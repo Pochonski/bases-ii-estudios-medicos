@@ -37,3 +37,13 @@ La identidad de ejecución del procesador outbox (cuenta de aplicación/servicio
 ## Criterio de aprobación
 
 Ningún rol se considera implementado sin scripts, verificación de inicio de sesión y evidencia de una operación permitida más una operación denegada.
+
+## Implementación parcial — 22/10/2026, Joseph (D-028)
+
+La configuración no secreta está en .env; contraseñas aleatorias en secrets/ ignorado.
+Compose monta solo el secreto de cada motor; no hay contraseñas en environment del modelo Compose.
+El wrapper de SQL Server exporta su contraseña al proceso en tiempo de arranque: un administrador
+del contenedor aún puede acceder a ella. No se promete aislamiento frente al dueño de Docker.
+SCRAM PostgreSQL, peer Unix local, red interna y puertos localhost opcionales preparados.
+TLS de FreeTDS es obligatorio pero sin CA validada; PostgreSQL y MongoDB no configuran TLS.
+No hay prueba funcional de roles ni habilitación de perfiles externos. Consultar el manual local.

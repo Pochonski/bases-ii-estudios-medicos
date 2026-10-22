@@ -1,0 +1,42 @@
+name: Joseph - infraestructura
+on:
+  pull_request:
+    paths:
+      - 'compose*.yaml'
+      - 'docker/postgres/**'
+      - 'scripts/**'
+      - 'pruebas/infraestructura/**'
+      - 'integracion/01_fdw_sqlserver.sql'
+      - '.dockerignore'
+      - '.env.example'
+      - '.github/workflows/joseph-infra.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  infraestructura:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 verificado
+      - name: Configuración efímera y análisis estático
+        shell: pwsh
+        run: |
+          ./scripts/Initialize-Local.ps1
+          ./scripts/Test-Infra.ps1 -StaticOnly
+      - name: Construir PostgreSQL con ambos FDW
+        run: docker compose build --progress plain postgres
+      - name: Iniciar tres motores
+        run: docker compose up -d --wait --wait-timeout 300
+      - name: Consultas y carga de extensiones
+        shell: pwsh
+        run: ./scripts/Test-Infra.ps1
+      - name: Persistencia PostgreSQL
+        shell: pwsh
+        run: ./scripts/Test-Persistence.ps1
+      - name: Estado final
+        if: always()
+        run: docker compose ps -a
+      - name: Detener servicios del runner
+        if: always()
+        run: docker compose down

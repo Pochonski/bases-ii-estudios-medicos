@@ -38,3 +38,6 @@ Thumbs.db
 # Generated evidence: manage intentional curated files separately
 .tmp/
 temp/
+
+# Salidas locales de inspección (pueden contener configuración)
+*.local.json

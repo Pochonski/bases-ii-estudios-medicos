@@ -58,3 +58,39 @@
 ## Registro de nuevas decisiones
 
 Agregar filas `D-024` y siguientes con **fecha**, **proponente**, **fuente** (curso/grupo/propuesta), **estado**, **consecuencias**, **archivos afectados** y **evidencia** si ya se probó. No borrar decisiones anteriores: marcarlas supersedidas y enlazar reemplazo.
+
+### D-025 — Inicio limitado a Joseph (21–22/10/2026)
+
+- Proponente/fuente: autorización explícita de Joseph en esta sesión.
+- Estado: IMPLEMENTACIÓN AUTORIZADA solo para infraestructura/PostgreSQL/lectura SQL Server de Joseph.
+- Impacto: rama feature/joseph-infra-postgresql, PR en borrador; sin merge ni módulos de Joyce/Armando.
+- Archivos: README, docs de estado/bitácora y entregables de Joseph.
+
+### D-026 — Respetar spike previo al esquema (22/10/2026)
+
+- Proponente: Joseph mediante agente; fuente: gate 2 de docs/06.
+- Estado: ejecutado como orden de trabajo; DDL clínico permanece PENDIENTE.
+- Motivo: Docker Linux no expone su named pipe incluso tras intentar iniciar Desktop.
+- Impacto: entregar archivos y pruebas de infraestructura, investigar conectores, preparar CI Ubuntu;
+  no declarar compilación, FDW real ni Windows funcional sin evidencia.
+
+### D-027 — Candidatos inmutables para el spike (22/10/2026)
+
+- Proponente: Joseph mediante agente; fuente: repositorios y manifiestos oficiales.
+- Estado: PROPUESTA TÉCNICA verificable por artefactos; compatibilidad funcional SIN APROBAR.
+- Elección: PG 16.15/bookworm, SQL Server 2022 Developer y MongoDB 8.0.34-noble por digest amd64;
+  tds_fdw 2.0.5, mongo_fdw 5.5.3, driver C 1.30.2, json-c 0.18.
+- Motivo: respetar preselección y release mongo_fdw que declara MongoDB 8; evitar master/latest flotantes.
+- Archivos: compose.yaml, docker/postgres/Dockerfile, documentacion/COMPATIBILIDAD_FDW.md.
+- Evidencia: manifiestos consultados, commits oficiales y cuatro SHA-256 calculados desde descargas;
+  apt no está inmovilizado por snapshot. Fijación definitiva pendiente de pruebas con Joyce.
+
+### D-028 — Secretos por archivo y límites de seguridad (22/10/2026)
+
+- Proponente: Joseph mediante agente; fuente: mínimo privilegio de docs/05 y Compose secrets.
+- Estado: IMPLEMENTADO; validación estática y generación/idempotencia probadas en Windows.
+- Motivo: .env sin contraseñas, secretos fuera del contexto build/Git y solo en su motor.
+- Impacto: scripts/Initialize-Local.ps1, .env.example, .gitignore, .dockerignore, configuración PG/FreeTDS;
+  pruebas y manual. Sin cambios de columnas o IDs compartidos.
+- Límites: red interna; TLS TDS sin CA, sin TLS PG/Mongo, cuentas remotas de Joyce pendientes.
+  Perfil FDW PostgreSQL preparado NOLOGIN; no declarar roles plenamente implementados.

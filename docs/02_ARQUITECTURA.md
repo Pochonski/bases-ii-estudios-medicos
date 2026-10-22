@@ -64,3 +64,12 @@ flowchart TB
 - **Pendiente**: confirmar con el docente que tres servidores lógicos en una PC bastan para el requisito «distribuido».
 - **Pendiente**: compilación real de `tds_fdw` y `mongo_fdw` con imágenes y dependencias elegidas.
 - **Pendiente**: confirmar puertos libres, SSD suficiente, WSL 2 y recursos.
+
+## Preparación de infraestructura — 22/10/2026, Joseph
+
+`compose.yaml` implementa la topología prevista y `compose.local.yaml` ofrece publicación opcional
+solo localhost. La red `medical-network` usa `internal: true`; no hay puertos host por defecto.
+Se agregó volumen `mongodb_config` para /data/configdb, sin modificar el modelo MongoDB.
+Límites: PostgreSQL 1 GiB, SQL Server 3 GiB (límite interno 2048 MB), MongoDB 1.5 GiB (caché 0.5 GB).
+No hay medición de rendimiento ni prueba local de arranque. Versiones siguen como candidatos de spike;
+ver `documentacion/COMPATIBILIDAD_FDW.md` y D-027.

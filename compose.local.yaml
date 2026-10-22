@@ -1,0 +1,8 @@
+# Opcional: clientes administrativos en esta PC. No necesario para docker compose exec.
+services:
+  postgres:
+    ports: ["127.0.0.1:${POSTGRES_PORT:-5432}:5432"]
+  sqlserver:
+    ports: ["127.0.0.1:${SQLSERVER_PORT:-1433}:1433"]
+  mongodb:
+    ports: ["127.0.0.1:${MONGODB_PORT:-27017}:27017"]
