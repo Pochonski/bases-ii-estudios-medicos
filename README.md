@@ -1,6 +1,6 @@
 # Bases de Datos II · Sistema de Gestión de Estudios Médicos Distribuido
 
-> **Estado: PLANIFICACIÓN DOCUMENTADA — NO IMPLEMENTADO.** Corte de contexto: 21 de octubre de 2026 (America/Costa_Rica). Proyecto académico del Instituto Tecnológico de Costa Rica, Campus Tecnológico San Carlos. **Entrega indicada en el enunciado: 28/10/2026 a las 23:59; confirmar en Moodle la inconsistencia del día de la semana.**
+> **Estado: IMPLEMENTACIÓN PARCIAL AUTORIZADA PARA JOSEPH.** Corte de contexto: 21 de octubre de 2026 (America/Costa_Rica). Proyecto académico del Instituto Tecnológico de Costa Rica, Campus Tecnológico San Carlos. **Entrega indicada en el enunciado: 28/10/2026 a las 23:59; confirmar en Moodle la inconsistencia del día de la semana.**
 
 Este repositorio es la **fuente común de contexto** de Joseph, Joyce, Armando y sus agentes de desarrollo. Se elaboró a partir del enunciado original y de las fases de planificación acordadas en conversación. Su objetivo es prevenir decisiones contradictorias y facilitar trabajo paralelo y revisable.
 
@@ -49,7 +49,7 @@ Se deben demostrar las conexiones PostgreSQL ↔ SQL Server y PostgreSQL ↔ Mon
 
 **No asignar a Armando un bloqueante de la fase inicial.** Su desarrollo depende de interfaces acordadas y validadas hasta el 25 de octubre.
 
-## Estado real
+## Estado al corte de planificación (histórico)
 
 - [x] Enunciado recopilado, arquitectura planeada y división propuesta por el grupo.
 - [x] Modelos conceptuales, contratos, seguridad y pruebas descritos.
@@ -66,3 +66,21 @@ Se deben demostrar las conexiones PostgreSQL ↔ SQL Server y PostgreSQL ↔ Mon
 Actualizar `docs/10_DECISIONES_Y_PENDIENTES.md` al tomar decisiones nuevas, `docs/00_ESTADO_Y_FUENTES.md` al cambiar el estado real, y `docs/11_BITACORA.md` al terminar una sesión. Todas las modificaciones técnicas deben acompañarse de una prueba reproducible. Nunca incluir contraseñas, datos de salud reales ni secretos en commits.
 
 **Publicación:** repositorio **público** elegido por el grupo: https://github.com/Pochonski/bases-ii-estudios-medicos. La documentación publicada NO incluye el archivo original del profesor, datos clínicos reales, credenciales ni información privada. Invitaciones de escritura a Joyce y Armando siguen pendientes de sus usuarios de GitHub. La planificación fue trasladada al repositorio remoto el 21/10/2026.
+
+## Implementación autorizada de Joseph — 22/10/2026
+
+Joseph autorizó iniciar exclusivamente su alcance. Infraestructura y preparación FDW en
+`feature/joseph-infra-postgresql`; sin merge a main.
+
+- **IMPLEMENTADO Y PROBADO:** validación estática de Compose, sintaxis PowerShell, inicializador
+  idempotente, rechazo de configuración incompleta y exclusión Git de secretos.
+- **IMPLEMENTADO, NO PROBADO:** build de la imagen, arranque/salud de motores y persistencia local.
+  Docker Desktop no expone el motor Linux; no se ejecutaron motores en Windows.
+- **BLOQUEADO POR DEPENDENCIA:** lectura de facturación real, requiere vista/usuario/base de Joyce.
+- **PENDIENTE:** DDL clínico, particiones, outbox y datos ficticios (después del spike de conectores),
+  login de perfiles y validación mongo_fdw con Joyce. Módulos de Armando conservan su responsable.
+
+Guía exacta: [Windows / PowerShell 7](documentacion/JOSEPH_FASE1_WINDOWS.md).
+[Compatibilidad y fuentes](documentacion/COMPATIBILIDAD_FDW.md).
+[Registro local real](evidencias/registros/2026-10-22-joseph-local.txt).
+El workflow de infraestructura intenta build/runtime en Ubuntu; su resultado no prueba este Windows.

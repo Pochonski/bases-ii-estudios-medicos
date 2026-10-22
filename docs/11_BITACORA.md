@@ -37,3 +37,23 @@ Commit o PR:
 - Se preparó la publicación de los archivos de planificación y las guías individuales para los tres agentes en la rama `main` del repositorio público.
 - No se incluyó el archivo del enunciado original ni contraseñas o datos médicos reales.
 - Estado técnico inalterado: sin bases de datos implementadas ni pruebas ejecutadas.
+
+## 2026-10-22 — Joseph, infraestructura y preparación PostgreSQL
+
+- Objetivo: iniciar alcance autorizado de Joseph desde main 630cca6 en rama feature/joseph-infra-postgresql.
+- Contexto leído completo: README, AGENTS, agents/JOSEPH, PROTOCOLO, docs/00..12, guías Joyce/Armando,
+  handoff, CONTRIBUTING y evidencia. Dependencias identificadas antes de cambios.
+- Cambios reales: Compose de tres motores, imagen personalizada con fuentes/checksums de dos FDW,
+  configuración PG/HBA/FreeTDS, inicializador seguro, pruebas estáticas/runtime/persistencia, CI Ubuntu,
+  preparación SQL de lectura, manual y documentación. No hay tablas clínicas ni objetos de Joyce/Armando.
+- Decisiones: D-025..D-028; gate de conectores conserva pendiente la etapa clínica.
+- Comandos: git clone/switch/status/show/diff, gh api (refs/perfil), docker --version/compose version/info/
+  desktop start/buildx imagetools inspect/compose config/build; wsl --status; descargas oficiales en
+  memoria con SHA-256; scripts Initialize-Local (dos veces) y Test-Infra -StaticOnly; parser PowerShell;
+  git check-ignore y diff --check. Comandos de prueba exactos en manual/evidencia.
+- Pruebas: estáticas PASAN; build local falla antes de compilar por named pipe ausente.
+  P01 bloqueada por vista/base/cuenta de Joyce; P12/P14/P17/P18 no acreditadas localmente.
+- Evidencia: evidencias/registros/2026-10-22-joseph-local.txt.
+- Dependencias: Joyce confirma contrato SQL Server y valida BSON/escrituras Mongo FDW; Armando consume
+  posteriormente, sin reasignaciones. No se enviaron mensajes en nombre de Joseph.
+- Git/PR y resultados posteriores: se registrarán al terminar la verificación de esta misma sesión.

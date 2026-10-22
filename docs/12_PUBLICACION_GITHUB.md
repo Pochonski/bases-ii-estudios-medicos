@@ -1,7 +1,7 @@
 # Publicación, colaboración y protección del repositorio
 
 **Repositorio:** https://github.com/Pochonski/bases-ii-estudios-medicos
-**Visibilidad:** público, definido por el usuario el 21/10/2026. **Estado:** documentación de planificación (sin implementación ni pruebas).
+**Visibilidad:** público, definido por el usuario el 21/10/2026. **Estado:** implementación parcial de Joseph; consultar la actualización al final.
 
 ## Acceso para agentes
 
@@ -24,3 +24,10 @@ Clonar el repositorio y leer `README.md` y `AGENTS.md`, luego `docs/00_ESTADO_Y_
 ## Estado de la publicación
 
 La creación del repositorio en GitHub y la publicación de documentos son actos distintos. La existencia de un enlace no demuestra que la planificación esté subida hasta comprobar los archivos y el commit remoto.
+
+## Actualización — 22/10/2026, Joseph
+
+Implementación parcial autorizada en feature/joseph-infra-postgresql. main se conserva;
+PR en borrador al finalizar comprobaciones. La revisión de Joyce debe cubrir contrato SQL Server
+y conectores; Armando mantiene las vistas/roles/reportes finales.
+No se publican .env ni secretos generados; documentacion/ contiene instrucciones y fuentes.

@@ -1,6 +1,6 @@
 # Matriz de pruebas y aceptación
 
-**Estado: TODAS PLANIFICADAS / NO EJECUTADAS.** Para cada prueba preservar: precondiciones, comandos exactos, base/motor, salida relevante, comparación con esperado, fecha, responsable y evidencia en `evidencias/`.
+**Estado: aceptación funcional pendiente; ejecución estática parcial registrada al final.** Para cada prueba preservar: precondiciones, comandos exactos, base/motor, salida relevante, comparación con esperado, fecha, responsable y evidencia en `evidencias/`.
 
 | ID | Procedimiento previsto | Resultado esperado | Requisito |
 |---|---|---|---|
@@ -43,3 +43,23 @@
 ### Condición final
 
 El proyecto solo pasa aceptación si los tres motores están conectados, las operaciones exigidas funcionan, y los resultados están probados y documentados. La documentación por sí sola **no sustituye** ejecución real.
+
+## Ejecución parcial — 22/10/2026, Joseph
+
+| Prueba | Resultado local |
+|---|---|
+| Compose base y overlay, red, secretos, volúmenes y healthchecks | PASA validación estática |
+| Sintaxis de tres scripts PowerShell | PASA |
+| Inicializador repetido sin rotar secretos existentes | PASA |
+| POSTGRES_DB vacío | PASA negativo: Compose rechaza |
+| .env y tres secretos ignorados / git diff --check | PASA |
+| Build Docker PG con FDW | NO EJECUTADO: comando falla antes de compilar, daemon ausente |
+| P01 facturación real | BLOQUEADO POR DEPENDENCIA de Joyce |
+| P12 PostgreSQL | Script preparado, NO EJECUTADO localmente |
+| P14 particiones | PENDIENTE, todavía no hay DDL clínico |
+| P17 FDW | SQL/config preparados; NO EJECUTADO ni login validado |
+| P18 instalación vacía | Solo parte estática probada; arranque local NO EJECUTADO |
+| Otras Pxx | PENDIENTES, conservan responsables |
+
+Evidencia: evidencias/registros/2026-10-22-joseph-local.txt.
+El workflow Ubuntu es una comprobación adicional; no acredita funcionamiento en Windows.

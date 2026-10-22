@@ -1,0 +1,20 @@
+Fecha local: 2026-10-22T01:32:48.4119895-06:00
+Entorno: PowerShell local Windows; no se ejecutaron motores en Work.
+Configuración local preparada. No se sobrescribieron archivos existentes ni se mostraron secretos.
+Configuración local preparada. No se sobrescribieron archivos existentes ni se mostraron secretos.
+PASS inicializador idempotente: contraseñas existentes conservadas; valores no registrados.
+PASS estático: tres motores, red interna, secretos por archivo, volúmenes, healthchecks, puertos localhost opcionales.
+PASS sintaxis: Initialize-Local.ps1
+PASS sintaxis: Test-Infra.ps1
+PASS sintaxis: Test-Persistence.ps1
+PASS negativo: POSTGRES_DB vacío rechazado por Compose.
+error while interpolating services.postgres.environment.POSTGRES_DB: required variable POSTGRES_DB is missing a value: Defina POSTGRES_DB en .env
+.env
+secrets/postgres_password.txt
+secrets/sqlserver_sa_password.txt
+secrets/mongo_root_password.txt
+PASS git diff --check.
+ Image estudios-medicos/postgres-fdw:joseph-fase1 Building 
+failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
+
+Build local: código 1 (no es una prueba de compilación si el daemon no responde).

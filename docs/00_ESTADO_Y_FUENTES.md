@@ -1,6 +1,6 @@
 # Estado real, fuentes y convención de certeza
 
-**Corte funcional: 21/10/2026 · Zona horaria: America/Costa_Rica.** No hay implementación realizada en este repositorio. Todos los SQL, JS, Dockerfiles y pruebas referidos en otros documentos son **nombres previstos**, no archivos existentes.
+**Corte funcional: 21/10/2026 · Zona horaria: America/Costa_Rica.** El corte inicial siguiente corresponde a planificación. La actualización vigente al final registra los archivos y pruebas realmente creados.
 
 ## Jerarquía de autoridad
 
@@ -11,7 +11,7 @@
 
 Leyenda en documentos: **[CURSO]** = texto exigido; **[GRUPO]** = acordado; **[PROPUESTA]** = diseño; **[PENDIENTE]** = falta prueba o confirmación.
 
-## Estado por componente
+## Estado por componente al corte inicial (histórico)
 
 | Elemento | Estado al corte | Fuente |
 |---|---|---|
@@ -40,3 +40,22 @@ Leyenda en documentos: **[CURSO]** = texto exigido; **[GRUPO]** = acordado; **[P
 ## Actualización del estado
 
 Cambiar a «implementado» solamente con archivos revisables; cambiar a «probado» únicamente con comandos y resultados guardados en `evidencias/`. El autor debe anotar fecha y hash de commit cuando sea posible. Registrar novedades en `docs/11_BITACORA.md`.
+
+## Actualización vigente — 22/10/2026, Joseph (D-025 a D-028)
+
+Implementación autorizada por Joseph en su sesión; solo su alcance. El corte inicial arriba es histórico.
+
+| Componente | Estado comprobable |
+|---|---|
+| Clonación/main/rama personal | IMPLEMENTADO Y PROBADO: main limpio 630cca6, rama feature/joseph-infra-postgresql |
+| Compose, secretos, scripts PowerShell | IMPLEMENTADO Y PROBADO en validación estática local; ver evidencias/registros/2026-10-22-joseph-local.txt |
+| Imagen con tds_fdw/mongo_fdw | IMPLEMENTADO, NO PROBADO localmente: build detenido por ausencia del daemon |
+| Tres motores, healthchecks y persistencia | IMPLEMENTADO, NO PROBADO localmente |
+| Preparación externo.ft_estado_facturacion | IMPLEMENTADO, NO PROBADO; perfil NOLOGIN, sin datos remotos simulados |
+| P01 / contrato SQL Server | BLOQUEADO POR DEPENDENCIA de Joyce (vista, base, cuenta, tipos y fixture) |
+| Esquema clínico / particiones / outbox / dataset | PENDIENTE: respetar gate de conectores de docs/06 |
+| Mongo FDW funcional / exportación | PENDIENTE de pruebas conjuntas con Joyce; no reemplazado por driver |
+| Vistas API, roles externos y agregaciones | PENDIENTE, corresponden a Armando |
+
+Los candidatos están fijados por digest/hash para repetir el spike, con validación funcional pendiente.
+No hay aceptación global P01–P18. Ver documentación de ejecución y reporte de esta sesión.
