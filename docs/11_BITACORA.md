@@ -57,3 +57,13 @@ Commit o PR:
 - Dependencias: Joyce confirma contrato SQL Server y valida BSON/escrituras Mongo FDW; Armando consume
   posteriormente, sin reasignaciones. No se enviaron mensajes en nombre de Joseph.
 - Git/PR y resultados posteriores: se registrarán al terminar la verificación de esta misma sesión.
+
+### Continuación — diagnóstico de CI (misma sesión)
+
+PR en borrador #1: https://github.com/Pochonski/bases-ii-estudios-medicos/pull/1 .
+Commits iniciales 4591a78 y bd4ce09; 4785086 agregó logs para diagnóstico.
+Build de ambas extensiones PASÓ en Ubuntu; el init creó ambas extensiones y PG/SQL Server
+estuvieron saludables. Las dos primeras ejecuciones FALLARON por aborto de MongoDB,
+id 12257600 / SERVER-121912 (kernel no compatible).
+Se registra D-029 y se cambia solo el runner a ubuntu-22.04, agregando uname -r.
+Evidencia y cierre definitivo se registran en el informe final, sin atribuir éxito al Windows local.

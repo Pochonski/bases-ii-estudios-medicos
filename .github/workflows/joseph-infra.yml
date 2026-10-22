@@ -15,10 +15,12 @@ permissions:
   contents: read
 jobs:
   infraestructura:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 verificado
+      - name: Kernel de prueba
+        run: uname -r
       - name: Configuración efímera y análisis estático
         shell: pwsh
         run: |

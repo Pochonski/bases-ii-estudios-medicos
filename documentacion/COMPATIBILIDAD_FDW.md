@@ -50,3 +50,15 @@ registrar ambos por separado.
 - [Imagen PostgreSQL e inicialización](https://hub.docker.com/_/postgres)
 - [Contenedor SQL Server y sqlcmd](https://learn.microsoft.com/en-us/sql/linux/quickstart-install-connect-docker?view=sql-server-ver16)
 - [Secretos Compose](https://docs.docker.com/compose/how-tos/use-secrets/)
+
+## Hallazgo experimental de kernel — 22/10/2026 (D-029)
+
+Runs [39744770706](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39744770706)
+y [39747121313](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39747121313):
+build completo con tds_fdw y mongo_fdw PASÓ; PG inicializó ambas extensiones.
+El arranque conjunto FALLÓ porque MongoDB emitió id 12257600 (kernel desde 6.19 incompatible).
+La comprobación se cambia a ubuntu-22.04 y registra el kernel real; no altera Windows/WSL.
+[Incidencia oficial SERVER-121912](https://jira.mongodb.org/browse/SERVER-121912),
+[notas oficiales MongoDB 8.0](https://www.mongodb.com/docs/v8.0/release-notes/8.0/),
+[imagen oficial del runner 22.04](https://github.com/actions/runner-images/blob/main/images/ubuntu/Ubuntu2204-Readme.md).
+El kernel que usa Docker Desktop también deberá verificarse antes de fijar versiones definitivas.

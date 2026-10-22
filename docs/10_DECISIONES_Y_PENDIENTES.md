@@ -94,3 +94,16 @@ Agregar filas `D-024` y siguientes con **fecha**, **proponente**, **fuente** (cu
   pruebas y manual. Sin cambios de columnas o IDs compartidos.
 - Límites: red interna; TLS TDS sin CA, sin TLS PG/Mongo, cuentas remotas de Joyce pendientes.
   Perfil FDW PostgreSQL preparado NOLOGIN; no declarar roles plenamente implementados.
+
+### D-029 — Kernel del entorno de prueba MongoDB (22/10/2026)
+
+- Proponente: Joseph mediante agente; fuente: error real de MongoDB y documentación oficial.
+- Estado: corrección de CI propuesta y sometida a nueva ejecución.
+- Evidencia: runs 39744770706 y 39747121313 compilaron ambos FDW; PG/SQL Server saludables,
+  MongoDB abortó con id 12257600 por kernel 6.19 o posterior.
+- Decisión: probar el mismo candidato en runner ubuntu-22.04 (kernel 6.8 según runner-images);
+  registrar uname -r. No bajar la versión de MongoDB ni desactivar su protección.
+- Impacto: .github/workflows/joseph-infra.yml, manual, compatibilidad y evidencia.
+  Sin modificaciones al kernel Windows/WSL ni a contratos compartidos.
+- Fuentes: https://jira.mongodb.org/browse/SERVER-121912 y
+  https://www.mongodb.com/docs/v8.0/release-notes/8.0/ .

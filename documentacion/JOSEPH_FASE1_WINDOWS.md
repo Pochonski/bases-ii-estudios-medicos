@@ -129,3 +129,17 @@ abrir/revisar Docker Desktop y su diagnóstico WSL; no declarar que los motores 
 
 La verificación adicional en GitHub Actions usa un runner Ubuntu, contraseñas efímeras y los mismos
 scripts. Un PASS allí no valida el Windows de Joseph ni las consultas de negocio o exportación.
+
+## Compatibilidad del kernel Linux (D-029)
+
+El candidato MongoDB abortó en el primer entorno CI por la comprobación SERVER-121912.
+Se cambia el runner a Ubuntu 22.04, manteniendo la misma imagen MongoDB y el despliegue previsto.
+Antes de fijar versiones en Windows, con Docker ya disponible registrar:
+
+```powershell
+docker compose run --rm --no-deps --entrypoint uname mongodb -r
+```
+
+Si aparece el mismo error de kernel en Docker Desktop, conservar el log y evaluar versiones
+con Joyce; no desactivar comprobaciones de seguridad ni cambiar el kernel sin revisar el impacto.
+El resultado CI no determina qué kernel tiene esta PC.
