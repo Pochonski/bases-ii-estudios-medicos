@@ -21,10 +21,11 @@ services:
       sqlserver: {condition: service_healthy}
       mongodb: {condition: service_healthy}
     healthcheck:
-      test: ["CMD", "haproxy", "-c", "-q", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8404/ready"]
+      interval: 3s
+      timeout: 2s
+      retries: 2
+      start_period: 10s
 
 networks:
   host-access:

@@ -4,6 +4,7 @@ on:
     paths:
       - 'compose*.yaml'
       - 'docker/postgres/**'
+      - 'docker/port-gateway/**'
       - 'scripts/**'
       - 'pruebas/infraestructura/**'
       - 'integracion/01_fdw_sqlserver.sql'
@@ -72,6 +73,10 @@ jobs:
       - name: Consultas y permisos de lectura de secretos
         shell: pwsh
         run: ./scripts/Test-Infra.ps1 | Tee-Object -FilePath .tmp/ci/runtime.txt
+      - name: Un backend caído vuelve no saludable al gateway
+        if: matrix.mode == 'localhost'
+        shell: pwsh
+        run: ./pruebas/infraestructura/Test-GatewayBackendFailure.ps1 | Tee-Object -FilePath .tmp/ci/backend-failure.txt
       - name: Restart PostgreSQL conserva fila, contenedor, volumen y puertos
         shell: pwsh
         run: ./scripts/Test-Persistence.ps1 | Tee-Object -FilePath .tmp/ci/persistencia.txt
