@@ -1,8 +1,31 @@
-# Opcional: clientes administrativos en esta PC. No necesario para docker compose exec.
+# Acceso administrativo opcional desde esta PC. Los motores permanecen solo
+# en medical-network (internal: true); el gateway es el único servicio con
+# salida a una red no interna para que Docker publique los puertos localhost.
 services:
-  postgres:
-    ports: ["127.0.0.1:${POSTGRES_PORT:-5432}:5432"]
-  sqlserver:
-    ports: ["127.0.0.1:${SQLSERVER_PORT:-1433}:1433"]
-  mongodb:
-    ports: ["127.0.0.1:${MONGODB_PORT:-27017}:27017"]
+  port-gateway:
+    image: haproxy:3.2-alpine@sha256:dfba86f031bd4c9039f10f8cc5de75991d1b6766d5460f0335b980408503baad
+    platform: linux/amd64
+    restart: unless-stopped
+    read_only: true
+    networks: [medical-network, host-access]
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+      - "127.0.0.1:${SQLSERVER_PORT:-1433}:1433"
+      - "127.0.0.1:${MONGODB_PORT:-27017}:27017"
+    volumes:
+      - ./docker/port-gateway/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+    mem_limit: 128m
+    cpus: 0.25
+    depends_on:
+      postgres: {condition: service_healthy}
+      sqlserver: {condition: service_healthy}
+      mongodb: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "haproxy", "-c", "-q", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  host-access:
+    driver: bridge

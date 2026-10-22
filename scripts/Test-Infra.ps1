@@ -28,7 +28,9 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Motor Docker Linux no disponible; runtime NO PROBADO.' }
     Invoke-ProjectCompose $context @('ps')
     $snapshot = Get-PostgresSnapshot -Context $context -Configuration $config
+    Assert-LocalhostPortConnections -Configuration $config
     Write-Output "PASS selección runtime PG: puertos=$($snapshot.Ports); volumen=$($snapshot.Volume)."
+    if ($snapshot.GatewayId) { Write-Output 'PASS conexiones TCP Windows/host a los tres puertos localhost del gateway.' }
     Invoke-ProjectCompose $context @('exec','-T','--user','postgres','postgres','sh','-ec','test -r /run/secrets/postgres_password; exec psql -X -U postgres -d "$POSTGRES_DB" -v ON_ERROR_STOP=1 -f /opt/proyecto/pruebas/01_extensiones.sql')
     Invoke-ProjectCompose $context @('exec','-T','--user','10001:0','sqlserver','bash','-ec','test -r /run/secrets/sqlserver_sa_password; test "$(id -u)" = 10001; export SQLCMDPASSWORD="$(cat /run/secrets/sqlserver_sa_password)"; exec /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -b -Q "SELECT @@VERSION"')
     Invoke-ProjectCompose $context @('exec','-T','--user','mongodb','mongodb','sh','-ec','test -r /run/secrets/mongo_root_password')
