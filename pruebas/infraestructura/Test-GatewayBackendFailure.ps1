@@ -1,6 +1,6 @@
 #requires -Version 7.0
-# Prueba disruptiva de disponibilidad: suspende procesos PG en un proyecto efímero de CI.
-# No escribe datos ni elimina contenedores, redes o volúmenes; siempre intenta reanudar PG.
+# Prueba disruptiva de disponibilidad: detiene PG en un proyecto efímero de CI.
+# No escribe datos ni elimina contenedores, redes o volúmenes; siempre intenta iniciarlo.
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 . (Join-Path (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)) 'scripts/Compose-Context.ps1')
@@ -13,16 +13,16 @@ if ($env:GITHUB_ACTIONS -ne 'true' -or $config.name -ne 'joseph-audit-localhost'
 if (-not $config.services.ContainsKey('port-gateway')) { throw 'Se requiere overlay localhost.' }
 
 $before = Get-PostgresSnapshot -Context $context -Configuration $config
-$pauseAttempted = $false
+$stopAttempted = $false
 try {
-    $pauseAttempted = $true
-    Invoke-ProjectCompose $context @('pause','postgres')
+    $stopAttempted = $true
+    Invoke-ProjectCompose $context @('stop','postgres')
     $timer = [Diagnostics.Stopwatch]::StartNew()
     do {
         $health = & docker inspect --format '{{.State.Health.Status}}' $before.GatewayId
         if ($LASTEXITCODE -ne 0) { throw 'No se pudo inspeccionar el gateway.' }
         if (($health -join '').Trim() -eq 'unhealthy') { break }
-        if ($timer.Elapsed.TotalSeconds -ge 60) { throw 'El gateway no detectó el backend PostgreSQL suspendido.' }
+        if ($timer.Elapsed.TotalSeconds -ge 60) { throw 'El gateway no detectó el backend PostgreSQL detenido.' }
         Start-Sleep -Seconds 1
     } while ($true)
 
@@ -35,23 +35,23 @@ try {
         $detected = $true
     }
     if (-not $detected) { throw 'La validación runtime aceptó un gateway con backend caído.' }
-    Write-Output 'PASS negativo: TCP localhost acepta conexiones, pero la salud del gateway y la validación runtime rechazan PostgreSQL suspendido.'
+    Write-Output 'PASS negativo: TCP localhost acepta conexiones, pero la salud del gateway y la validación runtime rechazan PostgreSQL detenido.'
 } finally {
-    if ($pauseAttempted) {
+    if ($stopAttempted) {
         $state = & docker inspect --format '{{.State.Status}}' $before.Id
-        if ($LASTEXITCODE -ne 0) { throw 'No se pudo inspeccionar PostgreSQL para reanudarlo.' }
-        if (($state -join '').Trim() -eq 'paused') { Invoke-ProjectCompose $context @('unpause','postgres') }
+        if ($LASTEXITCODE -ne 0) { throw 'No se pudo inspeccionar PostgreSQL para iniciarlo.' }
+        if (($state -join '').Trim() -ne 'running') { Invoke-ProjectCompose $context @('start','postgres') }
     }
 }
 
 $timer = [Diagnostics.Stopwatch]::StartNew()
 do {
     $pgHealth = & docker inspect --format '{{.State.Health.Status}}' $before.Id
-    if ($LASTEXITCODE -ne 0) { throw 'No se pudo inspeccionar PostgreSQL tras reanudar.' }
+    if ($LASTEXITCODE -ne 0) { throw 'No se pudo inspeccionar PostgreSQL tras start.' }
     $gatewayHealth = & docker inspect --format '{{.State.Health.Status}}' $before.GatewayId
-    if ($LASTEXITCODE -ne 0) { throw 'No se pudo inspeccionar el gateway tras reanudar.' }
+    if ($LASTEXITCODE -ne 0) { throw 'No se pudo inspeccionar el gateway tras start.' }
     if (($pgHealth -join '').Trim() -eq 'healthy' -and ($gatewayHealth -join '').Trim() -eq 'healthy') { break }
-    if ($timer.Elapsed.TotalSeconds -ge 90) { throw 'PostgreSQL/gateway no recuperó salud tras unpause.' }
+    if ($timer.Elapsed.TotalSeconds -ge 90) { throw 'PostgreSQL/gateway no recuperó salud tras start.' }
     Start-Sleep -Seconds 1
 } while ($true)
 
@@ -59,6 +59,6 @@ $after = Get-PostgresSnapshot -Context $context -Configuration $config
 Assert-LocalhostPortConnections -Configuration $config
 if ($before.Id -ne $after.Id -or $before.GatewayId -ne $after.GatewayId -or
     $before.Ports -ne $after.Ports -or $before.Volume -ne $after.Volume) {
-    throw 'La pausa/reanudación cambió contenedor, gateway, puertos o volumen PostgreSQL.'
+    throw 'Stop/start cambió contenedor, gateway, puertos o volumen PostgreSQL.'
 }
 Write-Output 'PASS recuperación: mismos contenedores, volumen y bindings localhost; tres motores/gateway disponibles antes de P12.'
