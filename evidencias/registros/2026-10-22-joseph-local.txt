@@ -14,7 +14,7 @@ secrets/postgres_password.txt
 secrets/sqlserver_sa_password.txt
 secrets/mongo_root_password.txt
 PASS git diff --check.
- Image estudios-medicos/postgres-fdw:joseph-fase1 Building 
+ Image estudios-medicos/postgres-fdw:joseph-fase1 Building
 failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
 
 Build local: código 1 (no es una prueba de compilación si el daemon no responde).

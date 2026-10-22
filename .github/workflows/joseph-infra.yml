@@ -25,7 +25,7 @@ jobs:
           ./scripts/Initialize-Local.ps1
           ./scripts/Test-Infra.ps1 -StaticOnly
       - name: Construir PostgreSQL con ambos FDW
-        run: docker compose build --progress plain postgres
+        run: docker compose --progress plain build postgres
       - name: Iniciar tres motores
         run: docker compose up -d --wait --wait-timeout 300
       - name: Consultas y carga de extensiones
@@ -36,7 +36,9 @@ jobs:
         run: ./scripts/Test-Persistence.ps1
       - name: Estado final
         if: always()
-        run: docker compose ps -a
+        run: |
+          docker compose ps -a
+          docker compose logs --no-color --tail 80 postgres sqlserver mongodb
       - name: Detener servicios del runner
         if: always()
         run: docker compose down
