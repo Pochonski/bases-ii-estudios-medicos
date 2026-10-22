@@ -1,0 +1,103 @@
+EVIDENCIA JOSEPH — 2026-10-22, Windows 11, America/Costa_Rica
+Rama feature/joseph-infra-postgresql; inicio HEAD fc7b305b3db36044664fe93051223fcbf0f4a8e8.
+PR #1 OPEN/DRAFT; main y origin/main 630cca6b14f23d73579ccab2a0106ab1fa68f7fc.
+Este registro resume salidas observadas; logs crudos permanecen en .tmp/windows-local/ (ignorado).
+No incluye contraseñas, hashes de secretos, configuración Compose completa ni datos clínicos.
+
+1. DIAGNÓSTICO Y RECUPERACIÓN DE DOCKER DESKTOP
+Comandos: docker info --format '{{.ServerVersion}}'; docker desktop status;
+Get-Service com.docker.service; Get-Process; wsl --list --verbose;
+Get-Content $env:LOCALAPPDATA\Docker\log\host\com.docker.backend.exe.log -Tail 70;
+fsutil reparsepoint query $env:LOCALAPPDATA\Docker\run\sailor-ingest.sock.
+Inicio: docker info falló: npipe:////./pipe/dockerDesktopLinuxEngine inexistente.
+Docker Desktop 4.91.0.239619; com.docker.service Stopped (no implica por sí solo causa con WSL2).
+El backend registró: "initializing Ingest server ... rename ... sailor-ingest.sock.stale:
+The file cannot be accessed by the system". fsutil devolvió error 1920.
+docker desktop restart --timeout 40 no avanzó; se interrumpió el cliente en espera.
+docker desktop stop --force --timeout 30 respondió "Forcing Docker Desktop to stop".
+Tras verificar ausencia de procesos GUI/backend, se renombraron por Move-Item -LiteralPath
+las carpetas runtime %LOCALAPPDATA%\Docker\run y %LOCALAPPDATA%\docker-secrets-engine
+con sufijo .joseph-preserved-20261022-090013. Las copias permanecen fuera del repo.
+Start-Process del ejecutable existente Docker Desktop.exe; no reinstalación ni reset.
+Después: docker info servidor=29.8.0, OSType=linux,
+kernel=6.18.33.2-microsoft-standard-WSL2, memoria asignada=14823337984 bytes.
+Docker Compose v5.5.1; Docker Desktop 4.91.0; Windows 11 Home 10.0.26300.
+No se cambió WSL/kernel, protección, configuración de Desktop ni volúmenes.
+No se probó aún un segundo reinicio de Desktop/Windows ni causa raíz de los sockets.
+
+2. SELECCIÓN OPERATIVA Y BUILD
+El puerto host 5432 ya tenía un listener de otro proceso. No se alteró ese proceso.
+Se creó archivo temporal ignorado .tmp/windows-local/ports.env:
+POSTGRES_PORT=15432, SQLSERVER_PORT=11433, MONGODB_PORT=37017.
+Selección común: ComposeFile=(compose.yaml,compose.local.yaml),
+EnvFile=(.env,.tmp/windows-local/ports.env), ProjectName=estudios-medicos.
+Inicializador: PASS; hashes calculados solo en memoria confirmaron .env y tres secretos
+existentes intactos. Regresión Everyone/Users: PASS DACL/owner de carpeta y archivos.
+Test-ComposeValidation: PASS base, overlay, selección ambiental y H3 negativo temporal.
+Test-Infra -StaticOnly: PASS ejemplo base, ejemplo localhost, entorno operativo.
+Parser PowerShell: PASS siete scripts. git diff --check: PASS.
+Invoke-Compose pull sqlserver mongodb: PASS por digests del repo.
+Invoke-Compose build postgres: PASS. Salida final:
+"Image estudios-medicos/postgres-fdw:joseph-fase1 Built".
+Este build fue local Windows/Docker Desktop; no equivale a compatibilidad FDW remota.
+
+3. FALLO REAL DEL OVERLAY ANTERIOR (PRESERVADO)
+Primer Invoke-Compose up -d --wait: tres motores saludables.
+PostgreSQL HostConfig.PortBindings: 5432/tcp -> 127.0.0.1:15432 (solicitado).
+PostgreSQL NetworkSettings.Ports: {"5432/tcp":[]} (no publicado).
+SQL Server/MongoDB NetworkSettings.Ports: {"1433/tcp":[]}, {"27017/tcp":[]}.
+docker port postgres no mostró mapping. Windows Get-NetTCPConnection no mostró
+listeners 15432/11433/37017. El test previo solo comprobaba HostConfig:
+el PASS de CI 39759092391 no acredita publicación efectiva.
+Causa técnica inmediata/inferencia: los motores estaban únicamente en medical-network
+internal=true; Docker no materializó los bindings. No se atribuye a WSL sin evidencia.
+
+4. OVERLAY CORREGIDO Y CONSULTAS
+compose.local.yaml agrega port-gateway HAProxy 3.2.26 por digest, red bridge host-access
+solo para gateway, junto con medical-network; motores solo en medical-network interna.
+Segundo Invoke-Compose up -d --wait: cuatro contenedores saludables
+(tres motores + pasarela). Docker Compose recreó los tres motores al cambiar el overlay;
+no se borraron los volúmenes. Gateway muestra:
+127.0.0.1:11433->1433/tcp, 127.0.0.1:15432->5432/tcp,
+127.0.0.1:37017->27017/tcp. Get-NetTCPConnection confirma los tres listeners
+en 127.0.0.1. Sondas TcpClient desde Windows PASS a los tres puertos.
+docker network inspect medical-network: internal=true.
+Volúmenes montados: estudios-medicos_postgres_data,
+estudios-medicos_sqlserver_data, estudios-medicos_mongodb_data y
+estudios-medicos_mongodb_config. Gateway sin secretos ni volumen de datos.
+Test-Infra runtime: PASS. PostgreSQL 16.15, timezone UTC, SCRAM;
+tds_fdw extversion 2.0.5 y mongo_fdw extversion 1.1; LOAD ambos PASS;
+pg_hba_file_rules sin errores ni host trust. SQL Server 2022 CU27-GDR 16.0.4305.5;
+MongoDB 8.0.34. Consultas autenticadas dentro de cada contenedor y lectura de
+secretos por postgres, UID SQL Server 10001:0 y mongodb: PASS.
+Cliente psql.exe de Windows a 127.0.0.1:15432 con contraseña tomada del secreto
+solo en memoria: SELECT current_database(), server_version, inet_client_addr()
+retornó postgres | 16.15 (Debian 16.15-1.pgdg12+2) | true.
+Cliente sqlcmd.exe v1.10.0 de Windows a 127.0.0.1:11433 con SQLCMDPASSWORD
+temporal tomado del secreto: SELECT @@VERSION retornó SQL Server 2022 CU27-GDR.
+Ambas variables de entorno temporales se eliminaron tras cada comando.
+MongoDB desde Windows: solo TCP, NO consulta autenticada con cliente Windows.
+
+5. PERSISTENCIA Y SELECCIÓN
+Test-Persistence: creó public.joseph_probe_10f97775c3c046cabc305f502bc73fcd
+en base postgres con una fila sintética; ejecutó restart postgres; esperó health
+del mismo ID; comprobó fila=1, mismo volumen/gateway/puertos activos y eliminó
+la tabla (DROP TABLE). PASS P12 parcial PostgreSQL. No hubo up durante la espera.
+Prueba negativa local: Test-Infra con solo compose.yaml y mismo proyecto rechazó
+el gateway existente antes de escribir el marcador (PASS negativo).
+No se ejecutaron P12 SQL Server/MongoDB, recreación como prueba de datos, backup,
+restauración, reboot Desktop/Windows, FDW remoto ni BSON/INSERT/UPDATE Mongo.
+Mongo_fdw instalado/LOAD y estos smoke tests NO cierran gate de conectores.
+
+6. VERSIONES, RECURSOS Y LIMITACIONES
+PowerShell 7.6.5; Docker Engine 29.8.0; Compose v5.5.1;
+Docker Desktop 4.91.0.239619; WSL 2.7.10.0; kernel efectivo indicado arriba.
+Muestra docker stats --no-stream: PG 20.36MiB/1GiB, SQL 621.6MiB/3GiB,
+Mongo 203.4MiB/1.5GiB, gateway 14.89MiB/128MiB.
+Es una instantánea, NO prueba de capacidad/rendimiento. Espacio libre C: antes del
+build 75.6GiB. No se probó otro hardware ni Windows Server CI con el código nuevo
+al elaborar este registro.
+Dependencia Joyce: base/vista/cuenta/fixture SQL Server y validación Mongo auth,
+ObjectId, Int64/Int32, Date, escritura, índice único, revisión. No se contactó a nadie.
+Sin cambios main; PR #1 permanece en borrador. Reporte completo:
+documentacion/INFORME_WINDOWS_Y_PUERTOS_JOSEPH.md.

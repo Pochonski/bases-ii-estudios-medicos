@@ -103,3 +103,29 @@ H1/H3 y selección estática probados también en Windows local; daemon sigue au
 No se acredita recreación, SQL Server/MongoDB persistentes, restauración, FDW remoto, BSON o login propio.
 Informe: documentacion/INFORME_CORRECCIONES_AUDITORIA_PR1.md.
 Commits correctivos aa1ae16/a801c88; cierre posterior solo documental. PR #1 en borrador, sin aprobación/merge.
+
+## Manual Windows y puerto efectivo — 22/10/2026, Joseph (D-034)
+
+La CI 39759092391 sigue siendo evidencia de H1–H3 en el código anterior, pero su comprobación
+de puertos H2 examinaba `HostConfig.PortBindings` (solicitud) y no
+`NetworkSettings.Ports` ni conexiones al host. El primer arranque Windows reveló que la red
+`internal: true` sola no activaba esos bindings, aunque los tres motores estaban saludables.
+Se conserva ese fallo en el registro Windows.
+
+| Prueba | Resultado Windows local después de agregar `port-gateway` |
+|---|---|
+| Build imagen PostgreSQL con tds_fdw/mongo_fdw | PASA; ambos artefactos cargan mediante `LOAD` |
+| Compose base/overlay + H1/H3 + sintaxis | PASA; `.env` y secretos existentes conservados |
+| Tres healthchecks y consultas autenticadas | PASA; PostgreSQL, SQL Server y MongoDB |
+| Lectura de secretos por UID | PASA; usuarios postgres, SQL Server 10001:0, mongodb |
+| Red y puertos localhost | PASA; motores solo en `medical-network` interna, gateway con tres bindings activos y sondas TCP Windows |
+| Cliente Windows PostgreSQL/SQL Server | PASA; consultas autenticadas por 127.0.0.1 y puertos alternativos |
+| Selección Compose incorrecta sin overlay | PASA negativo; rechaza el gateway existente antes de escribir marcador |
+| P12 PostgreSQL | PASA **parcial**: fila sintética tras `restart`, mismo contenedor/volumen/gateway/puertos, marcador eliminado |
+| P12 tres motores / recreación / restauración | NO EJECUTADAS |
+| P01/P17 remoto y Mongo BSON/INSERT/UPDATE | BLOQUEADAS por objetos, cuentas, tipos y fixture de Joyce; gate abierto |
+
+MongoDB autenticó dentro de su contenedor; solo se probó TCP desde Windows, no `mongosh`
+cliente en Windows. El kernel efectivo Docker fue `6.18.33.2-microsoft-standard-WSL2`.
+Pruebas de host y CI deben seguir distinguiéndose; la próxima CI validará el gateway también
+en Ubuntu. Evidencia y comandos: `evidencias/registros/2026-10-22-joseph-despliegue-windows.txt`.

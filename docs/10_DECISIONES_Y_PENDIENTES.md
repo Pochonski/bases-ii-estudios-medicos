@@ -142,3 +142,25 @@ Agregar filas `D-024` y siguientes con **fecha**, **proponente**, **fuente** (cu
 - CI del head auditado 612d07d PASA (39753627026); código corregido a801c88 PASA en 39759092391, tres jobs y artifacts revisados.
 - Windows local: daemon ausente, servicio detenido; sin reinstalación ni cambios WSL/kernel/volúmenes.
 - FDW remoto, BSON, login propio/privilegios negativos e INT siguen pendientes de Joyce/gates.
+
+### D-034 — Pasarela localhost y validación del puerto activo (22/10/2026, Joseph)
+
+- Fuente/motivación: autorización de continuar el manual local; reproducción Windows con
+  `HostConfig.PortBindings` solicitado pero `NetworkSettings.Ports` vacío. Los tres motores
+  estaban saludables, pero Windows no escuchaba. H1–H3 ya habían sido aceptados técnicamente
+  por Joseph; esta prueba encontró una limitación adicional de la infraestructura.
+- Decisión: `compose.local.yaml` incorpora un `port-gateway` TCP sin secretos ni volumen,
+  imagen HAProxy 3.2-alpine por digest. Mantiene los **tres motores** solo en la red
+  `medical-network` interna. Únicamente el gateway une esa red con `host-access` bridge y
+  publica 127.0.0.1. El modo base permanece sin puertos/gateway.
+- Motivo: un motor conectado exclusivamente a una red interna no obtuvo puertos reales;
+  relajar `internal: true` de los motores habría cambiado su aislamiento.
+- Verificación: `Get-PostgresSnapshot` observa `NetworkSettings.Ports` del gateway, su ID,
+  salud y proyecto; sondas TCP alcanzan los tres puertos; selección base ante despliegue
+  overlay falla. En Windows PASAN healthchecks, consultas nativas PG/SQL Server y P12 parcial.
+- Archivos: `compose.local.yaml`, `docker/port-gateway/haproxy.cfg`, `scripts/Compose-Context.ps1`,
+  `Test-Infra.ps1`, `Test-Persistence.ps1`, workflow, guía, matriz, estado y evidencia.
+- Impacto/limitación: cuarto **contenedor auxiliar**, no motor ni modificación de contrato
+  clínico. El gateway tiene salida por bridge; no contiene credenciales y monta config read-only.
+  No prueba conectores FDW ni persistencia de los otros motores. CI del cambio pendiente al
+  elaborar esta entrada; registrar run y resultado efectivo en evidencia antes de cierre.

@@ -112,3 +112,31 @@ H1/H3 y selección estática probados también en Windows local; daemon sigue au
 No se acredita recreación, SQL Server/MongoDB persistentes, restauración, FDW remoto, BSON o login propio.
 Informe: documentacion/INFORME_CORRECCIONES_AUDITORIA_PR1.md.
 Commits correctivos aa1ae16/a801c88; cierre posterior solo documental. PR #1 en borrador, sin aprobación/merge.
+
+## 2026-10-22 — Joseph, recuperación Docker Desktop y manual Windows
+
+- Objetivo: resolver disponibilidad del motor Linux y ejecutar el manual local sin alterar
+  WSL/kernel, protecciones, imágenes previas ni volúmenes. Contexto obligatorio y PR #1
+  comprobados; inicio limpio en `fc7b305`, `main` en `630cca6`, PR OPEN/DRAFT.
+- Diagnóstico: Docker Desktop 4.91.0 abortaba al renombrar el socket de Ingest (`error 1920`).
+  Reinicio por CLI no progresó. Se cerró Desktop y se conservaron por renombrado sus carpetas
+  transitorias de sockets `Docker/run` y `docker-secrets-engine`; inicio normal posterior
+  expuso Engine 29.8.0 y kernel `6.18.33.2-microsoft-standard-WSL2`. No se concluyó causa
+  raíz de los sockets ni estabilidad tras otro reinicio de Desktop/Windows.
+- Implementación D-034: el primer `compose.local.yaml` no activaba puertos con los motores
+  solo en red interna. Se agregó pasarela TCP sin secretos y sondas de puerto activo, conservando
+  red interna para los tres motores. La selección base equivocada ahora falla en runtime.
+- Archivos: overlay, configuración HAProxy, helper/test Compose, workflow, guía, decisiones,
+  matriz, estado, este registro e informe/evidencia Windows. No se tocaron módulos Joyce/Armando.
+- Comandos: `docker info/context/ps/network inspect/stats`, `docker desktop restart/stop`,
+  `Start-Process Docker Desktop`, `docker buildx imagetools inspect`, inicializador,
+  regresiones H1–H3, `Test-Infra -StaticOnly`, `Invoke-Compose build/up/ps`,
+  `Test-Infra`, `Test-Persistence`, clientes Windows `psql`/`sqlcmd`, parser PowerShell y Git.
+- Pruebas: build/health/consultas autenticadas/lectura secretos/puertos activos/clientes
+  Windows PASAN. P12 PASA solo para una fila PG tras `restart`, marcador eliminado. Docker
+  publicó puertos por gateway. El primer overlay sin gateway FALLÓ publicación efectiva,
+  aunque la configuración estática pasó. Detalles: evidencia Windows de esta fecha.
+- Riesgos y pendientes: sockets antiguos retenidos fuera del repo; puerto 5432 ocupado por
+  otro proceso, se usaron puertos alternativos desde archivo temporal ignorado; no se probó
+  reinicio completo de Desktop ni restauración; FDW/BSON/cuentas Joyce y gate siguen abiertos.
+  CI del nuevo código por ejecutar y documentar; PR permanece en borrador.

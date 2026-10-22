@@ -91,3 +91,24 @@ H1/H3 y selección estática probados también en Windows local; daemon sigue au
 No se acredita recreación, SQL Server/MongoDB persistentes, restauración, FDW remoto, BSON o login propio.
 Informe: documentacion/INFORME_CORRECCIONES_AUDITORIA_PR1.md.
 Commits correctivos aa1ae16/a801c88; cierre posterior solo documental. PR #1 en borrador, sin aprobación/merge.
+
+## Validación Windows posterior — 22/10/2026, Joseph (D-034)
+
+El estado anterior «daemon ausente» es histórico. Docker Desktop 4.91.0/Engine 29.8.0
+volvió a funcionar tras retirar del uso, conservándolas por renombrado, dos carpetas de
+sockets de ejecución dañados. Windows 11/WSL2 kernel efectivo
+`6.18.33.2-microsoft-standard-WSL2`. El build de ambos FDW, tres healthchecks, consultas
+autenticadas y lectura de secretos por UID PASAN en esta PC. PostgreSQL y SQL Server
+respondieron además a clientes nativos de Windows vía puertos localhost.
+
+El overlay anterior no publicaba puertos activos con los tres motores unidos solo a la red
+interna. El nuevo `port-gateway` preserva los motores en `medical-network` interna y publica
+los tres puertos desde una red bridge adicional solo en `127.0.0.1`. Snapshot y sonda TCP
+verifican los puertos efectivos; selección equivocada de Compose se rechaza. P12 PASA
+**parcialmente** también en Windows: una fila PostgreSQL tras `restart`, con ID, volumen,
+gateway y puertos conservados. La prueba no acredita persistencia de SQL Server/MongoDB,
+recreación ni restauración. P01/P17 remotos, Mongo BSON, cuentas y objetos de Joyce siguen
+pendientes; gate de conectores y DDL clínico continúan abiertos.
+
+Evidencia: `evidencias/registros/2026-10-22-joseph-despliegue-windows.txt`.
+Informe: `documentacion/INFORME_WINDOWS_Y_PUERTOS_JOSEPH.md`.

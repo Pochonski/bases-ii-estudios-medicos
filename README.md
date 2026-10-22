@@ -102,3 +102,19 @@ FDW remoto, BSON y autenticación propia siguen pendientes; gate abierto, sin m�
 [Informe de correcciones y evidencias](documentacion/INFORME_CORRECCIONES_AUDITORIA_PR1.md).
 La [guía Windows](documentacion/JOSEPH_FASE1_WINDOWS.md) muestra una selección consistente para operación y tests.
 PR #1 sigue en borrador, sin aprobación ni merge.
+
+## Validación local posterior — 22/10/2026
+
+Docker Desktop 4.91.0 volvió a exponer el motor Linux tras conservar y reemplazar sus carpetas
+de sockets de ejecución dañados. En Windows 11 se construyó la imagen PostgreSQL y arrancaron
+los tres motores con healthchecks y consultas autenticadas. El kernel efectivo fue
+`6.18.33.2-microsoft-standard-WSL2`. La primera ejecución del overlay reveló que Docker no
+publicaba puertos de contenedores conectados solo a la red `internal: true`; la prueba anterior
+comprobaba la solicitud, no el puerto activo. El overlay corregido usa una pasarela HAProxy
+sin secretos: solo ella une la red interna a una red bridge y publica puertos en `127.0.0.1`.
+PostgreSQL y SQL Server respondieron también desde clientes Windows. P12 sigue limitado a
+una fila PostgreSQL tras `restart`; FDW remoto y BSON permanecen pendientes de Joyce.
+
+[Evidencia y comandos Windows](evidencias/registros/2026-10-22-joseph-despliegue-windows.txt) ·
+[informe técnico actualizado](documentacion/INFORME_WINDOWS_Y_PUERTOS_JOSEPH.md).
+El párrafo anterior de correcciones registra el estado *antes* de esta validación local.

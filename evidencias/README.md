@@ -17,3 +17,13 @@ No agregar secretos, datos médicos reales ni capturas simuladas.
 
 P12 no acredita recreación/restauración ni persistencia de los tres motores. FDW/BSON/login propio pendientes.
 El informe de correcciones contiene el head, comandos, resultados, archivos y límites.
+
+## Ejecución en Windows 11 posterior
+
+- `registros/2026-10-22-joseph-despliegue-windows.txt`: diagnóstico y recuperación de
+  Docker Desktop, fallo real de puertos del overlay anterior, pasarela local, salud,
+  consultas, P12 parcial y selección Compose negativa. No contiene secretos.
+- `documentacion/INFORME_WINDOWS_Y_PUERTOS_JOSEPH.md`: interpretación, comandos,
+  límites, decisiones y dependencias. El CI anterior 39759092391 probó los cambios H1–H3;
+  su binding en `HostConfig` no probaba publicación activa. La CI nueva debe evaluarse
+  por separado para este gateway.

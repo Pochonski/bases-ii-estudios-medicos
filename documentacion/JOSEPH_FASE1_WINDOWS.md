@@ -1,6 +1,6 @@
 # Ejecución de la fase 1 de Joseph
 
-Actualización: 22/10/2026, correcciones de auditoría H1–H3. Rama feature/joseph-infra-postgresql; PR #1 en borrador.
+Actualización: 22/10/2026, ejecución local y D-034 posteriores a correcciones H1–H3. Rama feature/joseph-infra-postgresql; PR #1 en borrador.
 Solo infraestructura de Joseph. El gate FDW sigue abierto: CREATE EXTENSION/LOAD no prueban consultas remotas ni BSON.
 
 ## Diagnóstico Windows y requisitos
@@ -16,11 +16,15 @@ wsl --status
 wsl --version
 ```
 
-En la revisión local del 22/10 el named pipe dockerDesktopLinuxEngine sigue ausente y el servicio está
-detenido. WSL instalado informa 2.7.10.0/kernel 6.18.33.2-2; eso no demuestra el kernel efectivo de Docker.
-No se reinstaló Docker, cambió WSL/kernel, desactivó protección ni borró volumen.
-Si docker info falla, ejecutar solamente inicialización/regresiones/validación estática y conservar el bloqueo.
-El arranque de Docker Desktop se realiza y revisa aparte; estas pruebas no reparan su instalación.
+En la primera revisión local del 22/10 faltaba el named pipe. El log de Docker Desktop 4.91.0
+mostró error 1920 al renombrar `sailor-ingest.sock`; `fsutil reparsepoint query` reprodujo el
+error. Tras cerrar Desktop se **renombraron y conservaron**, sin borrar, las carpetas
+transitorias `%LOCALAPPDATA%\Docker\run` y `%LOCALAPPDATA%\docker-secrets-engine`. Al volver
+a iniciar Desktop, `docker info` respondió con Engine 29.8.0 y kernel efectivo
+`6.18.33.2-microsoft-standard-WSL2`. Esta recuperación se probó una sola vez; no se ha probado
+su permanencia tras reiniciar Desktop o Windows. Los directorios anteriores permanecen fuera
+del repositorio. No se modificó WSL/kernel, protecciones ni volúmenes.
+Si el daemon falta en otro arranque, revisar el error actual antes de repetir una reparación.
 
 ## Inicialización y pruebas sin daemon
 
@@ -68,6 +72,23 @@ $deploy = @{
 ./scripts/Test-Persistence.ps1 @deploy
 ```
 
+En esta PC el puerto 5432 ya estaba ocupado por otro PostgreSQL. Para repetir la validación
+sin editar `.env`, seleccionar el overlay y dos archivos de entorno **antes** del arranque:
+
+```powershell
+New-Item -ItemType Directory -Path .tmp/windows-local -Force | Out-Null
+Set-Content -LiteralPath .tmp/windows-local/ports.env -Encoding utf8 -Value @(
+    'POSTGRES_PORT=15432','SQLSERVER_PORT=11433','MONGODB_PORT=37017'
+)
+$deploy.ComposeFile = @('compose.yaml','compose.local.yaml')
+$deploy.EnvFile = @('.env','.tmp/windows-local/ports.env')
+```
+
+En el overlay actual la publicación la hace **`port-gateway`**, un proxy TCP sin secretos
+conectado a `medical-network` y a `host-access`. Los motores siguen solo en la red interna;
+el proxy expone únicamente 127.0.0.1. Compose levanta cuatro contenedores: tres motores
+y esa pasarela auxiliar. El modo base mantiene exactamente tres motores y ningún puerto host.
+
 Revisar cada código de salida. Invoke-Compose y ambos tests comparten Compose-Context.ps1 y admiten
 ComposeFile (array), EnvFile (array), ProjectName y ProjectDirectory. Rutas relativas se resuelven
 desde ProjectDirectory, por defecto la raíz del checkout.
@@ -82,19 +103,22 @@ Test-Infra valida por separado:
 Un PASS del ejemplo no sustituye un PASS operativo. Un .env operativo inválido hace fallar el script.
 La prueba negativa H3 se hace en una copia temporal; no edita .env del usuario ni imprime su contenido.
 
-Por defecto no hay puertos host; el overlay publica 127.0.0.1:5432/1433/27017 (configurables en .env).
-Las verificaciones runtime comprueban que el PostgreSQL real coincide con proyecto, puertos y volumen
-seleccionados. Si se arrancó con overlay pero se prueba como base, falla antes de insertar el marcador.
-Eso evita validar silenciosamente un despliegue distinto.
+Por defecto no hay puertos host; el overlay publica 127.0.0.1:5432/1433/27017
+(configurables en .env o en archivo temporal adicional). El primer overlay guardaba
+bindings solicitados en `HostConfig`, pero Docker no activó puertos de motores unidos
+solo a una red `internal: true`. Ahora las verificaciones runtime contrastan el
+`NetworkSettings.Ports` del gateway, su ID/salud, proyecto y volumen PG, y abren TCP
+a los tres puertos desde el host. Si se arrancó con overlay pero se prueba como base,
+falla antes de insertar el marcador.
 
 ## Qué acredita la persistencia y cómo limpiar
 
 Test-Persistence crea una tabla public.joseph_probe_<GUID> con una fila en la base administrativa postgres;
 ejecuta restart postgres, espera health de **ese mismo contenedor** mediante inspect y compara ID,
-puertos publicados y nombre del volumen. Comprueba la fila y elimina la tabla al pasar.
+gateway, puertos activos y nombre del volumen. Comprueba la fila y elimina la tabla al pasar.
 No ejecuta up ni reconcilia/recrea configuración durante la recuperación.
 
-**P12 parcial:** una fila PostgreSQL tras restart, con bindings y volumen conservados.
+**P12 parcial:** una fila PostgreSQL tras restart, con puertos activos, gateway y volumen conservados.
 No acredita datos en SQL Server/MongoDB, recreación, down/up, reinicio Docker/WSL, backup ni restauración.
 Aunque verifica el montaje del volumen nombrado, restart por sí solo no reemplaza una prueba de recreación.
 
