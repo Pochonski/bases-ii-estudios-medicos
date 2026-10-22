@@ -78,3 +78,25 @@ BSON/escritura, P01, P14 ni el outbox.
 Evidencia: evidencias/registros/2026-10-22-joseph-ci-exito.txt.
 Informe de auditoría: documentacion/INFORME_CHATGPT_JOSEPH_FASE1.md.
 PR #1 permanece en borrador; main conserva 630cca6.
+
+## 2026-10-22 — Joseph, correcciones de auditoría PR #1
+
+- Objetivo: H1 ACL, H2 selección Compose/restart y H3 .env operativo. Auditoría local leída íntegra.
+- Inicio: árbol limpio; HEAD y remoto feature/joseph-infra-postgresql = 612d07d; main = 630cca6.
+  No existía trabajo posterior. PR OPEN/DRAFT, sin aprobación ni merge.
+- Cambios reales: reconstrucción DACL/owner y reparación de archivos existentes sin rotar secretos;
+  helper/launcher Compose, validación ejemplo frente a operación, restart por inspect sin up y
+  comparación de bindings/ID/volumen; regresiones temporales y CI base/localhost/ACL Windows.
+- Decisiones: D-030..D-033, sin cambios al modelo/contratos clínicos.
+- Comandos: git status/log/fetch/rev-parse/diff, gh pr view y gh run view 39753627026;
+  docker info/context, Get-Service, wsl --status/--version; Parser.ParseFile; Test-Secrets,
+  Test-ComposeValidation, Initialize-Local y Test-Infra -StaticOnly.
+- Resultados Windows: H1 temporal e idempotencia PASAN; valores reales conservados al reparar;
+  H2 selección estática explícita/ambiental y H3 negativo PASAN; siete scripts sin errores sintácticos.
+- Fallo durante corrección: Set-Acl devolvió SeSecurityPrivilege; API FileSystemAclExtensions permitió
+  persistir DACL/owner sin tocar SACL. Se conservan fallos históricos y límites.
+- Windows motores: NO EJECUTADOS, named pipe ausente y servicio detenido. WSL instalado 2.7.10.0 /
+  kernel informado 6.18.33.2-2; kernel efectivo Docker desconocido. Sin cambios de sistema o volúmenes.
+- Evidencia: evidencias/registros/2026-10-22-joseph-auditoria-windows.txt. CI corregida aún pendiente.
+- P01/P17/BSON y gate FDW siguen abiertos; NOLOGIN/SET ROLE no acreditan login o permiso negativo.
+  No se contactó a compañeros ni se implementaron sus módulos. Cierre CI/commits se registrará después.

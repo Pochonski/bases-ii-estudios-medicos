@@ -47,3 +47,11 @@ del contenedor aún puede acceder a ella. No se promete aislamiento frente al du
 SCRAM PostgreSQL, peer Unix local, red interna y puertos localhost opcionales preparados.
 TLS de FreeTDS es obligatorio pero sin CA validada; PostgreSQL y MongoDB no configuran TLS.
 No hay prueba funcional de roles ni habilitación de perfiles externos. Consultar el manual local.
+
+## Corrección de auditoría H1 — 22/10/2026, Joseph (D-030)
+
+La versión auditada conservaba autorizaciones explícitas de terceros. Se reconstruye la DACL y se
+verifican propietario/herencia/reglas tanto en carpeta como archivos existentes, conservando valores.
+Regresión Windows con Everyone/Users PASA; no se impersonó otro usuario ni se certifica protección
+frente a administradores que puedan tomar posesión. Linux mantiene 700/644 para Compose por archivo.
+Las pruebas de login y permisos negativos de los roles FDW continúan NO EJECUTADAS.
