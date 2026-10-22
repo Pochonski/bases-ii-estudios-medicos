@@ -20,6 +20,8 @@ ahora verifican `NetworkSettings.Ports` y conexiones TCP reales desde el host. C
 Windows autenticaron PostgreSQL y SQL Server por esos puertos. La prueba P12 conservó una
 fila sintética de PostgreSQL tras `restart`, sin cambiar su contenedor, volumen, gateway ni
 puertos. El marcador fue eliminado. P12 sigue parcial; el gate FDW/BSON sigue abierto.
+La CI del último commit de código pasó en los tres jobs; se conserva evidencia separada
+para Windows 11, Windows Server CI y Ubuntu CI.
 
 ## Rama, PR y alcance Git
 
@@ -28,12 +30,16 @@ puertos. El marcador fue eliminado. P12 sigue parcial; el gate FDW/BSON sigue ab
   `630cca6b14f23d73579ccab2a0106ab1fa68f7fc` al iniciar.
 - [PR #1](https://github.com/Pochonski/bases-ii-estudios-medicos/pull/1): OPEN/DRAFT al
   inicio; debe mantenerse así. No se emitió aprobación ni merge.
-- Commits de esta continuación: consultar `git log fc7b305..HEAD`; la evidencia local
-  se generó antes de este commit de documentación/código. Registrar SHA final en entrega.
+- Commits de esta continuación: `841969c` (gateway y prueba efectiva), `9b22c98`
+  (evidencia/manual), `0b5e507` (mensajes exactos por modo). El cierre posterior
+  documenta la CI sin cambiar código; su SHA final se consigna en la entrega.
 - [CI anterior del código H1–H3, 39759092391](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39759092391):
   tres jobs PASAN en `a801c88`; solo comprobó `HostConfig`, no puertos activos. La
   [CI de `fc7b305`, 39791879419](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39791879419)
-  terminó SUCCESS, sin el gateway actual. El nuevo código requiere su propio run.
+  terminó SUCCESS, sin el gateway actual.
+- [CI del gateway, 39807402214](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39807402214):
+  SUCCESS sobre head `0b5e507`; Windows Server ACL y Ubuntu base/localhost. Checkout de
+  merge `533079c3c16a57f14b82729e0eb9d8f9093d0f31`. Tres artifacts revisados.
 
 ## Archivos creados o modificados
 
@@ -46,6 +52,7 @@ puertos. El marcador fue eliminado. P12 sigue parcial; el gate FDW/BSON sigue ab
 | `.github/workflows/joseph-infra.yml` | Diagnóstico del gateway si falla CI; la matriz existente base/localhost ejecuta el nuevo test. |
 | README, `docs/00`, `02`, `05`, `07`, `10`, `11`, manual Windows | Estado actualizado y D-034, sin cambiar contratos de datos. |
 | `evidencias/registros/2026-10-22-joseph-despliegue-windows.txt`, `evidencias/README.md`, este informe | Resultados reales, fallo previo, límites y comandos. |
+| `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` | Head/checkout, tres jobs y extractos de artifacts del nuevo código. |
 
 No se modificaron los módulos asignados a Joyce/Armando, modelo clínico, claves, vista
 `dbo.vw_estado_facturacion` ni contrato MongoDB. H1–H3 habían sido cerrados técnicamente
@@ -128,6 +135,16 @@ y `sqlcmd.exe` usaron secretos solo en variables de proceso temporales, eliminad
 La [evidencia detallada](../evidencias/registros/2026-10-22-joseph-despliegue-windows.txt)
 preserva salidas resumidas; los logs de build/pull/up siguen en `.tmp/windows-local` ignorado.
 
+CI: `gh run watch 39807402214 --exit-status` salió 0; `gh run view ... --json`
+confirmó `completed/success` en head 0b5e507 y los tres jobs. `gh run download`
+guardó artifacts ignorados en `.tmp/ci-gateway-final-39807402214`; se revisaron
+`runtime.txt`, `persistencia.txt`, `resumen.txt`, regresión de configuración y ACL.
+El [extracto durable](../evidencias/registros/2026-10-22-joseph-gateway-ci.txt)
+registra IDs, versiones, salidas pertinentes y límites sin secretos. La matriz
+Ubuntu22 usó kernel 6.8.0-1070-azure, Docker 28.0.4 y Compose 2.38.2. En base
+`puertos=[]`; en overlay `NetworkSettings.Ports` reflejó 127.0.0.1:5432/1433/27017
+y los tres TCP del runner respondieron. P12 parcial pasó en ambos modos.
+
 ## Pruebas: resultado y alcance
 
 | Clase | Resultado Windows 11 |
@@ -155,7 +172,8 @@ que se acredita fue dentro del contenedor. Las consultas FDW no se sustituyen po
   recibe secretos; el bridge auxiliar le permite salida, por lo que esa excepción queda
   explícita. La base sin overlay sigue aislada y sin puertos publicados.
 - La CI previa H1–H3 sigue válida para sus hallazgos, pero su prueba de puertos solo verificó
-  bindings solicitados. La nueva matriz debe demostrar publicación activa y sonda TCP.
+  bindings solicitados. La nueva matriz 39807402214 sí demostró publicación activa y TCP
+  del host Ubuntu. No representa Windows 11; esa evidencia local consta aparte.
 - P12 no acredita recreación ni restauración; un volumen montado no es backup. No se borraron
   volúmenes ni se alteraron recursos Docker ajenos.
 - Joseph: revisar la CI del nuevo commit, conservar artifacts depurados, ejecutar junto con

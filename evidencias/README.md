@@ -25,5 +25,8 @@ El informe de correcciones contiene el head, comandos, resultados, archivos y l�
   consultas, P12 parcial y selección Compose negativa. No contiene secretos.
 - `documentacion/INFORME_WINDOWS_Y_PUERTOS_JOSEPH.md`: interpretación, comandos,
   límites, decisiones y dependencias. El CI anterior 39759092391 probó los cambios H1–H3;
-  su binding en `HostConfig` no probaba publicación activa. La CI nueva debe evaluarse
-  por separado para este gateway.
+  su binding en `HostConfig` no probaba publicación activa. La CI del gateway se registra
+  por separado a continuación.
+- `registros/2026-10-22-joseph-gateway-ci.txt`: CI 39807402214 SUCCESS sobre
+  0b5e507, Windows Server ACL y Ubuntu base/localhost con puertos activos y P12 parcial.
+  Artifacts descargados y revisados; no sustituyen la prueba en Windows 11.

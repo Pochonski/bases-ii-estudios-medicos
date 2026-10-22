@@ -164,3 +164,8 @@ Agregar filas `D-024` y siguientes con **fecha**, **proponente**, **fuente** (cu
   clínico. El gateway tiene salida por bridge; no contiene credenciales y monta config read-only.
   No prueba conectores FDW ni persistencia de los otros motores. CI del cambio pendiente al
   elaborar esta entrada; registrar run y resultado efectivo en evidencia antes de cierre.
+
+**Cierre de verificación D-034:** CI [39807402214](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39807402214)
+SUCCESS en head `0b5e507`, Windows ACL y Ubuntu base/localhost. Artifact localhost confirma
+bindings activos en `NetworkSettings.Ports`, TCP desde host y P12 parcial. Registros separados
+en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 11.

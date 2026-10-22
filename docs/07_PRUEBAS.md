@@ -127,5 +127,15 @@ Se conserva ese fallo en el registro Windows.
 
 MongoDB autenticó dentro de su contenedor; solo se probó TCP desde Windows, no `mongosh`
 cliente en Windows. El kernel efectivo Docker fue `6.18.33.2-microsoft-standard-WSL2`.
-Pruebas de host y CI deben seguir distinguiéndose; la próxima CI validará el gateway también
-en Ubuntu. Evidencia y comandos: `evidencias/registros/2026-10-22-joseph-despliegue-windows.txt`.
+Pruebas de host y CI deben seguir distinguiéndose. Evidencia Windows y comandos:
+`evidencias/registros/2026-10-22-joseph-despliegue-windows.txt`.
+
+### CI del gateway verificada
+
+[39807402214](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39807402214)
+terminó SUCCESS en head `0b5e507`: tres jobs, artifacts revisados. Base: sin puertos
+publicados, P12 parcial PG. Overlay: tres puertos 127.0.0.1 activos y conexiones TCP del
+runner, P12 parcial PG con gateway estable. Windows Server solo probó ACL. Checkout de merge
+`533079c3c16a57f14b82729e0eb9d8f9093d0f31`. Evidencia:
+`evidencias/registros/2026-10-22-joseph-gateway-ci.txt`.
+Este PASS no cierra P01/P17 remotos, Mongo BSON ni P12 completo.

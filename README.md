@@ -118,3 +118,7 @@ una fila PostgreSQL tras `restart`; FDW remoto y BSON permanecen pendientes de J
 [Evidencia y comandos Windows](evidencias/registros/2026-10-22-joseph-despliegue-windows.txt) ·
 [informe técnico actualizado](documentacion/INFORME_WINDOWS_Y_PUERTOS_JOSEPH.md).
 El párrafo anterior de correcciones registra el estado *antes* de esta validación local.
+
+La [CI del gateway](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39807402214)
+PASÓ en head `0b5e507` con tres jobs: Windows Server ACL y Ubuntu base/localhost;
+[registro revisado](evidencias/registros/2026-10-22-joseph-gateway-ci.txt).

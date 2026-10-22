@@ -140,3 +140,13 @@ Commits correctivos aa1ae16/a801c88; cierre posterior solo documental. PR #1 en 
   otro proceso, se usaron puertos alternativos desde archivo temporal ignorado; no se probó
   reinicio completo de Desktop ni restauración; FDW/BSON/cuentas Joyce y gate siguen abiertos.
   CI del nuevo código por ejecutar y documentar; PR permanece en borrador.
+
+### Verificación CI y cierre documental
+
+Run 39806854571 PASÓ para diseño gateway en 9b22c98. Se precisaron dos mensajes de salida
+(host genérico y modo base sin gateway) en 0b5e507; Windows repitió P12 parcial.
+Run [39807402214](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39807402214)
+PASÓ en head 0b5e507: tres jobs y artifacts revisados. Ubuntu base sin puertos;
+Ubuntu localhost con gateway, TCP host y P12 parcial; Windows Server ACL.
+Evidencia durable: `evidencias/registros/2026-10-22-joseph-gateway-ci.txt`.
+El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRAFT.
