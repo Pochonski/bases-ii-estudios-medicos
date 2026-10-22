@@ -100,3 +100,15 @@ PR #1 permanece en borrador; main conserva 630cca6.
 - Evidencia: evidencias/registros/2026-10-22-joseph-auditoria-windows.txt. CI corregida aún pendiente.
 - P01/P17/BSON y gate FDW siguen abiertos; NOLOGIN/SET ROLE no acreditan login o permiso negativo.
   No se contactó a compañeros ni se implementaron sus módulos. Cierre CI/commits se registrará después.
+
+## Cierre de correcciones de auditoría — 22/10/2026, Joseph
+
+CI [39759092391](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39759092391)
+PASA sobre head a801c88004a7943b96e0355fbaea11ff734c683e: ACL Windows Server2022 y dos variantes
+Ubuntu22 (base/localhost). Lectura de secretos por UID y P12 parcial PASAN; en overlay se conserva
+127.0.0.1:5432 junto con la fila, ID y volumen PG. Marcadores eliminados al pasar.
+Artifacts depurados disponibles 14 días; evidencia versionada: evidencias/registros/2026-10-22-joseph-auditoria-ci.txt.
+H1/H3 y selección estática probados también en Windows local; daemon sigue ausente.
+No se acredita recreación, SQL Server/MongoDB persistentes, restauración, FDW remoto, BSON o login propio.
+Informe: documentacion/INFORME_CORRECCIONES_AUDITORIA_PR1.md.
+Commits correctivos aa1ae16/a801c88; cierre posterior solo documental. PR #1 en borrador, sin aprobación/merge.

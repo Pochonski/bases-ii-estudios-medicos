@@ -87,3 +87,18 @@ Guía exacta: [Windows / PowerShell 7](documentacion/JOSEPH_FASE1_WINDOWS.md).
 [Registro local real](evidencias/registros/2026-10-22-joseph-local.txt).
 [CI aprobado en Ubuntu 22.04, SHA 89d0754](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39747806912).
 El resultado no prueba este Windows. [Informe completo para ChatGPT](documentacion/INFORME_CHATGPT_JOSEPH_FASE1.md).
+
+## Correcciones de auditoría PR #1 — 22/10/2026
+
+H1: DACL/propietario reparados también en archivos preexistentes, sin rotar secretos.
+H2: selección Compose compartida y restart sin up; bindings/ID/volumen/fila PG comprobados.
+H3: ejemplo y .env operativo validados por separado, con negativo temporal y .env real intacto.
+
+[CI corregida a801c88, tres jobs PASAN](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39759092391):
+ACL Windows Server y motores Ubuntu base/localhost; artifacts depurados con retención 14 días.
+P12 sigue parcial: solo PostgreSQL tras restart. Windows local no tiene daemon disponible.
+FDW remoto, BSON y autenticación propia siguen pendientes; gate abierto, sin módulos ajenos.
+
+[Informe de correcciones y evidencias](documentacion/INFORME_CORRECCIONES_AUDITORIA_PR1.md).
+La [guía Windows](documentacion/JOSEPH_FASE1_WINDOWS.md) muestra una selección consistente para operación y tests.
+PR #1 sigue en borrador, sin aprobación ni merge.

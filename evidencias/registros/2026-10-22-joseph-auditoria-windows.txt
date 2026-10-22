@@ -58,3 +58,7 @@ NO EJECUTADO en Windows: build, motores, salud, consultas, lectura por UID, rest
 No se reinstaló Docker, cambió WSL/kernel, inició/reinició servicios ni eliminaron volúmenes.
 Nota de desarrollo: Set-Acl falló con SeSecurityPrivilege; la corrección usa FileSystemAclExtensions para persistir las secciones modificadas y la regresión pasó.
 FDW remoto/BSON/login propio/permisos negativos: no ejecutados; gate pendiente de Joyce.
+Versiones locales al cierre de correcciones:
+Docker version 29.8.0, build 88096ef
+Docker Compose version v5.5.1
+PowerShell 7.6.5

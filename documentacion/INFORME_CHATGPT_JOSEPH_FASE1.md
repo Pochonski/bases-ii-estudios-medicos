@@ -1,5 +1,8 @@
 # Informe técnico para ChatGPT, auditor del proyecto de Joseph
 
+> Informe histórico de la primera sesión. Para H1–H3 y evidencia posterior de auditoría,
+> consultar [informe de correcciones](INFORME_CORRECCIONES_AUDITORIA_PR1.md).
+
 **Sesión:** 21–22/10/2026, America/Costa_Rica.
 **Responsable:** Joseph Fonseca, con implementación asistida.
 **Objetivo:** iniciar infraestructura reproducible y preparación PostgreSQL dentro del alcance de Joseph.

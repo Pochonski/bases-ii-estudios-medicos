@@ -116,7 +116,7 @@ Agregar filas `D-024` y siguientes con **fecha**, **proponente**, **fuente** (cu
 - Archivos: Initialize-Local.ps1, Test-Secrets.ps1, docs/05 y guía.
 - Evidencia Windows: regresión con Everyone/Users explícitos y archivos preexistentes PASA;
   DACL/propietario verificados, sin impersonación. API .NET evita el fallo local SeSecurityPrivilege.
-- Linux conserva directorio 700/archivos 644 para lectura por UID SQL Server; validación runtime CI pendiente.
+- Linux conserva directorio 700/archivos 644; lectura por UID SQL Server y demás motores PASA en CI 39759092391.
 
 ### D-031 — Selección Compose compartida y restart sin reconciliar (22/10/2026, Joseph; H2)
 
@@ -126,7 +126,7 @@ Agregar filas `D-024` y siguientes con **fecha**, **proponente**, **fuente** (cu
   y fila sintética PG; limpia al pasar y documenta limpieza del marcador si falla.
 - Alcance P12 permanece parcial: restart PG, no tres motores/recreación/restauración.
 - Archivos: Compose-Context.ps1, Invoke-Compose.ps1, Test-Infra/Test-Persistence, regresiones y CI.
-- Resultado local: selección base/overlay/ambiental PASA en estático; runtime pendiente de CI/daemon.
+- Resultado: selección local estática PASA; runtime base/overlay PASA en CI 39759092391. Windows sin daemon.
 
 ### D-032 — Validación separada del entorno operativo (22/10/2026, Joseph; H3)
 
@@ -139,6 +139,6 @@ Agregar filas `D-024` y siguientes con **fecha**, **proponente**, **fuente** (cu
 
 - CI añade ACL Windows Server2022 y matriz Ubuntu22 base/localhost con lectura de secretos por UID
   y persistencia PG acotada; secretos efímeros enmascarados, artifacts depurados con retención 14 días.
-- CI del head auditado 612d07d PASA (run 39753627026); el código corregido requiere una ejecución nueva.
+- CI del head auditado 612d07d PASA (39753627026); código corregido a801c88 PASA en 39759092391, tres jobs y artifacts revisados.
 - Windows local: daemon ausente, servicio detenido; sin reinstalación ni cambios WSL/kernel/volúmenes.
 - FDW remoto, BSON, login propio/privilegios negativos e INT siguen pendientes de Joyce/gates.

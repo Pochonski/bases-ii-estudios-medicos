@@ -1,0 +1,122 @@
+CI corregida: https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39759092391
+Head PR: a801c88004a7943b96e0355fbaea11ff734c683e
+Conclusión consultada en GitHub: success; tres jobs success; artifacts descargados y revisados.
+Retención artifacts: 14 días. No son evidencia del daemon Windows local.
+Extractos de artifacts (espacios finales normalizados; sin secretos):
+
+Fuente: joseph-acl-windows/acl.txt
+Head PR: a801c88004a7943b96e0355fbaea11ff734c683e; checkout: 24cbf39de9562be792443abc987fb075048bc489; sistema: Windows Server 2022; PowerShell: 7.6.6
+PRECONDICIÓN H1: Everyone y Users con lectura explícita en carpeta y archivos existentes.
+PASS inicialización: permisos aplicados; valores existentes conservados; secretos no mostrados.
+PASS inicialización: permisos aplicados; valores existentes conservados; secretos no mostrados.
+PASS H1 Windows: DACL cerrada y protegida en carpeta y cuatro archivos; propietario actual; solo usuario/SYSTEM.
+Límite: inspección de DACL; no se inició sesión ni se impersonó a otra cuenta.
+PASS idempotencia: valores existentes y .env conservados; valores no impresos.
+
+Fuente: joseph-infra-base/resumen.txt
+Head PR: a801c88004a7943b96e0355fbaea11ff734c683e
+Checkout: 24cbf39de9562be792443abc987fb075048bc489
+Modo: base
+Compose files: compose.yaml
+Compose env files: .env
+Proyecto: joseph-audit-base
+Kernel: 6.8.0-1070-azure
+PowerShell: 7.6.7
+Resultado antes del artifact: success
+Alcance P12: solo una fila PostgreSQL tras restart; no recreación, otros motores ni restauración.
+FDW remoto, BSON, login propio y permisos negativos: NO EJECUTADOS; gate sigue abierto.
+Docker cliente=28.0.4 servidor=28.0.4
+Docker Compose version v2.38.2
+
+Fuente: joseph-infra-base/persistencia.txt
+CREATE TABLE
+INSERT 0 1
+Marcador sintético PostgreSQL: public.joseph_probe_91f46733f48840188e793345f28adff8; proyecto=joseph-audit-base.
+DROP TABLE
+PASS P12 parcial PG: fila tras restart; mismo contenedor/volumen/puertos []; marcador eliminado.
+Alcance: solo PostgreSQL tras restart; no acredita recreación, otros motores ni restauración.
+
+Fuente: joseph-infra-localhost/resumen.txt
+Head PR: a801c88004a7943b96e0355fbaea11ff734c683e
+Checkout: 24cbf39de9562be792443abc987fb075048bc489
+Modo: localhost
+Compose files: compose.yaml:compose.local.yaml
+Compose env files: .env
+Proyecto: joseph-audit-localhost
+Kernel: 6.8.0-1070-azure
+PowerShell: 7.6.7
+Resultado antes del artifact: success
+Alcance P12: solo una fila PostgreSQL tras restart; no recreación, otros motores ni restauración.
+FDW remoto, BSON, login propio y permisos negativos: NO EJECUTADOS; gate sigue abierto.
+Docker cliente=28.0.4 servidor=28.0.4
+Docker Compose version v2.38.2
+
+Fuente: joseph-infra-localhost/persistencia.txt
+CREATE TABLE
+INSERT 0 1
+Marcador sintético PostgreSQL: public.joseph_probe_a5c9b789c0a744a8994548ade2316aba; proyecto=joseph-audit-localhost.
+DROP TABLE
+PASS P12 parcial PG: fila tras restart; mismo contenedor/volumen/puertos [5432/tcp|127.0.0.1|5432]; marcador eliminado.
+Alcance: solo PostgreSQL tras restart; no acredita recreación, otros motores ni restauración.
+
+PASS / versiones, runtime base
+PASS ejemplo base: estructura válida y sin puertos publicados.
+PASS ejemplo localhost: puertos limitados a 127.0.0.1.
+PASS entorno operativo: proyecto=joseph-audit-base; selección efectiva aceptada por Compose.
+PASS selección runtime PG: puertos=; volumen=joseph-audit-base_postgres_data.
+ PostgreSQL 16.15 (Debian 16.15-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit
+ password_encryption
+ mongo_fdw | 1.1
+ tds_fdw   | 2.0.5
+Microsoft SQL Server 2022 (RTM-CU27-GDR) (KB5126934) - 16.0.4305.5 (X64)
+8.0.34
+PASS runtime: consultas autenticadas y lectura de secretos por UID de cada motor. FDW remoto/BSON/exportación pendientes.
+
+Regresión configuración, base
+PASS ejemplo base: estructura válida y sin puertos publicados.
+PASS ejemplo localhost: puertos limitados a 127.0.0.1.
+PASS entorno operativo: proyecto=auditoria-base; selección efectiva aceptada por Compose.
+PASS ejemplo base: estructura válida y sin puertos publicados.
+PASS ejemplo localhost: puertos limitados a 127.0.0.1.
+PASS entorno operativo: proyecto=auditoria-local; selección efectiva aceptada por Compose.
+PASS H2 estático: base y overlay aceptados con selección explícita de archivos/entorno/proyecto.
+PASS ejemplo base: estructura válida y sin puertos publicados.
+PASS ejemplo localhost: puertos limitados a 127.0.0.1.
+PASS entorno operativo: proyecto=auditoria-ambiental; selección efectiva aceptada por Compose.
+PASS H2 ambiental: COMPOSE_FILE, COMPOSE_ENV_FILES y COMPOSE_PROJECT_NAME respetados.
+PASS ejemplo base: estructura válida y sin puertos publicados.
+PASS ejemplo localhost: puertos limitados a 127.0.0.1.
+PASS H3 negativo: ejemplo válido, FAIL entorno operativo por POSTGRES_DB vacío; .env temporal.
+PASS aislamiento: .env real del usuario intacto; sin necesidad de daemon.
+NO EJECUTADO por esta suite: restart, conservación real de puertos y datos; corresponden a Test-Persistence.
+
+PASS / versiones, runtime localhost
+PASS ejemplo base: estructura válida y sin puertos publicados.
+PASS ejemplo localhost: puertos limitados a 127.0.0.1.
+PASS entorno operativo: proyecto=joseph-audit-localhost; selección efectiva aceptada por Compose.
+PASS selección runtime PG: puertos=5432/tcp|127.0.0.1|5432; volumen=joseph-audit-localhost_postgres_data.
+ PostgreSQL 16.15 (Debian 16.15-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit
+ password_encryption
+ mongo_fdw | 1.1
+ tds_fdw   | 2.0.5
+Microsoft SQL Server 2022 (RTM-CU27-GDR) (KB5126934) - 16.0.4305.5 (X64)
+8.0.34
+PASS runtime: consultas autenticadas y lectura de secretos por UID de cada motor. FDW remoto/BSON/exportación pendientes.
+
+Regresión configuración, localhost
+PASS ejemplo base: estructura válida y sin puertos publicados.
+PASS ejemplo localhost: puertos limitados a 127.0.0.1.
+PASS entorno operativo: proyecto=auditoria-base; selección efectiva aceptada por Compose.
+PASS ejemplo base: estructura válida y sin puertos publicados.
+PASS ejemplo localhost: puertos limitados a 127.0.0.1.
+PASS entorno operativo: proyecto=auditoria-local; selección efectiva aceptada por Compose.
+PASS H2 estático: base y overlay aceptados con selección explícita de archivos/entorno/proyecto.
+PASS ejemplo base: estructura válida y sin puertos publicados.
+PASS ejemplo localhost: puertos limitados a 127.0.0.1.
+PASS entorno operativo: proyecto=auditoria-ambiental; selección efectiva aceptada por Compose.
+PASS H2 ambiental: COMPOSE_FILE, COMPOSE_ENV_FILES y COMPOSE_PROJECT_NAME respetados.
+PASS ejemplo base: estructura válida y sin puertos publicados.
+PASS ejemplo localhost: puertos limitados a 127.0.0.1.
+PASS H3 negativo: ejemplo válido, FAIL entorno operativo por POSTGRES_DB vacío; .env temporal.
+PASS aislamiento: .env real del usuario intacto; sin necesidad de daemon.
+NO EJECUTADO por esta suite: restart, conservación real de puertos y datos; corresponden a Test-Persistence.
