@@ -1,0 +1,40 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+**/credentials.json
+**/service-account.json
+
+# DB data, volumes and backup artifacts (do not commit large/sensitive data)
+*.bak
+*.dump
+*.sql.gz
+*.archive
+*.db
+*.sqlite
+*.sqlite3
+backups/
+volumes/
+**/data/
+
+# Tool outputs
+.vscode/
+.idea/
+__pycache__/
+*.py[cod]
+node_modules/
+.venv/
+venv/
+.pytest_cache/
+*.log
+.DS_Store
+Thumbs.db
+
+# Generated evidence: manage intentional curated files separately
+.tmp/
+temp/
