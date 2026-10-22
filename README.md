@@ -74,8 +74,10 @@ Joseph autorizó iniciar exclusivamente su alcance. Infraestructura y preparaci�
 
 - **IMPLEMENTADO Y PROBADO:** validación estática de Compose, sintaxis PowerShell, inicializador
   idempotente, rechazo de configuración incompleta y exclusión Git de secretos.
-- **IMPLEMENTADO, NO PROBADO:** build de la imagen, arranque/salud de motores y persistencia local.
-  Docker Desktop no expone el motor Linux; no se ejecutaron motores en Windows.
+- **IMPLEMENTADO Y PROBADO EN CI UBUNTU:** build de ambos FDW, tres motores saludables,
+  consultas autenticadas, carga de extensiones y persistencia PostgreSQL tras reinicio.
+- **IMPLEMENTADO, NO PROBADO EN WINDOWS:** despliegue de los motores; Docker Desktop no expone
+  el motor Linux local.
 - **BLOQUEADO POR DEPENDENCIA:** lectura de facturación real, requiere vista/usuario/base de Joyce.
 - **PENDIENTE:** DDL clínico, particiones, outbox y datos ficticios (después del spike de conectores),
   login de perfiles y validación mongo_fdw con Joyce. Módulos de Armando conservan su responsable.
@@ -83,4 +85,5 @@ Joseph autorizó iniciar exclusivamente su alcance. Infraestructura y preparaci�
 Guía exacta: [Windows / PowerShell 7](documentacion/JOSEPH_FASE1_WINDOWS.md).
 [Compatibilidad y fuentes](documentacion/COMPATIBILIDAD_FDW.md).
 [Registro local real](evidencias/registros/2026-10-22-joseph-local.txt).
-El workflow de infraestructura intenta build/runtime en Ubuntu; su resultado no prueba este Windows.
+[CI aprobado en Ubuntu 22.04, SHA 89d0754](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39747806912).
+El resultado no prueba este Windows. [Informe completo para ChatGPT](documentacion/INFORME_CHATGPT_JOSEPH_FASE1.md).

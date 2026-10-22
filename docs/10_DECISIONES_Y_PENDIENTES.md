@@ -98,7 +98,7 @@ Agregar filas `D-024` y siguientes con **fecha**, **proponente**, **fuente** (cu
 ### D-029 — Kernel del entorno de prueba MongoDB (22/10/2026)
 
 - Proponente: Joseph mediante agente; fuente: error real de MongoDB y documentación oficial.
-- Estado: corrección de CI propuesta y sometida a nueva ejecución.
+- Estado: PROBADO EN CI: runner Ubuntu22, kernel real 6.8.0-1070-azure; run 39747806912 PASA.
 - Evidencia: runs 39744770706 y 39747121313 compilaron ambos FDW; PG/SQL Server saludables,
   MongoDB abortó con id 12257600 por kernel 6.19 o posterior.
 - Decisión: probar el mismo candidato en runner ubuntu-22.04 (kernel 6.8 según runner-images);

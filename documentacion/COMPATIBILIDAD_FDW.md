@@ -6,10 +6,10 @@ Los digests inmovilizan candidatos para poder repetir el spike; no equivalen a a
 | Componente | Candidato verificable | Evidencia / límite |
 |---|---|---|
 | PostgreSQL | 16.15, Debian bookworm, linux/amd64 | Metadato del manifiesto oficial de postgres:16-bookworm |
-| SQL Server | 2022 Developer, digest en compose.yaml | Manifiesto disponible; CU/build exacto requiere SELECT @@VERSION |
+| SQL Server | 2022 Developer, CU27-GDR 16.0.4305.5 | SELECT @@VERSION en CI; digest en compose.yaml |
 | MongoDB | 8.0.34-noble, linux/amd64 | Metadato oficial de mongo:8.0 |
 | tds_fdw | 2.0.5, commit 5830577908683cb35c760079ec0f105ef7e3ff98 | Fuente declara PG 16 y FreeTDS, solo lectura |
-| FreeTDS | libsybdb5 / freetds-dev de Debian bookworm | Versión del paquete a registrar cuando se construya |
+| FreeTDS | libsybdb5 / freetds-dev 1.3.17+ds-2 | Versión registrada en apt del build CI |
 | mongo_fdw | REL-5_5_3, commit 27aa7b04af197129bf10069c4b512a326c94f3f8 | Makefile acepta PG 16; release declara MongoDB 8 |
 | mongo-c-driver | 1.30.2 con OpenSSL/Cyrus SASL | Versión indicada por el INSTALL de ese release |
 | json-c | json-c-0.18-20240915 | Versión indicada por ese release |
@@ -28,9 +28,9 @@ SHA-256:
 - mongo-c-driver: `56224101eccd24bd71e42f806df8332b1280c2294b21b32c2da2d0f77cfa5cbe`
 - json-c: `3112c1f25d39eca661fe3fc663431e130cc6e2f900c081738317fba49d29e298`
 
-## Puertas pendientes
+## Puertas de verificación
 
-1. Build real, ldd sin bibliotecas faltantes, CREATE EXTENSION y LOAD en PG 16.
+1. PASÓ en CI Ubuntu22: build real, ldd sin faltantes, CREATE EXTENSION y LOAD en PG16 (run 39747806912).
 2. Consulta tds_fdw real a SQL Server, incluyendo UTF-8, fechas con offset y decimal.
 3. Joyce: consulta e inserción/actualización reales mongo_fdw con BSON Int64, Int32, Date, ObjectId,
    índice único y revisión. Crear la extensión no prueba estas operaciones ni un UPSERT.

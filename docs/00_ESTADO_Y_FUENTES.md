@@ -59,3 +59,14 @@ Implementación autorizada por Joseph en su sesión; solo su alcance. El corte i
 
 Los candidatos están fijados por digest/hash para repetir el spike, con validación funcional pendiente.
 No hay aceptación global P01–P18. Ver documentación de ejecución y reporte de esta sesión.
+
+## Cierre verificado — 22/10/2026, Joseph
+
+[CI 39747806912](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39747806912)
+PASA en SHA 89d0754, Ubuntu22/kernel 6.8.0-1070-azure:
+build de ambos FDW, tres motores saludables, consultas autenticadas, CREATE EXTENSION/LOAD
+y persistencia PostgreSQL tras reinicio (P12 parcial).
+Windows sigue sin motor Docker disponible; no se acreditan consultas FDW remotas, BSON/escritura,
+P01, P14 ni el outbox.
+Evidencia: evidencias/registros/2026-10-22-joseph-ci-exito.txt.
+Informe: documentacion/INFORME_CHATGPT_JOSEPH_FASE1.md. PR #1 en borrador, sin merge.

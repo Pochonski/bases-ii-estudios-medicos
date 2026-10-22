@@ -41,8 +41,9 @@ No hay aceptación global INT-01..05 ni P01..P18.
 | 4785086 | Diagnóstico de arranque en CI |
 | 89d07543085020fbb28d83c834a3655851857d79 | Runner compatible y registro del bloqueo de kernel |
 
-El commit posterior que contiene este informe modifica documentación/evidencias; su hash se obtiene con
-`git log -1 --oneline`. El código ejecutable probado corresponde a 89d0754; no se atribuye a otro SHA.
+El primer commit del informe es efc4ad7. Los commits de cierre posteriores a 89d0754 modifican
+solo documentación/evidencias y se consultan con `git log --oneline 89d0754..HEAD`.
+El código ejecutable probado corresponde a 89d0754; no se atribuye a otro SHA.
 Autor de commits: Joseph Fonseca, cuenta Pochonski con correo noreply de GitHub.
 
 ## 3. Archivos creados o modificados
