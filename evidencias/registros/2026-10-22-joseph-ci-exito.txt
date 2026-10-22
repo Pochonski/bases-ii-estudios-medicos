@@ -1,0 +1,29 @@
+Evidencia CI aprobada — 22/10/2026.
+Entorno: GitHub Actions ubuntu-22.04, linux/amd64; NO Windows de Joseph.
+Commit probado: 89d07543085020fbb28d83c834a3655851857d79
+Run: https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39747806912
+Job: https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39747806912/job/119720546315
+Resultado global consultado con gh run view --json: success.
+Build, arranque de tres motores, smoke y persistencia PG: success.
+Extractos de gh run view --log (solo líneas relevantes, sin ANSI/espacios finales):
+infraestructura	Kernel de prueba	2026-10-22T08:27:04.8729554Z 6.8.0-1070-azure
+infraestructura	Consultas y carga de extensiones	2026-10-22T08:28:46.9428752Z PASS estático: tres motores, red interna, secretos por archivo, volúmenes, healthchecks, puertos localhost opcionales.
+infraestructura	Consultas y carga de extensiones	2026-10-22T08:28:47.1083359Z estudios-medicos-mongodb-1     mongo:8.0@sha256:4c7d0fb8fde0681e2ae443b0b09371ec9c31a81caab05af9579458bfcb30d656                                    "docker-entrypoint.s…"   mongodb     8 seconds ago   Up 7 seconds (healthy)
+infraestructura	Consultas y carga de extensiones	2026-10-22T08:28:47.1084855Z estudios-medicos-postgres-1    estudios-medicos/postgres-fdw:joseph-fase1                                                                           "docker-entrypoint.s…"   postgres    8 seconds ago   Up 7 seconds (healthy)
+infraestructura	Consultas y carga de extensiones	2026-10-22T08:28:47.1086507Z estudios-medicos-sqlserver-1   mcr.microsoft.com/mssql/server:2022-latest@sha256:cf8f0ab2ebe61feec2eed2629061a07d247f791c2a8ddda74a4ac9f06a291718   "/bin/bash -ec 'expo…"   sqlserver   8 seconds ago   Up 7 seconds (healthy)
+infraestructura	Consultas y carga de extensiones	2026-10-22T08:28:47.3313363Z  PostgreSQL 16.15 (Debian 16.15-1.pgdg12+2) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit
+infraestructura	Consultas y carga de extensiones	2026-10-22T08:28:47.3335002Z  mongo_fdw | 1.1
+infraestructura	Consultas y carga de extensiones	2026-10-22T08:28:47.3335537Z  tds_fdw   | 2.0.5
+infraestructura	Consultas y carga de extensiones	2026-10-22T08:28:47.3336779Z LOAD
+infraestructura	Consultas y carga de extensiones	2026-10-22T08:28:47.3375084Z LOAD
+infraestructura	Consultas y carga de extensiones	2026-10-22T08:28:47.3397454Z DO
+infraestructura	Consultas y carga de extensiones	2026-10-22T08:28:47.5002757Z Microsoft SQL Server 2022 (RTM-CU27-GDR) (KB5126934) - 16.0.4305.5 (X64)
+infraestructura	Consultas y carga de extensiones	2026-10-22T08:28:48.2376981Z 8.0.34
+infraestructura	Consultas y carga de extensiones	2026-10-22T08:28:48.2699269Z PASS runtime: consultas autenticadas y bibliotecas FDW cargadas. P01/exportación MongoDB pendientes de Joyce.
+infraestructura	Persistencia PostgreSQL	2026-10-22T08:28:49.2937832Z CREATE TABLE
+infraestructura	Persistencia PostgreSQL	2026-10-22T08:28:49.2938506Z INSERT 0 1
+infraestructura	Persistencia PostgreSQL	2026-10-22T08:28:55.1332792Z DROP TABLE
+infraestructura	Persistencia PostgreSQL	2026-10-22T08:28:55.1872507Z PASS P12 parcial: PostgreSQL conservó una fila tras reinicio; marcador eliminado.
+
+No se ejecutó P01, no se consultó dbo.vw_estado_facturacion y no se exportó a MongoDB.
+El extversion SQL 1.1 de mongo_fdw corresponde aquí al release de código REL-5_5_3.

@@ -63,3 +63,14 @@ El proyecto solo pasa aceptación si los tres motores están conectados, las ope
 
 Evidencia: evidencias/registros/2026-10-22-joseph-local.txt.
 El workflow Ubuntu es una comprobación adicional; no acredita funcionamiento en Windows.
+
+## Cierre verificado — 22/10/2026, Joseph
+
+[CI 39747806912](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39747806912)
+PASA en SHA 89d0754, Ubuntu22/kernel 6.8.0-1070-azure:
+build de tds_fdw/mongo_fdw, tres motores saludables, consultas autenticadas, CREATE EXTENSION/LOAD
+y persistencia PostgreSQL tras reinicio (P12 parcial). No prueba Windows, consultas FDW remotas,
+BSON/escritura, P01, P14 ni el outbox.
+Evidencia: evidencias/registros/2026-10-22-joseph-ci-exito.txt.
+Informe de auditoría: documentacion/INFORME_CHATGPT_JOSEPH_FASE1.md.
+PR #1 permanece en borrador; main conserva 630cca6.

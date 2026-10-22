@@ -67,3 +67,14 @@ estuvieron saludables. Las dos primeras ejecuciones FALLARON por aborto de Mongo
 id 12257600 / SERVER-121912 (kernel no compatible).
 Se registra D-029 y se cambia solo el runner a ubuntu-22.04, agregando uname -r.
 Evidencia y cierre definitivo se registran en el informe final, sin atribuir éxito al Windows local.
+
+## Cierre verificado — 22/10/2026, Joseph
+
+[CI 39747806912](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39747806912)
+PASA en SHA 89d0754, Ubuntu22/kernel 6.8.0-1070-azure:
+build de tds_fdw/mongo_fdw, tres motores saludables, consultas autenticadas, CREATE EXTENSION/LOAD
+y persistencia PostgreSQL tras reinicio (P12 parcial). No prueba Windows, consultas FDW remotas,
+BSON/escritura, P01, P14 ni el outbox.
+Evidencia: evidencias/registros/2026-10-22-joseph-ci-exito.txt.
+Informe de auditoría: documentacion/INFORME_CHATGPT_JOSEPH_FASE1.md.
+PR #1 permanece en borrador; main conserva 630cca6.
