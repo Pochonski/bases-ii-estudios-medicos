@@ -139,3 +139,24 @@ runner, P12 parcial PG con gateway estable. Windows Server solo probó ACL. Chec
 `533079c3c16a57f14b82729e0eb9d8f9093d0f31`. Evidencia:
 `evidencias/registros/2026-10-22-joseph-gateway-ci.txt`.
 Este PASS no cierra P01/P17 remotos, Mongo BSON ni P12 completo.
+
+### Regresión menor del gateway — 22/10/2026, Joseph (D-035)
+
+| Caso | Windows 11 local | CI Ubuntu22 localhost |
+|---|---|---|
+| Filtro workflow `docker/port-gateway/**` | Revisado en YAML | Filtro presente; el primer run se disparó con varios archivos modificados. NO PROBADO con cambio exclusivo de esa ruta. |
+| HAProxy `/ready` y healthcheck Docker | PASA en estado normal tras recrear solo gateway; tres motores conservaron ID | PASA en overlay; el modo base no crea gateway |
+| P12 parcial PostgreSQL con gateway actualizado | PASA: fila sintética tras `restart`, mismo ID/volumen/gateway/bindings, tabla eliminada | PASA base/localhost; marcador eliminado |
+| Backend PostgreSQL detenido; frontend TCP aún abierto; gateway no saludable; recuperación con mismo volumen/puertos | NO EJECUTADA: la regresión impide afectar el proyecto local | PASS con `stop/start` en proyecto efímero, tras FALLA informativa con `pause` en 39811585204 |
+| Exposición host | `NetworkSettings.Ports` del gateway: solo 127.0.0.1:11433/15432/37017; endpoint 8404 no publicado | PASS: solo 127.0.0.1:1433/5432/27017; base sin puertos |
+
+La [CI 39812197292](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39812197292)
+terminó SUCCESS en `ee5ce970e61428b5c68440d2ce3b39f0f39b500d`, checkout de merge
+`ed428667f13fce9a717c4cf198cb43805cb7ce25`: tres jobs y artifacts descargados.
+La prueba negativa no acredita persistencia nueva ni consultas FDW. El check TCP de HAProxy
+no detectó `pause` porque el socket del backend quedó abierto; sí detecta `stop`.
+P12 conserva el alcance parcial documentado arriba. Evidencia durable:
+`evidencias/registros/2026-10-22-joseph-gateway-backend-ci.txt`.
+Al cierre, Docker Desktop dejó de exponer el daemon Windows de nuevo; el PASS local
+corresponde a la ejecución anterior a esa pérdida de disponibilidad, no a una comprobación
+del estado actual. La CI Ubuntu no sustituye la estabilidad del host Windows.

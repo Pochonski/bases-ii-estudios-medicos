@@ -86,3 +86,8 @@ configurables). Los tres motores conservan solo `medical-network`, `internal: tr
 Es un cuarto contenedor auxiliar, **no** un cuarto motor ni un cambio de autoridad de datos.
 En modo base no se crea la pasarela ni se publican puertos. El acceso desde Windows es
 opcional y no reemplaza las conexiones motor a motor dentro de la red interna.
+
+El gateway comprueba disponibilidad de los **tres** backends con el endpoint HTTP `/ready`
+de HAProxy, enlazado a 127.0.0.1:8404 **dentro** del contenedor. Devuelve 503 si un backend
+no tiene servidor activo. Docker usa ese endpoint para su healthcheck; 8404 no se publica
+en el host. Una conexión TCP al frontend, por sí sola, no acredita backend disponible.

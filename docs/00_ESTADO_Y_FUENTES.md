@@ -112,3 +112,20 @@ pendientes; gate de conectores y DDL clínico continúan abiertos.
 
 Evidencia: `evidencias/registros/2026-10-22-joseph-despliegue-windows.txt`.
 Informe: `documentacion/INFORME_WINDOWS_Y_PUERTOS_JOSEPH.md`.
+
+## Revisión menor de PR #1 — 22/10/2026, Joseph (D-035)
+
+El gateway añade una sonda `/ready` **interna** que rechaza backends no disponibles,
+además de la comprobación TCP del host. La salud Docker del gateway depende ahora de
+PostgreSQL, SQL Server y MongoDB. El workflow incluye `docker/port-gateway/**` en sus
+filtros y ejecuta un stop/start controlado de PostgreSQL solo en su proyecto
+efímero localhost. Windows local verificó sintaxis, endpoint sano, consultas runtime y
+bindings 127.0.0.1 tras recrear solo el gateway; no se interrumpió la base local.
+El primer intento con `pause` falló en CI 39811585204: HAProxy mantuvo el backend UP
+porque el socket TCP siguió abierto. Se sustituyó por `stop/start`; la CI
+[39812197292](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39812197292)
+PASÓ en `ee5ce97`: tres jobs, caída/recuperación del backend en localhost y P12 parcial.
+Evidencia: `evidencias/registros/2026-10-22-joseph-gateway-backend-ci.txt`.
+El daemon local volvió a quedar inaccesible después de esas pruebas Windows; no se
+acredita estabilidad tras reinicio de Desktop/Windows. No altera el resultado CI.
+No cambian los contratos, P12 parcial ni el gate FDW/BSON aún abierto.

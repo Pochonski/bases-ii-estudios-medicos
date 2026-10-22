@@ -65,3 +65,8 @@ por su bridge, por lo que se limita a forwarding TCP y no ejecuta lógica de apl
 Los clientes Windows autenticaron PostgreSQL/SQL Server; MongoDB solo fue autenticado dentro
 del contenedor, aunque su puerto localhost aceptó TCP. Estas pruebas usan cuentas de
 administración inicial, no acreditan login de roles propios ni permisos negativos.
+
+El endpoint de salud del gateway se enlaza únicamente al loopback **interno** del
+contenedor (`127.0.0.1:8404`) y no figura en `ports` del overlay. Los únicos bindings
+host permitidos por la comprobación estática y runtime siguen siendo los tres puertos
+de motores, todos en 127.0.0.1. El endpoint no contiene secretos.

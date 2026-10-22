@@ -111,6 +111,14 @@ solo a una red `internal: true`. Ahora las verificaciones runtime contrastan el
 a los tres puertos desde el host. Si se arrancó con overlay pero se prueba como base,
 falla antes de insertar el marcador.
 
+El gateway ahora usa `/ready` de HAProxy, enlazado a 127.0.0.1:8404 **dentro del
+contenedor**, para exigir al menos un servidor activo en cada uno de los tres backends.
+Docker marca no saludable al gateway cuando cualquiera cae; `Test-Infra.ps1` y
+`Test-Persistence.ps1` rechazan esa condición. El puerto 8404 no está publicado al host.
+Una sonda TCP del frontend sola puede pasar aunque el backend esté caído. La regresión
+que detiene e inicia PostgreSQL está protegida para ejecutarse únicamente en el proyecto efímero
+`joseph-audit-localhost` de GitHub Actions; **no ejecutarla contra el despliegue local**.
+
 ## Qué acredita la persistencia y cómo limpiar
 
 Test-Persistence crea una tabla public.joseph_probe_<GUID> con una fila en la base administrativa postgres;

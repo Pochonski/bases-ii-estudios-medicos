@@ -169,3 +169,33 @@ Agregar filas `D-024` y siguientes con **fecha**, **proponente**, **fuente** (cu
 SUCCESS en head `0b5e507`, Windows ACL y Ubuntu base/localhost. Artifact localhost confirma
 bindings activos en `NetworkSettings.Ports`, TCP desde host y P12 parcial. Registros separados
 en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 11.
+
+### D-035 — Salud real del gateway y regresión de backend (22/10/2026, Joseph)
+
+- Fuente: observaciones menores de la revisión técnica de PR #1; alcance de infraestructura de Joseph.
+- Motivo: la sonda TCP del host y el antiguo healthcheck `haproxy -c` podían pasar con un
+  backend caído; validaban listener y sintaxis, no disponibilidad de destinos.
+- Decisión: HAProxy ofrece `/ready` **solo en 127.0.0.1:8404 dentro del contenedor**;
+  responde 503 si alguno de los tres backends carece de servidor activo. El healthcheck
+  de Docker consulta ese endpoint. El overlay sigue publicando solo 5432/1433/27017
+  hacia 127.0.0.1 del host; 8404 no se publica.
+- Prueba controlada: solo en el proyecto efímero `joseph-audit-localhost` de CI, detener
+  PostgreSQL, exigir que gateway y validación runtime rechacen el backend caído,
+  iniciarlo en `finally` y comprobar salud/IDs/volumen/puertos restaurados. No elimina datos
+  ni volúmenes; causa indisponibilidad breve únicamente en ese proyecto de CI.
+- Archivos: workflow, `compose.local.yaml`, `docker/port-gateway/haproxy.cfg`,
+  `pruebas/infraestructura/Test-GatewayBackendFailure.ps1`, guía, matriz, estado, bitácora
+  y evidencia. No cambia contratos clínicos ni módulos de Joyce/Armando.
+- Evidencia inicial Windows: sintaxis HAProxy, configuración Compose, salud 200, consulta
+  runtime y tres bindings host 127.0.0.1 PASAN tras recrear **solo el gateway**. Los tres
+  IDs de motores permanecieron estables. La caída controlada se ejecuta solo en CI.
+- Primera ejecución CI 39811585204 **FALLÓ** solo en el test negativo: `docker compose pause`
+  congeló PostgreSQL, pero su socket TCP siguió aceptando conexiones; el check TCP de
+  HAProxy permaneció UP. El test ejecutó `unpause` en `finally`. Se corrigió el estímulo a
+  `stop/start`, que conserva contenedor y volumen pero cierra realmente el listener.
+- Cierre CI: [39812197292](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39812197292)
+  SUCCESS en `ee5ce97`, tres jobs. Artifact localhost: el frontend TCP aceptó conexión
+  con PG detenido, el gateway se marcó no saludable y la validación runtime lo rechazó;
+  tras `start` recuperó salud con mismos contenedores/volumen/bindings. P12 parcial pasó
+  después. No demuestra detección cuando un proceso congelado mantiene el socket TCP abierto,
+  ni pérdida de funcionalidad que no cierre el puerto del backend.

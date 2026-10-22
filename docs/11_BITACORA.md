@@ -150,3 +150,42 @@ PASÓ en head 0b5e507: tres jobs y artifacts revisados. Ubuntu base sin puertos;
 Ubuntu localhost con gateway, TCP host y P12 parcial; Windows Server ACL.
 Evidencia durable: `evidencias/registros/2026-10-22-joseph-gateway-ci.txt`.
 El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRAFT.
+
+## 2026-10-22 — Joseph, observaciones menores de infraestructura PR #1
+
+- **Objetivo:** filtrar cambios de `docker/port-gateway/**` y rechazar un backend
+  HAProxy indisponible, manteniendo solo puertos host en 127.0.0.1.
+- **Contexto y rama:** README, AGENTS, `agents/JOSEPH.md`, protocolo, docs obligatorios,
+  seguridad, pruebas y guía; `feature/joseph-infra-postgresql` limpio en `a521ee2` al inicio,
+  PR #1 OPEN/DRAFT, `main` en `630cca6`.
+- **Cambio real:** filtro de workflow; `/ready` interno HAProxy dependiente de tres backends;
+  healthcheck del gateway; test de stop/start protegido para CI efímera. Decisión D-035.
+- **Archivos:** workflow, overlay, HAProxy, nuevo test, guía, arquitectura, seguridad,
+  matriz, estado, decisiones, esta bitácora e informe/evidencia por cerrar.
+- **Comandos ejecutados:** `git status/log/diff/commit/push`, `gh pr view`, `docker info/ps/
+  inspect/exec`, `docker compose config` vía Test-Infra, `haproxy -c`, `wget /ready`,
+  `Invoke-Compose restart/up --no-deps --force-recreate --wait port-gateway`,
+  `Test-Infra -StaticOnly` y runtime, parser PowerShell y `git diff --check`.
+- **Resultados Windows 11:** Docker Engine 29.8.0/WSL2 kernel 6.18.33.2 disponible;
+  sintaxis y configuración PASS; `/ready` 200 y healthcheck Docker saludable;
+  tres consultas autenticadas y lectura de secretos por UID PASS. Solo se recreó el
+  gateway; IDs de los tres motores permanecieron estables. Bindings efectivos:
+  127.0.0.1:11433/15432/37017, sin 8404. No se pausó el proyecto local.
+- **P12 local:** `Test-Persistence.ps1` PASS parcial con una fila sintética tras `restart`
+  de PostgreSQL; mismo contenedor/gateway/volumen/bindings; marcador eliminado.
+- **Disponibilidad posterior del host:** al cerrar la evidencia, `docker info` volvió a
+  fallar por named pipe `dockerDesktopLinuxEngine` ausente; `docker desktop status`
+  no pudo leer estado y `com.docker.service` estaba Stopped. Se conserva como riesgo
+  de estabilidad local; no se cambió Docker/WSL/volúmenes para ocultarlo.
+- **CI y evidencia:** commit de código `5d73d9e`; ejecución negativa, artifacts y run
+  39811585204 FALLÓ: con `pause`, el socket TCP de PG siguió abierto y HAProxy continuó
+  saludable. El `finally` ejecutó `unpause`; base y ACL PASARON; P12 localhost no se ejecutó.
+  `ee5ce97` cambió solo el estímulo a `stop/start` para cerrar el listener. La CI
+  [39812197292](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39812197292)
+  PASÓ: tres jobs y artifacts descargados. El negativo y la recuperación PASARON;
+  P12 parcial siguió PASS en base/localhost. Extractos durables en
+  `evidencias/registros/2026-10-22-joseph-gateway-backend-ci.txt`.
+- **Riesgos/dependencias:** la caída del backend causa indisponibilidad breve en el
+  proyecto de prueba; no hay datos ni volúmenes borrados. P12 sigue parcial. FDW remoto,
+  BSON y cuentas/objetos de Joyce siguen bloqueados; no se contactó a compañeros.
+- **Siguiente:** repetir CI con stop/start, registrar evidencia y mantener PR en borrador sin aprobación/merge.
