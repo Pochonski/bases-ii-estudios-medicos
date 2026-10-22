@@ -70,3 +70,12 @@ Windows sigue sin motor Docker disponible; no se acreditan consultas FDW remotas
 P01, P14 ni el outbox.
 Evidencia: evidencias/registros/2026-10-22-joseph-ci-exito.txt.
 Informe: documentacion/INFORME_CHATGPT_JOSEPH_FASE1.md. PR #1 en borrador, sin merge.
+
+## Correcciones de auditoría en curso — 22/10/2026, Joseph
+
+H1 (ACL) e H3 (.env) corregidos y probados localmente; H2 selección explícita/ambiental probada en estático.
+Test-Persistence usa restart+inspect, conserva selección y comprueba contenedor/puertos/volumen/fila.
+Su ejecución real nueva está pendiente de CI: daemon Windows ausente. No ampliar el alcance de P12.
+CI del head auditado 612d07d confirmada en 39753627026. La nueva CI se identificará al terminar.
+Ver D-030..D-033, guía Windows y evidencia 2026-10-22-joseph-auditoria-windows.txt.
+Las dependencias de Joyce y el gate de consultas FDW/BSON no cambiaron.

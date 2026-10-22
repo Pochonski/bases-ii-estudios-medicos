@@ -14,33 +14,98 @@ on:
 permissions:
   contents: read
 jobs:
+  secretos-windows:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Regresión ACL Windows en carpeta temporal
+        shell: pwsh
+        run: |
+          $null = New-Item -ItemType Directory -Force .tmp/ci
+          "Head PR: ${{ github.event.pull_request.head.sha || github.sha }}; checkout: $(git rev-parse HEAD); sistema: Windows Server 2022; PowerShell: $($PSVersionTable.PSVersion)" | Set-Content .tmp/ci/acl.txt
+          ./pruebas/infraestructura/Test-Secrets.ps1 | Tee-Object -FilePath .tmp/ci/acl.txt -Append
+      - name: Guardar evidencia ACL
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: joseph-acl-windows
+          path: .tmp/ci/acl.txt
+          retention-days: 14
+          if-no-files-found: error
+
   infraestructura:
     runs-on: ubuntu-22.04
     timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - mode: base
+            files: compose.yaml
+          - mode: localhost
+            files: compose.yaml:compose.local.yaml
+    env:
+      COMPOSE_FILE: ${{ matrix.files }}
+      COMPOSE_ENV_FILES: .env
+      COMPOSE_PROJECT_NAME: joseph-audit-${{ matrix.mode }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4 verificado
-      - name: Kernel de prueba
-        run: uname -r
-      - name: Configuración efímera y análisis estático
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Configuración efímera y enmascarado
         shell: pwsh
         run: |
+          $null = New-Item -ItemType Directory -Force .tmp/ci
           ./scripts/Initialize-Local.ps1
-          ./scripts/Test-Infra.ps1 -StaticOnly
+          foreach ($file in Get-ChildItem secrets/*.txt) {
+            $value = [IO.File]::ReadAllText($file.FullName).Trim()
+            Write-Output "::add-mask::$value"
+          }
+      - name: Regresiones de secretos y entorno operativo
+        shell: pwsh
+        run: |
+          ./pruebas/infraestructura/Test-Secrets.ps1 | Tee-Object -FilePath .tmp/ci/secretos.txt
+          ./pruebas/infraestructura/Test-ComposeValidation.ps1 | Tee-Object -FilePath .tmp/ci/config-regresion.txt
+          ./scripts/Test-Infra.ps1 -StaticOnly | Tee-Object -FilePath .tmp/ci/config-operativa.txt
       - name: Construir PostgreSQL con ambos FDW
         run: docker compose --progress plain build postgres
-      - name: Iniciar tres motores
+      - name: Iniciar selección operativa
         run: docker compose up -d --wait --wait-timeout 300
-      - name: Consultas y carga de extensiones
+      - name: Consultas y permisos de lectura de secretos
         shell: pwsh
-        run: ./scripts/Test-Infra.ps1
-      - name: Persistencia PostgreSQL
+        run: ./scripts/Test-Infra.ps1 | Tee-Object -FilePath .tmp/ci/runtime.txt
+      - name: Restart PostgreSQL conserva fila, contenedor, volumen y puertos
         shell: pwsh
-        run: ./scripts/Test-Persistence.ps1
-      - name: Estado final
+        run: ./scripts/Test-Persistence.ps1 | Tee-Object -FilePath .tmp/ci/persistencia.txt
+      - name: Resumen de entorno sin secretos
         if: always()
+        shell: pwsh
         run: |
+          @(
+            "Head PR: ${{ github.event.pull_request.head.sha || github.sha }}"
+            "Checkout: $(git rev-parse HEAD)"
+            "Modo: ${{ matrix.mode }}"
+            "Compose files: $env:COMPOSE_FILE"
+            "Compose env files: $env:COMPOSE_ENV_FILES"
+            "Proyecto: $env:COMPOSE_PROJECT_NAME"
+            "Kernel: $(uname -r)"
+            "PowerShell: $($PSVersionTable.PSVersion)"
+            "Resultado antes del artifact: ${{ job.status }}"
+            "Alcance P12: solo una fila PostgreSQL tras restart; no recreación, otros motores ni restauración."
+            "FDW remoto, BSON, login propio y permisos negativos: NO EJECUTADOS; gate sigue abierto."
+          ) | Set-Content .tmp/ci/resumen.txt
+          docker version --format 'Docker cliente={{.Client.Version}} servidor={{.Server.Version}}' | Add-Content .tmp/ci/resumen.txt
+          docker compose version | Add-Content .tmp/ci/resumen.txt
           docker compose ps -a
-          docker compose logs --no-color --tail 80 postgres sqlserver mongodb
-      - name: Detener servicios del runner
+      - name: Guardar evidencia depurada
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: joseph-infra-${{ matrix.mode }}
+          path: .tmp/ci/*.txt
+          retention-days: 14
+          if-no-files-found: error
+      - name: Diagnóstico de motores
+        if: failure()
+        run: docker compose logs --no-color --tail 80 postgres sqlserver mongodb
+      - name: Detener servicios conservando volúmenes
         if: always()
         run: docker compose down

@@ -74,3 +74,20 @@ BSON/escritura, P01, P14 ni el outbox.
 Evidencia: evidencias/registros/2026-10-22-joseph-ci-exito.txt.
 Informe de auditoría: documentacion/INFORME_CHATGPT_JOSEPH_FASE1.md.
 PR #1 permanece en borrador; main conserva 630cca6.
+
+## Regresiones de auditoría — 22/10/2026, Joseph
+
+| Caso | Windows local | CI corregida |
+|---|---|---|
+| H1 Everyone/Users explícitos en carpeta/archivos, DACL final y owner | PASA; sin impersonación | PENDIENTE |
+| Valores existentes / .env conservados, nuevo secreto, idempotencia | PASA | PENDIENTE |
+| H2 selección base/overlay explícita y COMPOSE_* | PASA estático | PENDIENTE |
+| H3 ejemplo válido y .env operativo vacío | PASA negativo; archivo temporal, .env real intacto | PENDIENTE |
+| Puertos/ID/volumen y fila PG tras restart en base/localhost | NO EJECUTADO: daemon ausente | PENDIENTE |
+| Lectura de secretos por UID de cada motor | NO EJECUTADO | PENDIENTE |
+
+P12 solo cubre una fila PostgreSQL tras restart y bindings/volumen conservados.
+No acredita recreación/restauración ni persistencia SQL Server/MongoDB.
+CI previa confirmada: 39753627026 / 612d07d; no valida las correcciones nuevas.
+Evidencia local: evidencias/registros/2026-10-22-joseph-auditoria-windows.txt.
+P01/P17/BSON, autenticación propia y privilegios negativos siguen NO EJECUTADOS; gates abiertos.

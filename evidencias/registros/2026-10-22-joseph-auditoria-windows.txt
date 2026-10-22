@@ -1,0 +1,60 @@
+Fecha: 2026-10-22T03:50:34.0373627-06:00 Entorno: Windows local de Joseph. Base inicial 612d07d; correcciones del árbol de esta sesión aún sin commit. Regresiones H1/H2/H3: carpetas temporales; valores y hashes secretos no registrados.
+PASS sintaxis: Compose-Context.ps1
+PASS sintaxis: Initialize-Local.ps1
+PASS sintaxis: Invoke-Compose.ps1
+PASS sintaxis: Test-Infra.ps1
+PASS sintaxis: Test-Persistence.ps1
+PASS sintaxis: Test-ComposeValidation.ps1
+PASS sintaxis: Test-Secrets.ps1
+PRECONDICIÓN H1: Everyone y Users con lectura explícita en carpeta y archivos existentes.
+PASS inicialización: permisos aplicados; valores existentes conservados; secretos no mostrados.
+PASS inicialización: permisos aplicados; valores existentes conservados; secretos no mostrados.
+PASS H1 Windows: DACL cerrada y protegida en carpeta y cuatro archivos; propietario actual; solo usuario/SYSTEM.
+Límite: inspección de DACL; no se inició sesión ni se impersonó a otra cuenta.
+PASS idempotencia: valores existentes y .env conservados; valores no impresos.
+PASS ejemplo base: estructura válida y sin puertos publicados.
+PASS ejemplo localhost: puertos limitados a 127.0.0.1.
+PASS entorno operativo: proyecto=auditoria-base; selección efectiva aceptada por Compose.
+PASS ejemplo base: estructura válida y sin puertos publicados.
+PASS ejemplo localhost: puertos limitados a 127.0.0.1.
+PASS entorno operativo: proyecto=auditoria-local; selección efectiva aceptada por Compose.
+PASS H2 estático: base y overlay aceptados con selección explícita de archivos/entorno/proyecto.
+PASS ejemplo base: estructura válida y sin puertos publicados.
+PASS ejemplo localhost: puertos limitados a 127.0.0.1.
+PASS entorno operativo: proyecto=auditoria-ambiental; selección efectiva aceptada por Compose.
+PASS H2 ambiental: COMPOSE_FILE, COMPOSE_ENV_FILES y COMPOSE_PROJECT_NAME respetados.
+PASS ejemplo base: estructura válida y sin puertos publicados.
+PASS ejemplo localhost: puertos limitados a 127.0.0.1.
+PASS H3 negativo: ejemplo válido, FAIL entorno operativo por POSTGRES_DB vacío; .env temporal.
+PASS aislamiento: .env real del usuario intacto; sin necesidad de daemon.
+NO EJECUTADO por esta suite: restart, conservación real de puertos y datos; corresponden a Test-Persistence.
+PASS inicialización: permisos aplicados; valores existentes conservados; secretos no mostrados.
+PASS secretos reales: valores existentes conservados y ACL reparadas; valores/hashes no impresos.
+PASS ejemplo base: estructura válida y sin puertos publicados.
+PASS ejemplo localhost: puertos limitados a 127.0.0.1.
+PASS entorno operativo: proyecto=estudios-medicos; selección efectiva aceptada por Compose.
+docker info --format {{.ServerVersion}}:
+
+failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified.
+docker info código=1
+com.docker.service=Stopped
+WSL instalado (no equivale al kernel efectivo Docker):
+Versi�n de WSL: 2.7.10.0
+
+Versi�n de kernel: 6.18.33.2-2
+
+Versi�n de WSLg: 1.0.73.2
+
+Versi�n de MSRDC: 1.2.6676
+
+Versi�n de Direct3D: 1.611.1-81528511
+
+Versi�n de DXCore: 10.0.26100.1-240331-1435.ge-release
+
+Versi�n de Windows: 10.0.26300.9711
+
+
+NO EJECUTADO en Windows: build, motores, salud, consultas, lectura por UID, restart/puertos/datos; daemon ausente.
+No se reinstaló Docker, cambió WSL/kernel, inició/reinició servicios ni eliminaron volúmenes.
+Nota de desarrollo: Set-Acl falló con SeSecurityPrivilege; la corrección usa FileSystemAclExtensions para persistir las secciones modificadas y la regresión pasó.
+FDW remoto/BSON/login propio/permisos negativos: no ejecutados; gate pendiente de Joyce.

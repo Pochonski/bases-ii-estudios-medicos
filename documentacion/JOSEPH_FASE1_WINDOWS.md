@@ -1,145 +1,176 @@
 # Ejecución de la fase 1 de Joseph
 
-Fecha: 22/10/2026, America/Costa_Rica. Rama: `feature/joseph-infra-postgresql`.
-Alcance actual: infraestructura, construcción de extensiones y preparación FDW SQL Server.
-No se han creado las tablas clínicas: el gate 2 de docs/06 exige evaluar conectores primero.
+Actualización: 22/10/2026, correcciones de auditoría H1–H3. Rama feature/joseph-infra-postgresql; PR #1 en borrador.
+Solo infraestructura de Joseph. El gate FDW sigue abierto: CREATE EXTENSION/LOAD no prueban consultas remotas ni BSON.
 
-## Requisitos
+## Diagnóstico Windows y requisitos
 
-Windows 11 x86-64, Docker Desktop en modo Linux con WSL 2, PowerShell 7 (`pwsh`), Git;
-30–40 GB libres recomendados y RAM suficiente para Docker. Límites configurados: PostgreSQL 1 GiB,
-SQL Server 3 GiB, MongoDB 1.5 GiB; no representan consumo medido.
-En esta sesión WSL informa versión predeterminada 2; el motor Docker Linux no responde.
-No se modificaron distribuciones WSL ni se habilitaron características de Windows.
-
-## Arranque desde esta carpeta (PowerShell 7)
+PowerShell 7, Git y Docker Desktop en modo Linux/WSL 2. Revisar 30–40 GB libres y recursos:
+PG 1 GiB, SQL Server 3 GiB, MongoDB 1.5 GiB son límites, no consumo medido.
 
 ```powershell
-git switch feature/joseph-infra-postgresql
-docker desktop start
 docker info
-# Continuar cuando docker info muestre Server y modo Linux.
+docker context show
+Get-Service com.docker.service
+wsl --status
+wsl --version
+```
+
+En la revisión local del 22/10 el named pipe dockerDesktopLinuxEngine sigue ausente y el servicio está
+detenido. WSL instalado informa 2.7.10.0/kernel 6.18.33.2-2; eso no demuestra el kernel efectivo de Docker.
+No se reinstaló Docker, cambió WSL/kernel, desactivó protección ni borró volumen.
+Si docker info falla, ejecutar solamente inicialización/regresiones/validación estática y conservar el bloqueo.
+El arranque de Docker Desktop se realiza y revisa aparte; estas pruebas no reparan su instalación.
+
+## Inicialización y pruebas sin daemon
+
+```powershell
 ./scripts/Initialize-Local.ps1
-./scripts/Test-Infra.ps1 -StaticOnly
-docker compose config --quiet
-docker compose build --progress plain postgres
-docker compose up -d --wait --wait-timeout 300
-./scripts/Test-Infra.ps1
-./scripts/Test-Persistence.ps1
+./pruebas/infraestructura/Test-Secrets.ps1
+./pruebas/infraestructura/Test-ComposeValidation.ps1
 ```
 
-Revisar el código de salida de cada comando antes de continuar. `Initialize-Local.ps1` crea
-`.env` y tres contraseñas aleatorias de 68 caracteres en `secrets/`, sin mostrarlas ni
-sobrescribir archivos existentes. En Windows restringe la carpeta al usuario actual y SYSTEM;
-en Linux usa directorio 700 y archivos 644 para que el UID de SQL Server pueda leer su bind mount.
-La carpeta privada impide el acceso de otros usuarios del host.
-Los archivos se montan únicamente en el servicio que los necesita.
-Compose local NO cifra estos archivos en disco; proteger la cuenta y el equipo.
-`.dockerignore` impide enviarlos al contexto de construcción.
-No cambiar una contraseña en el archivo pensando que rota una base existente: la inicialización
-solo aplica a volúmenes nuevos; una rotación requiere ALTER del usuario en cada motor.
+El inicializador crea .env y tres secretos aleatorios de 68 caracteres solo si faltan. Conserva los bytes
+existentes, sin mostrarlos. En Windows reconstruye la DACL de secrets/ y de **todos los archivos normales
+existentes**, cambia propietario al usuario actual, protege la herencia y permite solo usuario/SYSTEM.
+Verifica el resultado; si no puede aplicar permisos, falla. Rechaza enlaces/subcarpetas dentro de secrets/.
+La persistencia de ACL usa FileSystemAclExtensions: en este Windows Set-Acl devolvió SeSecurityPrivilege.
+No se alteran las auditorías SACL ni se solicitan privilegios adicionales.
 
-El init de PostgreSQL crea únicamente las dos extensiones y restringe CREATE en public.
-Los reinicios conservan volúmenes y no vuelven a ejecutar initdb.
-Si un init falla con volumen parcialmente creado, inspeccionar el estado y corregirlo;
-no eliminar volúmenes ni repetir SQL a ciegas. No hay migraciones clínicas en esta fase.
-`Test-Persistence.ps1` reinicia solo PostgreSQL y usa una tabla marcador aleatoria en la base
-administrativa `postgres`; elimina el marcador al pasar. Una falla conserva el nombre en la salida
-para diagnóstico. No comprueba persistencia de SQL Server/MongoDB.
+La regresión crea carpeta y archivos temporales con Allow explícitos Everyone/Users, comprueba su retiro
+y preservación de valores tras dos ejecuciones, y limpia la carpeta temporal. Verifica DACL/propietario,
+sin impersonación ni inicio de sesión de otra cuenta. Un administrador puede tomar posesión de archivos.
+En Linux usa directorio 700/archivos 644 para permitir lectura por los UID dentro de sus respectivos
+bind mounts; el directorio privado restringe acceso desde el host. La CI comprueba lectura por usuarios
+postgres, SQL Server 10001:0 y mongodb. Compose local no cifra los secretos en disco.
 
-## Consultas interactivas
+.env es configuración no secreta; secrets/ está ignorado y fuera del build.
+No rotar un valor en el archivo creyendo que cambia una contraseña de un volumen existente:
+la rotación requiere modificar la cuenta dentro del motor.
+
+## Una selección para todas las operaciones y pruebas
+
+Ejecutar desde el repositorio. Elegir la selección **antes** de arrancar y conservar $deploy:
 
 ```powershell
-docker compose exec --user postgres postgres psql -X -U postgres -d estudios_medicos
-docker compose exec sqlserver /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C
-docker compose exec mongodb mongosh --username admin_local --authenticationDatabase admin
+$deploy = @{
+    ComposeFile = @('compose.yaml')
+    EnvFile = @('.env')
+    ProjectName = 'estudios-medicos'
+}
+# Si se necesitan clientes en localhost, usar esto desde el arranque:
+# $deploy.ComposeFile = @('compose.yaml','compose.local.yaml')
+
+./scripts/Test-Infra.ps1 @deploy -StaticOnly
+./scripts/Invoke-Compose.ps1 @deploy -Command @('build','postgres')
+./scripts/Invoke-Compose.ps1 @deploy -Command @('up','-d','--wait','--wait-timeout','300')
+./scripts/Test-Infra.ps1 @deploy
+./scripts/Test-Persistence.ps1 @deploy
 ```
 
-SQL Server y MongoDB solicitarán contraseña: consultarla localmente en el archivo correspondiente
-sin publicarla ni incluirla en capturas. `sa` y root Mongo son administración de bootstrap;
-Joyce debe crear sus cuentas de servicio de mínimo privilegio.
-Por defecto no se publica ningún puerto. Si se necesitan clientes en Windows:
+Revisar cada código de salida. Invoke-Compose y ambos tests comparten Compose-Context.ps1 y admiten
+ComposeFile (array), EnvFile (array), ProjectName y ProjectDirectory. Rutas relativas se resuelven
+desde ProjectDirectory, por defecto la raíz del checkout.
+Sin parámetros explícitos se respeta la selección nativa de Docker: COMPOSE_FILE, COMPOSE_ENV_FILES,
+COMPOSE_PROJECT_NAME y .env. COMPOSE_FILE separa rutas con ; en Windows y : en Linux;
+COMPOSE_ENV_FILES usa comas. Los parámetros explícitos tienen precedencia.
+
+Test-Infra valida por separado:
+1. Ejemplo base sin puertos, fijando archivos/.env.example/proyecto de ejemplo.
+2. Ejemplo con overlay, solo 127.0.0.1.
+3. Configuración **operativa**, con los mismos parámetros/variables que usarán las operaciones.
+Un PASS del ejemplo no sustituye un PASS operativo. Un .env operativo inválido hace fallar el script.
+La prueba negativa H3 se hace en una copia temporal; no edita .env del usuario ni imprime su contenido.
+
+Por defecto no hay puertos host; el overlay publica 127.0.0.1:5432/1433/27017 (configurables en .env).
+Las verificaciones runtime comprueban que el PostgreSQL real coincide con proyecto, puertos y volumen
+seleccionados. Si se arrancó con overlay pero se prueba como base, falla antes de insertar el marcador.
+Eso evita validar silenciosamente un despliegue distinto.
+
+## Qué acredita la persistencia y cómo limpiar
+
+Test-Persistence crea una tabla public.joseph_probe_<GUID> con una fila en la base administrativa postgres;
+ejecuta restart postgres, espera health de **ese mismo contenedor** mediante inspect y compara ID,
+puertos publicados y nombre del volumen. Comprueba la fila y elimina la tabla al pasar.
+No ejecuta up ni reconcilia/recrea configuración durante la recuperación.
+
+**P12 parcial:** una fila PostgreSQL tras restart, con bindings y volumen conservados.
+No acredita datos en SQL Server/MongoDB, recreación, down/up, reinicio Docker/WSL, backup ni restauración.
+Aunque verifica el montaje del volumen nombrado, restart por sí solo no reemplaza una prueba de recreación.
+
+Si falla, conserva en el error el nombre del marcador y muestra cómo limpiarlo con la misma selección.
+Cuando PostgreSQL esté disponible, copiar el nombre del error:
 
 ```powershell
-docker compose -f compose.yaml -f compose.local.yaml up -d --wait
+$table = 'joseph_probe_REEMPLAZAR_POR_GUID_DEL_ERROR'
+if ($table -notmatch '^joseph_probe_[0-9a-f]{32}$') { throw 'Marcador inválido' }
+./scripts/Invoke-Compose.ps1 @deploy -Command @(
+    'exec','-T','--user','postgres','postgres','psql','-X','-U','postgres',
+    '-d','postgres','-v','ON_ERROR_STOP=1','-c',"DROP TABLE IF EXISTS public.$table"
+)
 ```
 
-El overlay publica solo 127.0.0.1:5432/1433/27017, configurables en `.env`.
-Conectar el cliente al puerto correspondiente en 127.0.0.1.
-Seguir usando ambos `-f` al administrar ese despliegue. Disponibilidad de puertos/overlay sin probar.
+No borrar volúmenes para obtener PASS. El init solo corre en volumen nuevo; corregir instalaciones parciales
+mediante diagnóstico, sin repetir DDL a ciegas. Persistencia no equivale a backup.
 
-## FDW SQL Server: dependencia explícita de Joyce
-
-Esperar la base de integración, `dbo.vw_estado_facturacion` y
-`svc_pg_mssql_ro` con SELECT solo a esa vista. El contrato conserva:
-`id_paciente bigint`, `codigo_region char(2)`, `nombre_aseguradora`,
-`estado_cobertura`, `estado_facturacion`, `total_facturado_crc decimal(12,2)`,
-`fecha_actualizacion` temporal con zona. Una fila por paciente-región.
-Joyce debe confirmar tipos concretos, cardinalidad, base y fixture; no hay datos de facturación locales.
-La proyección FDW convierte la fecha a ISO-8601 en la consulta remota, conservando el instante y las
-columnas; validar DATETIMEOFFSET y precisión con Joyce. No cambia la vista remota.
-Sin esa dependencia, P01 y la validación funcional de P17 permanecen bloqueadas.
-
-Ejecutar desde PowerShell 7, reemplazando solo el nombre no secreto de base:
+## Consultas y diagnóstico con la misma selección
 
 ```powershell
-$joyceDatabase = Read-Host 'Nombre de base entregada por Joyce'
+./scripts/Invoke-Compose.ps1 @deploy -Command @('ps','-a')
+./scripts/Invoke-Compose.ps1 @deploy -Command @('exec','--user','postgres','postgres','psql','-X','-U','postgres','-d','estudios_medicos')
+./scripts/Invoke-Compose.ps1 @deploy -Command @('exec','sqlserver','/opt/mssql-tools18/bin/sqlcmd','-S','localhost','-U','sa','-C')
+./scripts/Invoke-Compose.ps1 @deploy -Command @('exec','mongodb','mongosh','--username','admin_local','--authenticationDatabase','admin')
+./scripts/Invoke-Compose.ps1 @deploy -Command @('stats','--no-stream')
+./scripts/Invoke-Compose.ps1 @deploy -Command @('run','--rm','--no-deps','--entrypoint','uname','mongodb','-r')
+./scripts/Invoke-Compose.ps1 @deploy -Command @('logs','--tail','80','postgres','sqlserver','mongodb')
+./scripts/Invoke-Compose.ps1 @deploy -Command @('down')
+```
+
+Ajustar nombres de DB/usuario si .env difiere del ejemplo. SQL Server/Mongo solicitarán contraseña.
+No publicar valores ni logs sin revisar. sa/root son administración inicial; Joyce prepara cuentas limitadas.
+down conserva volúmenes; no usar down -v. El kernel de uname dentro del contenedor es el efectivo Docker.
+Si aparece SERVER-121912, conservar el error y revisar con Joyce el digest/kernel; no eludir la protección.
+
+## FDW: dependencias sin cambios
+
+Esperar la base real, dbo.vw_estado_facturacion y svc_pg_mssql_ro de Joyce, con SELECT solo a la vista.
+Contrato: una fila por (id_paciente bigint, codigo_region char(2)), nombre_aseguradora, estado_cobertura,
+estado_facturacion, total_facturado_crc decimal(12,2), fecha_actualizacion con tipos/offset acordados.
+La proyección ISO-8601 TDS aún requiere prueba de Unicode, precisión y zona; no hay datos sustitutos locales.
+
+```powershell
+$joyceDatabase = Read-Host 'Base entregada por Joyce'
 $fdwSecret = Read-Host 'Contraseña de svc_pg_mssql_ro' -AsSecureString
 try {
     $env:FDW_MSSQL_PASSWORD = [Net.NetworkCredential]::new('', $fdwSecret).Password
-    docker compose exec -T --user postgres --env FDW_MSSQL_PASSWORD postgres psql -X -U postgres -d estudios_medicos -v ON_ERROR_STOP=1 -v "mssql_database=$joyceDatabase" -f /opt/proyecto/integracion/01_fdw_sqlserver.sql
-    if ($LASTEXITCODE -ne 0) { throw 'Configuración FDW falló; inspeccionar antes de repetir.' }
+    ./scripts/Invoke-Compose.ps1 @deploy -Command @(
+        'exec','-T','--user','postgres','--env','FDW_MSSQL_PASSWORD','postgres',
+        'psql','-X','-U','postgres','-d','estudios_medicos','-v','ON_ERROR_STOP=1',
+        '-v',"mssql_database=$joyceDatabase",'-f','/opt/proyecto/integracion/01_fdw_sqlserver.sql'
+    )
 } finally {
     Remove-Item Env:FDW_MSSQL_PASSWORD -ErrorAction SilentlyContinue
     $fdwSecret.Dispose()
 }
-docker compose exec -T --user postgres postgres psql -X -U postgres -d estudios_medicos -v ON_ERROR_STOP=1 -f /opt/proyecto/pruebas/02_fdw_sqlserver.sql
+./scripts/Invoke-Compose.ps1 @deploy -Command @(
+    'exec','-T','--user','postgres','postgres','psql','-X','-U','postgres','-d','estudios_medicos',
+    '-v','ON_ERROR_STOP=1','-f','/opt/proyecto/pruebas/02_fdw_sqlserver.sql'
+)
 ```
 
-Script de instalación transaccional, de una sola ejecución: al encontrar objetos existentes falla
-y revierte, sin sobrescribir mappings. El perfil PostgreSQL es NOLOGIN; las pruebas usan SET ROLE
-desde el administrador. Habilitación LOGIN/contraseña propia y pruebas de inicio de sesión pendientes.
-No hay mappings para PUBLIC ni para postgres; Armando deberá revisar el contexto del propietario
-de sus futuras vistas para usar el mapping adecuado. No se crearon vistas API.
-No ejecutar con `psql -a/-e`, no imprimir las variables ni consultar opciones secretas de mappings.
+Instalación transaccional de una ejecución; no usar psql -a/-e ni imprimir mappings/variables.
+NOLOGIN y SET ROLE desde administrador no demuestran autenticación propia ni permisos negativos.
+Mongo FDW requiere validación conjunta de cuenta limitada, ObjectId, Int64/Int32, Date, INSERT/UPDATE,
+índice único y revisión. No hay exportador ni outbox funcionando. El gate de conectores sigue abierto.
 
-## Seguridad efectiva y límites
+## Seguridad y evidencia CI
 
-- SCRAM-SHA-256 para TCP PostgreSQL, peer local solo para el usuario Unix postgres.
-- Red interna; sin puertos publicados por defecto.
-- FreeTDS exige cifrado TLS a SQL Server; se acepta certificado de laboratorio sin CA validada.
-  `sqlcmd -C` también confía en ese certificado. Validación de identidad TLS pendiente.
-- PostgreSQL y MongoDB no tienen TLS configurado: autenticación y aislamiento local no equivalen
-  a cifrado de todo el tráfico. Esta configuración es para la PC de laboratorio.
-- No se incluyeron claves reales, pacientes, datos médicos ni documentos originales del curso.
-- SQL Server y MongoDB arrancan vacíos de objetos del proyecto. Sus módulos pertenecen a Joyce.
+SCRAM PG, peer Unix local, red interna y puertos localhost opcionales. FreeTDS exige cifrado pero no valida
+CA; sqlcmd -C confía en certificado de laboratorio. PG/Mongo sin TLS. No ampliar exposición sin revisar esto.
+Las tablas clínicas, SQL Server/MongoDB de Joyce y vistas/roles/reportes de Armando siguen pendientes.
 
-## Parada y diagnóstico
-
-```powershell
-docker compose ps -a
-docker compose logs --tail 80 postgres sqlserver mongodb
-docker compose down
-```
-
-Revisar y redactar logs antes de publicarlos. `down` conserva volúmenes; nunca usar
-`down -v` para solucionar un arranque sin respaldo y autorización de Joseph.
-Persistencia no sustituye backups. Si no existe el named pipe dockerDesktopLinuxEngine,
-abrir/revisar Docker Desktop y su diagnóstico WSL; no declarar que los motores funcionan.
-
-La verificación adicional en GitHub Actions usa un runner Ubuntu, contraseñas efímeras y los mismos
-scripts. Un PASS allí no valida el Windows de Joseph ni las consultas de negocio o exportación.
-
-## Compatibilidad del kernel Linux (D-029)
-
-El candidato MongoDB abortó en el primer entorno CI por la comprobación SERVER-121912.
-Se cambia el runner a Ubuntu 22.04, manteniendo la misma imagen MongoDB y el despliegue previsto.
-Antes de fijar versiones en Windows, con Docker ya disponible registrar:
-
-```powershell
-docker compose run --rm --no-deps --entrypoint uname mongodb -r
-```
-
-Si aparece el mismo error de kernel en Docker Desktop, conservar el log y evaluar versiones
-con Joyce; no desactivar comprobaciones de seguridad ni cambiar el kernel sin revisar el impacto.
-El resultado CI no determina qué kernel tiene esta PC.
+El workflow ejecuta ACL en Windows Server 2022 y motores en Ubuntu22 con matriz base/localhost.
+Windows Server CI no es la PC Windows11 de Joseph. Se enmascaran secretos efímeros antes del diagnóstico
+y se guardan solo resúmenes y salidas depuradas en artifacts con retención de 14 días.
+Ni el PASS Ubuntu ni el PASS ACL acreditan motores en esta PC. El informe de correcciones identifica
+head, run, resultados y limitaciones. Logs históricos de fallos permanecen en evidencias/.
