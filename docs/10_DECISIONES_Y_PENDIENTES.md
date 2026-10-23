@@ -199,3 +199,23 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
   tras `start` recuperó salud con mismos contenedores/volumen/bindings. P12 parcial pasó
   después. No demuestra detección cuando un proceso congelado mantiene el socket TCP abierto,
   ni pérdida de funcionalidad que no cierre el puerto del backend.
+
+### D-036 — Núcleo PostgreSQL aislado antes del gate FDW (22/10/2026, Joseph)
+
+- Fuente: autorización explícita de Joseph para fase 2 independiente; motivo: avanzar y
+  probar el modelo acordado sin inventar resultados de Joyce ni Armando.
+- Decisión: crear 11 tablas en esquema `clinico` y el outbox en `integracion`, con PK
+  compuesta de paciente, FK compuesta en citas y particiones LIST SJ/AL/CA sin DEFAULT.
+  Los nombres de esquema son elección técnica de este PR; Joyce debe revisar la ruta
+  `integracion.eventos_integracion` antes de codificar su worker. No se cambia la
+  identidad intermotor ni el contrato `dbo.vw_estado_facturacion`.
+- DDL/fixture viven en scripts ejecutados explícitamente sobre base vacía. Los datos son
+  ficticios y estables; el outbox del fixture queda vacío. Solo las pruebas locales crean
+  eventos sintéticos tras COMMIT y confirman ROLLBACK local; ningún evento se exporta.
+- Impacto: PR #2 apilado sobre el PR #1; no cambia Compose, SQL Server, MongoDB, roles o
+  vistas API. El gate FDW de `docs/06` **permanece abierto**. Antes de integración revisar
+  con Joyce nombres de esquema, campos de outbox, tipos BSON/revisión y fixture compartido.
+- Prueba: workflow separado sobre Ubuntu22
+  [39878319168](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39878319168)
+  SUCCESS en `502f5fa`; dos bases vacías/restart. Manual Windows y resultado efectivo
+  en `docs/07_PRUEBAS.md` y `evidencias/`, sin atribuir CI al host local.
