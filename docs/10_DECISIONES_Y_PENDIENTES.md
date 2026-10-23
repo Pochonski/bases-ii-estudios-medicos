@@ -235,6 +235,12 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
   SQL erróneo bajo `ON_ERROR_STOP=1` debe propagarse como fallo CI. El primer run
   `40028582907` quedó rojo tras detectar el SQL inválido por `LASTEXITCODE` residual;
   `ae3f1b9` limpia solo ese código cuando el negativo esperado fue reconocido.
+  Tras revisar el límite de esa comprobación, `6e9d1bb` la sustituyó por un
+  paso SQL que falla realmente bajo `continue-on-error` limitado a ese paso y
+  una aserción posterior de `outcome=failure`. Así se ensaya la propagación en
+  Actions sin dejar rojo el PR por el error deliberado. La CI del núcleo en
+  [40029751371](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029751371)
+  PASÓ; no se suavizaron los errores de instalación o de pruebas clínicas.
 - Archivos: workflow, estado, plan, matriz de pruebas, decisiones, bitácora, guía,
   informe y evidencia. Contratos de IDs/tablas y módulos de otros integrantes
   permanecen intactos.

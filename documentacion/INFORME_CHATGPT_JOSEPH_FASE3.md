@@ -33,8 +33,10 @@ outbox siguen abiertos.
 Commits reaplicados: `0f3614a`→`344bb5b` (DDL/fixture), `295bf32`→`f93c0fb`
 (pruebas/CI), `502f5fa`→`8322310` (marcadores/versiones), `41c98b4`→`29bb20c`
 (documentación). Corrección de CI: `af34ed8` (filtro `main` y negativo SQL),
-`ae3f1b9` (limpieza de código residual tras el negativo esperado). El commit
-documental final y HEAD del PR se indican en el PR/informe de cierre. `main`
+`ae3f1b9` (limpieza de código residual tras el negativo esperado), `bd3124b`
+(evidencia documental) y `6e9d1bb` (paso SQL fallido real más aserción de
+`outcome=failure`). El commit documental final y HEAD del PR se indican en el
+PR/informe de cierre. `main`
 permaneció en `0a42732` durante esta sesión; no se hizo push a esa rama.
 
 ## C. Archivos del PR y cambio concreto
@@ -100,6 +102,14 @@ y job fallido. La [CI corregida](https://github.com/Pochonski/bases-ii-estudios-
 PASÓ el negativo y el runner clínico en `ae3f1b9`; el artifact incluye
 `sql-error.txt`, `nucleo.txt` y `resumen.txt`.
 
+Una revisión adicional detectó que esa versión capturaba el error dentro del
+mismo paso y no acreditaba el estado **failure del paso** en Actions. `6e9d1bb`
+deja que el SQL inválido falle con código 1; `continue-on-error` se limita a ese
+paso deliberado, y el paso siguiente falla el job si
+`steps.sql_invalido.outcome` no es `failure`. El [run 40029751371](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029751371)
+PASÓ esa aserción y luego las dos instalaciones; el artifact `sql-error.txt`
+lo confirma. Los pasos ordinarios de SQL no permiten continuar al fallar.
+
 ## G. Pruebas y evidencia
 
 **Windows 11 local:** Docker Desktop `desktop-linux`, Engine 29.8.0, kernel
@@ -134,6 +144,13 @@ PASÓ Ubuntu base/localhost y Windows ACL. Artifacts descargados: head PR
 Compose 2.38.2, PostgreSQL 16.15, PowerShell 7.6.6, kernel Ubuntu
 `6.8.0-1064-azure`; Windows Server 2022/PowerShell 7.6.7 para ACL. Los
 detalles constan en `evidencias/registros/2026-10-23-joseph-core-main-ci.txt`.
+El head documental `bd3124b` también pasó [núcleo](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029279031)
+y [los tres jobs de infraestructura](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029278993),
+con checkout `8381f9c`. El nuevo control del negativo corrió en `6e9d1bb`;
+su [regresión de infraestructura](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029751368)
+PASÓ los tres jobs. La CI del commit documental final queda para comprobación
+en el PR, porque el SHA se genera después de escribir este informe. No se
+repitió el ensayo local Windows porque no cambió el DDL ni el runner.
 Windows local y
 Ubuntu CI se reportan por separado. No se ejecutaron consultas FDW remotas,
 pruebas BSON ni exportación.

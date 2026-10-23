@@ -267,3 +267,14 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   P12 solo restart PG. Ningún PR aprobado/fusionado en esta sesión; `main` intacto.
 - **Siguiente:** verificar la CI del commit documental final y entregar informe
   para auditoría. Solicitar revisión de Joyce antes de integrar el outbox.
+- **Refuerzo CI posterior (23/10):** `bd3124b` registró guía/informe/evidencia; su
+  [CI de núcleo](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029279031)
+  y [CI de infraestructura](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029278993)
+  PASARON cuatro checks, head `bd3124b`, checkout `8381f9c`. Para acreditar mejor
+  la propagación SQL, `6e9d1bb` sustituyó la captura interna por un paso que
+  falla de verdad y otro que exige `outcome=failure`; solo el negativo lleva
+  `continue-on-error`. [Núcleo 40029751371](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029751371)
+  PASÓ con artifact `sql-error.txt` y pruebas clínicas posteriores. Las pruebas
+  locales Windows no se repitieron porque DDL, fixture y runner no cambiaron.
+  Infraestructura [40029751368](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029751368)
+  PASÓ los tres jobs del mismo head.

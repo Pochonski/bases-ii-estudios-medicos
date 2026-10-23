@@ -170,6 +170,11 @@ La [CI del núcleo](https://github.com/Pochonski/bases-ii-estudios-medicos/actio
 y la [regresión de infraestructura](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028827437)
 pasaron en el head `ae3f1b9`; los artifacts registran el SHA y el checkout.
 La CI del commit documental final debe verificarse por separado.
+Tras esa verificación se reforzó el negativo en `6e9d1bb`: el paso SQL falla
+realmente, con `continue-on-error` **solo en ese paso**; la aserción siguiente
+exige su `outcome=failure`. El [run del núcleo](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029751371)
+PASÓ y el artifact registra la aserción. Los scripts clínicos no tienen esa
+excepción. La CI del cierre documental posterior también debe verificarse.
 
 El outbox admite duplicados lógicos y eventos con revisión sin correspondencia al
 resultado; tampoco obliga a que toda escritura clínica emita evento. D-038 documenta

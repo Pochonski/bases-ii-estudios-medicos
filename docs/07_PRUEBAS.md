@@ -203,6 +203,16 @@ en el runner principal termina el job como fallido.
 | Error SQL controlado | NO EJECUTADO localmente | Primer run [40028582907](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028582907) FALLÓ tras detectar correctamente el error: `LASTEXITCODE=1` residual; `ae3f1b9` lo corrigió y `sql-error.txt` registra PASS en [40028827502](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028827502) |
 | Infraestructura heredada | Sin cambio; Compose estático aislado PASA | [40028827437](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028827437) SUCCESS, tres jobs (Ubuntu base/localhost y Windows ACL) en `ae3f1b9` |
 
+En `6e9d1bb` se reforzó el negativo SQL: la consulta inexistente termina con
+código 1 en su **propio paso** de Actions, configurado como excepción esperada
+`continue-on-error`; el siguiente paso exige `steps.sql_invalido.outcome=failure`.
+El [run 40029751371](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029751371)
+PASÓ y `sql-error.txt` registra esa aserción; el runner clínico posterior pasó.
+Los SQL de instalación/pruebas carecen de `continue-on-error` y detienen el job
+si fallan. La excepción no se aplica a otros pasos ni a despliegues reales.
+La [regresión de infraestructura del mismo head](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029751368)
+PASÓ tres jobs; ambos workflows se ejecutarán de nuevo en el cierre documental.
+
 Windows: Docker Engine 29.8.0, kernel efectivo
 `6.18.33.2-microsoft-standard-WSL2`, PostgreSQL 16.15. El proyecto de prueba
 usó red interna propia y ningún puerto host; se retiraron solo sus contenedores/red.

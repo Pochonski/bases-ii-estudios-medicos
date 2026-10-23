@@ -56,5 +56,21 @@ repositorio. CREATE EXTENSION/LOAD no acreditan conexiones FDW. No hay consultas
 TDS remotas ni pruebas BSON, escritura MongoDB o worker. Outbox: solo atomicidad
 de la transacción local ejercitada; D-038 registra duplicados/revisiones/escritura.
 
-El commit documental posterior a ae3f1b9 requiere verificación de su CI propia;
-su SHA y runs finales se registran en el PR/informe al cerrar esta sesión.
+El commit documental posterior a ae3f1b9 se verificó en su CI propia; el SHA
+final tras este registro se identifica en el PR y el informe de cierre.
+
+Cierre posterior documentado:
+- bd3124b81bafb60ea1f0fc85fff2bf7d8dde4f3a: núcleo 40029279031 y
+  infraestructura 40029278993 SUCCESS (cuatro checks). Artifacts descargados;
+  checkout de PR 8381f9c946f192f3af2f2b1e2c6b4dd33e8b3dac, dos instalaciones,
+  dos restart, negativo SQL reconocido, gateway/backend caído, ACL Windows.
+- 6e9d1bbc4c305bd48c9ec478fa96a16d31366e09: control SQL más fuerte.
+  Núcleo 40029751371 SUCCESS; el paso deliberadamente inválido terminó con
+  código 1 bajo continue-on-error solo allí; el paso siguiente exigió
+  steps.sql_invalido.outcome=failure y dejó PASS en sql-error.txt. El runner
+  clínico posterior pasó, sin continue-on-error. Artifact descargado:
+  checkout 863e753cef98810a8ad6a29a88b1fc20fe167fea, PostgreSQL 16.15,
+  Docker 28.0.4, Compose 2.38.2, kernel Ubuntu 6.8.0-1064-azure.
+  https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029751371
+- Infraestructura para 6e9d1bb: run 40029751368 SUCCESS, tres jobs.
+  https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029751368
