@@ -131,3 +131,13 @@ validación BSON y el worker de Joyce siguen pendientes; este adelanto no supera
 La [CI del gateway](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39807402214)
 PASÓ en head `0b5e507` con tres jobs: Windows Server ACL y Ubuntu base/localhost;
 [registro revisado](evidencias/registros/2026-10-22-joseph-gateway-ci.txt).
+
+## Consolidación propuesta hacia main — 23/10/2026
+
+Los estados de PR #1/#2 arriba son históricos: [PR #1](https://github.com/Pochonski/bases-ii-estudios-medicos/pull/1)
+se fusionó en `main` (`0a42732`) y [PR #2](https://github.com/Pochonski/bases-ii-estudios-medicos/pull/2)
+se fusionó únicamente en la rama de infraestructura (`84cb072`). El
+[PR #3](https://github.com/Pochonski/bases-ii-estudios-medicos/pull/3), en borrador y
+dirigido a `main`, traslada solo el delta clínico por cherry-pick. El gate FDW/MongoDB
+sigue abierto. El [informe de fase 3](documentacion/INFORME_CHATGPT_JOSEPH_FASE3.md)
+registra el estado actual, la revisión del outbox y las pruebas.

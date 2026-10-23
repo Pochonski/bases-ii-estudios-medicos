@@ -86,3 +86,47 @@ tipos y fixture SQL Server para consultas TDS reproducibles. Mongo FDW requiere 
 de autenticación, `ObjectId`, Int64/Int32, Date, INSERT/UPDATE, índice único y revisión.
 `CREATE EXTENSION`/`LOAD` del PR #1 no cierran estos puntos. No ejecutar módulos de Joyce
 o Armando desde este manual.
+
+## Actualización de consolidación — 23/10/2026
+
+PR #1 ya está en `main`; PR #2 fue fusionado solo en la rama de infraestructura.
+El PR #3 en borrador propone este núcleo directamente a `main`. Su workflow escucha
+ahora ambas bases y prueba que un SQL inválido devuelve un código de error. Los
+comandos anteriores siguen siendo válidos. Para verificar en Windows sin reiniciar
+el PostgreSQL compartido, se usó una segunda selección Compose **aislada** con un
+overlay temporal ignorado por Git que solo cambia el nombre de la red:
+
+```yaml
+networks:
+  medical-network:
+    name: joseph-core-pr3-local-network
+```
+
+```powershell
+New-Item -ItemType Directory -Force .tmp | Out-Null
+@'
+networks:
+  medical-network:
+    name: joseph-core-pr3-local-network
+'@ | Set-Content -LiteralPath .tmp/joseph-core-pr3-local.compose.yaml -Encoding utf8
+$deploy = @{
+    ComposeFile = @('compose.yaml','.tmp/joseph-core-pr3-local.compose.yaml')
+    EnvFile = @('.env')
+    ProjectName = 'joseph-core-pr3-local'
+}
+./scripts/Test-Infra.ps1 @deploy -StaticOnly
+try {
+    ./scripts/Invoke-Compose.ps1 @deploy -Command @('up','-d','--wait','--wait-timeout','180','postgres')
+    ./scripts/Test-PostgresqlCore.ps1 @deploy -Repeat 2 -IncludePersistence
+} finally {
+    ./scripts/Invoke-Compose.ps1 @deploy -Command @('down')
+}
+```
+
+La ejecución de 23/10 PASÓ dos veces en Windows 11 con Docker Engine 29.8.0 y
+PostgreSQL 16.15. El `down` fue **sin `-v`**; el volumen sintético
+`joseph-core-pr3-local_postgres_data` quedó conservado. Las dos bases de prueba
+se eliminaron al pasar. Los cuatro contenedores del proyecto compartido
+`estudios-medicos` conservaron sus IDs; no se reiniciaron. Este resultado no
+acredita estabilidad de Docker Desktop tras un reinicio completo de Windows,
+ni FDW remoto o sincronización MongoDB.

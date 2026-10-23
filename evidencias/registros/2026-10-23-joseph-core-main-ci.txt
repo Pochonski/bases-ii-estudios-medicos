@@ -1,0 +1,60 @@
+Joseph — fase 3, consolidación PostgreSQL hacia main — 23/10/2026
+
+Git verificado antes de actuar:
+- origin/main = 0a42732a3cfc87a8b3a955b4c71cd894a5221ce8 (PR #1 MERGED).
+- origin/feature/joseph-infra-postgresql = 84cb072a35b9f2d9c881124327a7ebf04f65403e (PR #2 MERGED allí).
+- main carecía del delta clínico de 21 archivos; rama nueva desde main.
+- PR #3 OPEN/DRAFT: https://github.com/Pochonski/bases-ii-estudios-medicos/pull/3
+- Cherry-picks: 344bb5b, f93c0fb, 8322310, 29bb20c.
+- Correcciones CI: af34ed8, ae3f1b9. Sin merge ni push a main.
+
+Windows 11 local — Docker Desktop desktop-linux:
+- Comandos de diagnóstico: git status/fetch/diff/log; docker version; docker info;
+  docker ps; docker image inspect. Engine cliente/servidor 29.8.0;
+  kernel 6.18.33.2-microsoft-standard-WSL2; imagen PG del proyecto 16.15.
+- Proyecto aislado joseph-core-pr3-local, compose.yaml más overlay temporal que
+  asigna red joseph-core-pr3-local-network; .env operativo local. Sin puertos host.
+- ./scripts/Test-Infra.ps1 @deploy -StaticOnly: PASS.
+- ./scripts/Invoke-Compose.ps1 @deploy -Command @('up','-d','--wait','--wait-timeout','180','postgres'): PASS.
+- ./scripts/Test-PostgresqlCore.ps1 @deploy -Repeat 2 -IncludePersistence: PASS.
+  Dos bases creadas desde template0 y eliminadas tras pasar. En ambas:
+  12 tablas/3 particiones; fixture exacto; inserción válida; seis rechazos de
+  integridad; PK/FK compuesta; tableoid 10/10/10; EXPLAIN solo pacientes_al;
+  paciente 1001/AL atendido en SJ; COMMIT/ROLLBACK locales de resultado+evento;
+  registros clínicos tras restart del mismo contenedor/volumen.
+- ./scripts/Invoke-Compose.ps1 @deploy -Command @('down'): PASS, sin -v.
+  Contenedor/red de prueba retirados; volumen
+  joseph-core-pr3-local_postgres_data conservado. Los cuatro IDs de contenedores
+  del proyecto compartido estudios-medicos coincidieron antes/después.
+- No se probó arranque de Windows tras reboot, recreación/restauración,
+  persistencia de SQL Server/MongoDB ni FDW/BSON remoto.
+
+CI del PR #3:
+- Primer núcleo 40028582907: FAILURE. El paso SQL inválido detectó correctamente
+  el fallo y escribió PASS, pero pwsh terminó con LASTEXITCODE=1 residual.
+  No se ejecutaron allí las pruebas clínicas. Corregido en ae3f1b9.
+- Primer infraestructura 40028582691: SUCCESS, tres jobs.
+- Núcleo corregido 40028827502: SUCCESS, head
+  ae3f1b9e0222169b4c10b035e72f5a8e019fe50e; checkout de PR
+  a5f4175bbc2ad10c78d5d6676f4c184b56cd042b.
+  https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028827502
+  Artifact joseph-postgresql-core descargado/revisado: resumen.txt, nucleo.txt,
+  sql-error.txt. sql-error.txt: SQL inexistente devolvió código no cero y se
+  reconoció como negativo esperado. nucleo.txt: dos bases vacías, estructura,
+  fixture, seis rechazos, particiones/EXPLAIN, COMMIT/ROLLBACK y dos restart PASS;
+  bases sintéticas eliminadas. PostgreSQL 16.15; Docker cliente/servidor 28.0.4;
+  Compose 2.38.2; PowerShell 7.6.6; kernel Ubuntu 6.8.0-1064-azure.
+- Infraestructura corregida 40028827437: SUCCESS, mismo head/check out.
+  https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028827437
+  Artifacts joseph-infra-base, joseph-infra-localhost, joseph-acl-windows
+  descargados/revisados. Tres jobs PASS: base, overlay localhost/gateway con
+  backend caído, ACL Windows Server 2022 (PowerShell 7.6.7). La persistencia de
+  infraestructura acredita una fila PG tras restart, no los tres motores.
+
+El workflow usa secretos efímeros de CI; no se copiaron valores ni .env al
+repositorio. CREATE EXTENSION/LOAD no acreditan conexiones FDW. No hay consultas
+TDS remotas ni pruebas BSON, escritura MongoDB o worker. Outbox: solo atomicidad
+de la transacción local ejercitada; D-038 registra duplicados/revisiones/escritura.
+
+El commit documental posterior a ae3f1b9 requiere verificación de su CI propia;
+su SHA y runs finales se registran en el PR/informe al cerrar esta sesión.

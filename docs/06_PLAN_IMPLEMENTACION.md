@@ -100,3 +100,14 @@ Joyce permanecen. El runner crea bases de prueba vacías, ejecuta scripts en ord
 `01_esquemas`, `02_tablas`, `03_particiones`, `06_datos_prueba` y luego pruebas,
 conserva el volumen y elimina únicamente las bases sintéticas al pasar. Guía exacta:
 `documentacion/JOSEPH_FASE2_POSTGRESQL.md`.
+
+## Ruta de consolidación a main — 23/10/2026
+
+PR #1 llevó infraestructura a `main`, mientras PR #2 se fusionó en la rama de
+infraestructura. El PR #3 parte de `main` y reaplica, en orden, los cuatro commits
+del núcleo de Joseph. Antes de ajustar el workflow, el árbol resultante coincidía
+exactamente con el de la rama de infraestructura tras PR #2. La única corrección
+funcional posterior es que el workflow se ejecute también al proponer cambios a
+`main` y verifique la propagación de un error SQL controlado. No se reescribieron
+ramas compartidas ni se duplicó Docker/Compose. La revisión del outbox queda como
+propuesta pendiente de Joyce, sin modificar el contrato ni el gate 2.

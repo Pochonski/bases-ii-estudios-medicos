@@ -225,3 +225,45 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   local, sin exportación. P12 parcial; P18 completo pendiente.
 - **Siguiente:** repetir en Windows cuando el daemon responda, solicitar revisión
   técnica de interfaz en PR #2 y mantener ambos PR en borrador sin merge/aprobación.
+
+## 2026-10-23 — Joseph, consolidación del núcleo hacia main
+
+- **Objetivo:** preparar un PR nuevo y aislado del núcleo clínico sobre `main`,
+  corregir su filtro CI y revisar el outbox sin alterar contratos compartidos.
+- **Estado inicial comprobado:** árbol local limpio en `feature/joseph-postgresql-core`;
+  `main=0a42732` con PR #1 fusionado, rama de infraestructura `84cb072` con PR #2
+  fusionado. Diff exacto de 21 archivos clínicos/documentales; núcleo ausente de
+  `main`. PR #1/#2 consultados en GitHub, ambos MERGED.
+- **Estrategia y archivos:** rama `feature/joseph-core-main-integration` desde
+  `origin/main`; cherry-pick limpio de `0f3614a`→`344bb5b`, `295bf32`→`f93c0fb`,
+  `502f5fa`→`8322310`, `41c98b4`→`29bb20c`. El árbol resultante coincidió con
+  `origin/feature/joseph-infra-postgresql`; después solo se cambió workflow y
+  documentación de estado, pruebas, decisiones, guía, informe/evidencia. No se
+  tocaron Compose, DDL, fixture, SQL Server, MongoDB ni módulos de Armando.
+- **Comandos:** `git status/fetch/ls-remote/diff/log/switch/cherry-pick/add/commit/push`,
+  `gh pr view/create`, `gh run list/view`, `docker info/version/ps/image inspect`,
+  `Test-Infra -StaticOnly`, `Invoke-Compose up/down` y
+  `Test-PostgresqlCore -Repeat 2 -IncludePersistence` en proyecto aislado.
+- **Windows local:** Engine 29.8.0/WSL2 kernel 6.18.33.2, PG 16.15; dos instalaciones
+  y restart de PG PASAN. Proyecto de prueba sin puertos, red/volumen propios; dos
+  bases sintéticas eliminadas, contenedores de prueba retirados, volumen conservado.
+  IDs de los cuatro contenedores compartidos no cambiaron.
+- **CI:** PR #3 abierto en borrador. Primer run núcleo
+  [40028582907](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028582907)
+  FALLÓ en el negativo SQL esperado: Compose/psql devolvieron error y el shell
+  conservó `LASTEXITCODE=1` pese a la captura. Commit `ae3f1b9` limpia solo ese
+  código tras verificar el error. La primera regresión de infraestructura
+  [40028582691](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028582691)
+  PASÓ tres jobs. En `ae3f1b9`, la [CI corregida del núcleo](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028827502)
+  PASÓ instalación doble, tests SQL, dos restart y negativo controlado; la
+  [regresión de infraestructura](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028827437)
+  PASÓ los tres jobs, incluidos Windows ACL y gateway localhost. Artifacts
+  descargados y contrastados: head `ae3f1b9`, checkout `a5f4175`, PostgreSQL
+  16.15, Docker 28.0.4, Compose 2.38.2, kernel Ubuntu `6.8.0-1064-azure`.
+- **Outbox (D-038):** UUID único no impide duplicado lógico; revisión de evento no
+  ligada a resultado; escritura directa puede omitir evento. Alternativas concretas
+  documentadas para Joyce, sin implementar worker, trigger ni cambios de DDL.
+- **Riesgos/dependencias:** FDW remoto, BSON, cuenta propia y exportación pendientes;
+  P12 solo restart PG. Ningún PR aprobado/fusionado en esta sesión; `main` intacto.
+- **Siguiente:** verificar la CI del commit documental final y entregar informe
+  para auditoría. Solicitar revisión de Joyce antes de integrar el outbox.

@@ -183,3 +183,30 @@ también PASÓ en `502f5fa`: PostgreSQL 16.15, dos bases vacías y dos restart;
 los marcadores de cada aserción constan en el artifact `joseph-postgresql-core`.
 Evidencia versionada: `evidencias/registros/2026-10-22-joseph-postgresql-core-ci.txt`.
 P01/P05–P11/P15–P17 y aceptación global permanecen pendientes o dependen de Joyce/Armando.
+
+## Fase 3 — consolidación hacia main (23/10/2026, Joseph)
+
+El PR #3 parte de `main` (`0a42732`) y contiene el mismo modelo/fixture del PR #2
+sin cambios de DDL. La CI del núcleo escucha ahora la base `main`. La prueba
+controlada `SELECT` a una tabla inexistente usa `ON_ERROR_STOP=1` y comprueba que
+`Invoke-ProjectCompose` rechaza el código no cero; cualquier error SQL no capturado
+en el runner principal termina el job como fallido.
+
+| Caso | Windows 11 local, proyecto aislado `joseph-core-pr3-local` | CI PR #3 |
+|---|---|---|
+| Instalación desde dos bases vacías/fixture | PASA, dos bases sintéticas creadas y eliminadas | PASA en [40028827502](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028827502), head `ae3f1b9` |
+| Integridad, identidad compuesta, CHECK/UNIQUE y válidos/inválidos | PASA en ambas bases | PASA en ambas bases |
+| P14 `tableoid` y `EXPLAIN` | PASA: 10/10/10, plan solo `pacientes_al`, paciente 1001/AL atendido en SJ | PASA: 10/10/10 y plan solo `pacientes_al` |
+| P04/P13 locales | PASAN COMMIT y ROLLBACK de resultado+evento sintéticos | PASAN; sin MongoDB |
+| P12 parcial clínico PG | PASA tras dos restart del contenedor aislado, mismo volumen/ID; volumen conservado tras `down` sin `-v` | PASA dos restart; no recreación/restauración |
+| Proyecto compartido | PASA: IDs de sus cuatro contenedores idénticos antes/después | No aplica |
+| Error SQL controlado | NO EJECUTADO localmente | Primer run [40028582907](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028582907) FALLÓ tras detectar correctamente el error: `LASTEXITCODE=1` residual; `ae3f1b9` lo corrigió y `sql-error.txt` registra PASS en [40028827502](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028827502) |
+| Infraestructura heredada | Sin cambio; Compose estático aislado PASA | [40028827437](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028827437) SUCCESS, tres jobs (Ubuntu base/localhost y Windows ACL) en `ae3f1b9` |
+
+Windows: Docker Engine 29.8.0, kernel efectivo
+`6.18.33.2-microsoft-standard-WSL2`, PostgreSQL 16.15. El proyecto de prueba
+usó red interna propia y ningún puerto host; se retiraron solo sus contenedores/red.
+No se borraron volúmenes ni se reinició el PostgreSQL compartido. FDW remoto,
+BSON/escrituras MongoDB, autenticación propia y sincronización siguen NO EJECUTADOS.
+Evidencia detallada: `evidencias/registros/2026-10-23-joseph-core-main-ci.txt`.
+Ambos workflows deben repetirse o verificarse después del commit documental final.

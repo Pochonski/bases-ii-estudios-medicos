@@ -148,3 +148,30 @@ esta fase; SQL/restart NO EJECUTADOS aquí. No se cambiaron WSL, Docker ni volú
 **Integración:** P01, Mongo BSON/lectura/escritura, cuentas y objetos Joyce siguen
 pendientes. El outbox no tiene worker ni exportación; P04/P13 solo prueban atomicidad
 PostgreSQL. No hay aprobación del gate FDW ni traspaso de interfaz a Armando.
+
+## Consolidación propuesta — 23/10/2026, Joseph (D-037/D-038)
+
+PR #1 fue fusionado en `main` como `0a42732`; PR #2 fue fusionado en la rama de
+infraestructura como `84cb072`. Al iniciar la sesión, `main` no contenía el núcleo:
+el diff entre ambos árboles era exactamente los 21 archivos clínicos/documentales
+de fase 2. Joseph autorizó un PR nuevo; `feature/joseph-core-main-integration`
+parte del `main` actualizado y reaplica los cuatro commits originales sin modificar
+infraestructura. [PR #3](https://github.com/Pochonski/bases-ii-estudios-medicos/pull/3)
+permanece abierto y en borrador. No se ha fusionado ni aprobado.
+
+El workflow del núcleo escucha ahora PRs contra `main`; su prueba negativa de SQL
+separa el error esperado de un fallo real. En Windows 11, Docker Desktop respondió
+durante esta sesión: un proyecto Compose **aislado**, sin puertos host, pasó dos
+instalaciones, integridad, `tableoid`/`EXPLAIN`, COMMIT/ROLLBACK y restart parcial PG.
+El proyecto compartido conservó sus IDs; el contenedor de prueba se retiró y su
+volumen se conservó. La primera CI de PR #3 falló tras detectar SQL inválido porque
+PowerShell retuvo `LASTEXITCODE=1`; `ae3f1b9` corrige solo el cierre de ese negativo.
+La [CI del núcleo](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028827502)
+y la [regresión de infraestructura](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028827437)
+pasaron en el head `ae3f1b9`; los artifacts registran el SHA y el checkout.
+La CI del commit documental final debe verificarse por separado.
+
+El outbox admite duplicados lógicos y eventos con revisión sin correspondencia al
+resultado; tampoco obliga a que toda escritura clínica emita evento. D-038 documenta
+alternativas pendientes de Joyce. No se cambió DDL ni se afirma exportación, FDW
+remoto o transacción global.
