@@ -38,26 +38,28 @@ jobs:
         run: docker compose --progress plain build postgres
       - name: Iniciar solo PostgreSQL
         run: docker compose up -d --wait --wait-timeout 300 postgres
-      - name: SQL inválido debe propagar un fallo
+      - name: SQL inválido debe fallar el paso
+        id: sql_invalido
+        continue-on-error: true
         shell: pwsh
         run: |
           . ./scripts/Compose-Context.ps1
           $context = New-ComposeContext
-          $rejected = $false
-          try {
-            Invoke-ProjectCompose $context @(
-              'exec','-T','--user','postgres','postgres','psql','-X','-U','postgres',
-              '-d','postgres','-v','ON_ERROR_STOP=1','-c',
-              'SELECT * FROM public.__joseph_ci_tabla_inexistente__'
-            )
-          } catch {
-            if ($_.Exception.Message -notmatch 'Compose exec terminó con código') { throw }
-            $rejected = $true
+          Invoke-ProjectCompose $context @(
+            'exec','-T','--user','postgres','postgres','psql','-X','-U','postgres',
+            '-d','postgres','-v','ON_ERROR_STOP=1','-c',
+            'SELECT * FROM public.__joseph_ci_tabla_inexistente__'
+          )
+      - name: Verificar fallo esperado del paso SQL
+        if: always()
+        shell: pwsh
+        env:
+          SQL_NEGATIVE_OUTCOME: ${{ steps.sql_invalido.outcome }}
+        run: |
+          if ($env:SQL_NEGATIVE_OUTCOME -ne 'failure') {
+            throw "El paso SQL inválido terminó como $env:SQL_NEGATIVE_OUTCOME; se esperaba failure."
           }
-          if (-not $rejected) { throw 'Un error SQL no produjo fallo de Compose/psql.' }
-          # GitHub Actions termina pwsh con LASTEXITCODE; limpiar solo el error esperado.
-          $global:LASTEXITCODE = 0
-          'PASS: SQL inválido devolvió código no cero; el runner propaga el error a CI.' |
+          'PASS: GitHub Actions registró failure para el paso SQL inválido; solo ese paso permite el fallo esperado.' |
             Tee-Object -FilePath .tmp/ci/sql-error.txt
       - name: Probar núcleo en dos bases vacías y restart
         shell: pwsh
