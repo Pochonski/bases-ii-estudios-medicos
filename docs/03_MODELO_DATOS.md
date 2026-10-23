@@ -83,3 +83,14 @@ Campos previstos del resumen: `id_estudio` Int64, `id_paciente` Int64, `codigo_r
 ## Datos de demostración [PROPUESTA]
 
 3 regiones y 3 sucursales, 30 pacientes (10 por región), 6 médicos, 30 citas, 25 órdenes, 40 estudios, 30 resultados, 3 aseguradoras; facturas con estados diferentes. Son **cantidades propuestas**, nunca requisitos del curso. Usar personas y datos completamente ficticios. Las filas que prueben sincronización deben originarse mediante la integración real, NO mediante inserción manual simulando éxito.
+
+## Implementación aislada de Joseph — 22/10/2026
+
+La rama `feature/joseph-postgresql-core` materializa las doce tablas anteriores: once bajo
+`clinico` y `eventos_integracion` bajo `integracion`. Es una elección de esquema de Joseph
+que debe revisar Joyce antes de conectar su procesador; no altera el par de identidad
+`(id_paciente,codigo_region)` ni `id_estudio`. Las particiones SJ/AL/CA corresponden a la
+región de **registro** y `citas.id_sucursal` determina la de **atención**. El fixture local
+usa 30 personas enteramente ficticias, sin filas de facturación ni documentos MongoDB.
+La tabla outbox es estructura; no existe worker ni exportación. D-036 documenta el adelanto
+autorizado y la dependencia del gate FDW todavía abierto.
