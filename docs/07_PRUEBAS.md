@@ -160,3 +160,26 @@ P12 conserva el alcance parcial documentado arriba. Evidencia durable:
 Al cierre, Docker Desktop dejó de exponer el daemon Windows de nuevo; el PASS local
 corresponde a la ejecución anterior a esa pérdida de disponibilidad, no a una comprobación
 del estado actual. La CI Ubuntu no sustituye la estabilidad del host Windows.
+
+## Fase 2 PostgreSQL aislada — 22/10/2026, Joseph
+
+**Precondición:** base temporal vacía PostgreSQL 16 en proyecto Compose base; los scripts
+se ejecutan en orden 01/02/03/06 con `psql -v ON_ERROR_STOP=1`. La ejecución CI usa
+`./scripts/Test-PostgresqlCore.ps1 -Repeat 2 -IncludePersistence`; crea y elimina dos
+bases sintéticas, conserva el volumen. Guía: `documentacion/JOSEPH_FASE2_POSTGRESQL.md`.
+
+| Caso | Windows local | CI Ubuntu22 [39878097819](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39878097819), código `295bf32` |
+|---|---|---|
+| DDL de 12 tablas, 3 particiones, fixture exacto | NO EJECUTADO: daemon ausente | PASA dos veces, desde base vacía |
+| Inserción válida entre regiones; FK/CHECK/UNIQUE inválidos | NO EJECUTADO | PASA; errores esperados capturados y ROLLBACK sin filas |
+| P14 `tableoid` y `EXPLAIN` | NO EJECUTADO | PASA: SJ/AL/CA = 10/10/10; plan solo `pacientes_al`; 1001/AL atendido en SJ |
+| P04 local: resultado y evento en mismo COMMIT | NO EJECUTADO | PASA; ambos visibles; MongoDB NO EJECUTADO |
+| P13 local: resultado/evento revertidos | NO EJECUTADO | PASA; filas ausentes, estudio sin cambio; exportación NO EJECUTADA |
+| P12 registros clínicos PG tras restart | NO EJECUTADO | PASA parcialmente, mismo contenedor y volumen; no recreación/restauración/otros motores |
+| P18 instalación del módulo desde base vacía | NO EJECUTADO | PASA dos instalaciones del módulo; P18 del sistema completo PENDIENTE |
+
+La [regresión 39878319168](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39878319168)
+también PASÓ en `502f5fa`: PostgreSQL 16.15, dos bases vacías y dos restart;
+los marcadores de cada aserción constan en el artifact `joseph-postgresql-core`.
+Evidencia versionada: `evidencias/registros/2026-10-22-joseph-postgresql-core-ci.txt`.
+P01/P05–P11/P15–P17 y aceptación global permanecen pendientes o dependen de Joyce/Armando.

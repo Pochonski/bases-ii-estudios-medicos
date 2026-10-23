@@ -1,0 +1,75 @@
+name: Joseph - núcleo PostgreSQL
+on:
+  pull_request:
+    branches:
+      - feature/joseph-infra-postgresql
+    paths:
+      - 'postgresql/**'
+      - 'pruebas/postgresql/**'
+      - 'scripts/Test-PostgresqlCore.ps1'
+      - '.github/workflows/joseph-postgresql-core.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  nucleo-postgresql:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    env:
+      COMPOSE_FILE: compose.yaml
+      COMPOSE_ENV_FILES: .env
+      COMPOSE_PROJECT_NAME: joseph-core-ci
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Crear secretos efímeros
+        shell: pwsh
+        run: |
+          $null = New-Item -ItemType Directory -Force .tmp/ci
+          ./scripts/Initialize-Local.ps1
+          foreach ($file in Get-ChildItem secrets/*.txt) {
+            $value = [IO.File]::ReadAllText($file.FullName).Trim()
+            Write-Output "::add-mask::$value"
+          }
+      - name: Validar configuración base
+        shell: pwsh
+        run: ./scripts/Test-Infra.ps1 -StaticOnly | Tee-Object -FilePath .tmp/ci/config.txt
+      - name: Construir PostgreSQL del proyecto
+        run: docker compose --progress plain build postgres
+      - name: Iniciar solo PostgreSQL
+        run: docker compose up -d --wait --wait-timeout 300 postgres
+      - name: Probar núcleo en dos bases vacías y restart
+        shell: pwsh
+        run: ./scripts/Test-PostgresqlCore.ps1 -Repeat 2 -IncludePersistence | Tee-Object -FilePath .tmp/ci/nucleo.txt
+      - name: Registrar entorno y alcance
+        if: always()
+        shell: pwsh
+        run: |
+          @(
+            "Head PR: ${{ github.event.pull_request.head.sha || github.sha }}"
+            "Checkout: $(git rev-parse HEAD)"
+            "Compose files: $env:COMPOSE_FILE"
+            "Proyecto: $env:COMPOSE_PROJECT_NAME"
+            "Kernel: $(uname -r)"
+            "PowerShell: $($PSVersionTable.PSVersion)"
+            "Resultado previo al artifact: ${{ job.status }}"
+            "Persistencia: registros clínicos tras restart del mismo contenedor y volumen PostgreSQL."
+            "No acredita recreación, restauración, persistencia SQL Server/MongoDB ni FDW remoto."
+          ) | Set-Content .tmp/ci/resumen.txt
+          docker version --format 'Docker cliente={{.Client.Version}} servidor={{.Server.Version}}' | Add-Content .tmp/ci/resumen.txt
+          docker compose version | Add-Content .tmp/ci/resumen.txt
+          docker compose exec -T --user postgres postgres psql -X -U postgres -d postgres -Atc 'SHOW server_version' | ForEach-Object { "PostgreSQL servidor: $_" } | Add-Content .tmp/ci/resumen.txt
+          docker compose ps -a
+      - name: Guardar evidencia depurada
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: joseph-postgresql-core
+          path: .tmp/ci/*.txt
+          retention-days: 14
+          if-no-files-found: error
+      - name: Diagnóstico PostgreSQL
+        if: failure()
+        run: docker compose logs --no-color --tail 80 postgres
+      - name: Detener sin eliminar volúmenes
+        if: always()
+        run: docker compose down

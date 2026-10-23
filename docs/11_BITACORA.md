@@ -189,3 +189,39 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   proyecto de prueba; no hay datos ni volúmenes borrados. P12 sigue parcial. FDW remoto,
   BSON y cuentas/objetos de Joyce siguen bloqueados; no se contactó a compañeros.
 - **Siguiente:** repetir CI con stop/start, registrar evidencia y mantener PR en borrador sin aprobación/merge.
+
+## 2026-10-22 — Joseph, fase 2 PostgreSQL independiente
+
+- **Objetivo y autorización:** adelantar exclusivamente 12 tablas PostgreSQL, LIST SJ/AL/CA,
+  fixture ficticio y pruebas, aislados del gate FDW y de los módulos Joyce/Armando.
+- **Punto de partida:** `feature/joseph-infra-postgresql` limpio en `20e9fe6`;
+  `feature/joseph-postgresql-core` creada desde ese commit. PR #2 en borrador,
+  base en rama de infraestructura; `main` no modificado.
+- **Archivos:** `postgresql/01_esquemas.sql`, `02_tablas.sql`, `03_particiones.sql`,
+  `06_datos_prueba.sql`; cinco pruebas SQL; `scripts/Test-PostgresqlCore.ps1`;
+  workflow separado; README, docs 00/03/06/07/10/11, guía, informe y evidencia.
+- **Comandos:** `git status/log/branch/add/commit/push/diff --check`, `gh pr create/view`,
+  `gh run list/view/download`, parser PowerShell, `docker info`. CI ejecuta
+  `Initialize-Local`, validación Compose, `docker compose build/up` solo PG,
+  `Test-PostgresqlCore -Repeat 2 -IncludePersistence`, `docker compose down` sin `-v`.
+- **Resultado inicial CI:** [39878097819](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39878097819)
+  SUCCESS en código `295bf32`: dos bases vacías, 12 tablas, fixture exacto,
+  inserciones y rechazos, P14 tableoid/EXPLAIN, COMMIT/ROLLBACK locales y
+  persistencia clínica tras restart del mismo PG. Ambas bases sintéticas eliminadas.
+  [Regresión 39878319168](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39878319168)
+  sobre `502f5fa` PASÓ: marcadores explícitos en artifact, PG servidor 16.15,
+  mismo resultado funcional en dos bases vacías y dos restart. Ver extracto en
+  `evidencias/registros/2026-10-22-joseph-postgresql-core-ci.txt`.
+  La regresión heredada de infraestructura
+  [39878319636](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39878319636)
+  PASÓ en el mismo head: ACL Windows Server y Ubuntu base/localhost, artifacts revisados.
+- **Windows local:** `docker info` falló por named pipe `dockerDesktopLinuxEngine` ausente.
+  `Test-Infra -StaticOnly` PASÓ con `.env` operativo/Compose base; sintaxis PowerShell
+  0 errores y `git diff --check` limpio. SQL/restart NO EJECUTADOS
+  localmente. Sin cambiar WSL/Docker ni eliminar volúmenes.
+- **Riesgos/dependencias:** esquema `clinico`/`integracion` requiere revisión Joyce
+  antes de worker; falta vista/base/cuenta/fixture SQL Server, validación Mongo FDW
+  de autenticación/BSON/escritura/índice/revisión y gate de conectores. Outbox solo
+  local, sin exportación. P12 parcial; P18 completo pendiente.
+- **Siguiente:** repetir en Windows cuando el daemon responda, solicitar revisión
+  técnica de interfaz en PR #2 y mantener ambos PR en borrador sin merge/aprobación.

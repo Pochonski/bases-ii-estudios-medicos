@@ -89,3 +89,14 @@ No se crearon las 12 tablas clínicas ni se delegaron tareas ajenas. La infraest
 un workflow Ubuntu para ejecutar el mismo build y smoke de extensiones/motores.
 Manual: documentacion/JOSEPH_FASE1_WINDOWS.md. No usar creación de extensión como prueba
 de lectura/escritura remota ni de sincronización.
+
+## Adelanto aislado autorizado — 22/10/2026, Joseph
+
+Joseph autorizó explícitamente implementar y probar solo su núcleo PostgreSQL antes de
+resolver las consultas FDW reales. DDL, particiones y fixture se mantienen en el PR #2,
+basado en la rama del PR #1, sin integrar SQL Server, MongoDB, worker ni vistas API.
+Este adelanto **no supera** el gate 2: el orden de integración 3–7 y las dependencias de
+Joyce permanecen. El runner crea bases de prueba vacías, ejecuta scripts en orden
+`01_esquemas`, `02_tablas`, `03_particiones`, `06_datos_prueba` y luego pruebas,
+conserva el volumen y elimina únicamente las bases sintéticas al pasar. Guía exacta:
+`documentacion/JOSEPH_FASE2_POSTGRESQL.md`.

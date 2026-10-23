@@ -129,3 +129,22 @@ Evidencia: `evidencias/registros/2026-10-22-joseph-gateway-backend-ci.txt`.
 El daemon local volvió a quedar inaccesible después de esas pruebas Windows; no se
 acredita estabilidad tras reinicio de Desktop/Windows. No altera el resultado CI.
 No cambian los contratos, P12 parcial ni el gate FDW/BSON aún abierto.
+
+## Núcleo PostgreSQL aislado — 22/10/2026, Joseph (D-036)
+
+Joseph autorizó adelantar solo sus 12 tablas clínicas/outbox y pruebas en el PR #2,
+basado en la rama del PR #1. Los scripts SQL, particiones LIST SJ/AL/CA, fixture
+ficticio y runner sobre bases vacías están implementados. En CI Ubuntu22 del código
+`295bf32`, la primera ejecución [39878097819](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39878097819)
+PASÓ dos instalaciones, integridad, `tableoid`/`EXPLAIN`, COMMIT/ROLLBACK locales y
+registros PostgreSQL tras `restart`. Se conserva el artifact y un extracto versionado.
+El código `502f5fa` añade marcadores explícitos al artifact y versión efectiva PG;
+[CI 39878319168](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39878319168)
+también PASÓ dos bases vacías y dos restart de PostgreSQL 16.15. Evidencia duradera:
+`evidencias/registros/2026-10-22-joseph-postgresql-core-ci.txt`.
+
+**Windows local:** `docker info` falló por ausencia de `dockerDesktopLinuxEngine` durante
+esta fase; SQL/restart NO EJECUTADOS aquí. No se cambiaron WSL, Docker ni volúmenes.
+**Integración:** P01, Mongo BSON/lectura/escritura, cuentas y objetos Joyce siguen
+pendientes. El outbox no tiene worker ni exportación; P04/P13 solo prueban atomicidad
+PostgreSQL. No hay aprobación del gate FDW ni traspaso de interfaz a Armando.
