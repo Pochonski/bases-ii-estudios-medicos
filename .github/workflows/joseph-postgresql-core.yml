@@ -2,6 +2,7 @@ name: Joseph - núcleo PostgreSQL
 on:
   pull_request:
     branches:
+      - main
       - feature/joseph-infra-postgresql
     paths:
       - 'postgresql/**'
@@ -37,6 +38,25 @@ jobs:
         run: docker compose --progress plain build postgres
       - name: Iniciar solo PostgreSQL
         run: docker compose up -d --wait --wait-timeout 300 postgres
+      - name: SQL inválido debe propagar un fallo
+        shell: pwsh
+        run: |
+          . ./scripts/Compose-Context.ps1
+          $context = New-ComposeContext
+          $rejected = $false
+          try {
+            Invoke-ProjectCompose $context @(
+              'exec','-T','--user','postgres','postgres','psql','-X','-U','postgres',
+              '-d','postgres','-v','ON_ERROR_STOP=1','-c',
+              'SELECT * FROM public.__joseph_ci_tabla_inexistente__'
+            )
+          } catch {
+            if ($_.Exception.Message -notmatch 'Compose exec terminó con código') { throw }
+            $rejected = $true
+          }
+          if (-not $rejected) { throw 'Un error SQL no produjo fallo de Compose/psql.' }
+          'PASS: SQL inválido devolvió código no cero; el runner propaga el error a CI.' |
+            Tee-Object -FilePath .tmp/ci/sql-error.txt
       - name: Probar núcleo en dos bases vacías y restart
         shell: pwsh
         run: ./scripts/Test-PostgresqlCore.ps1 -Repeat 2 -IncludePersistence | Tee-Object -FilePath .tmp/ci/nucleo.txt
