@@ -1,6 +1,6 @@
 # Matriz de pruebas y aceptación
 
-**Estado: TODAS PLANIFICADAS / NO EJECUTADAS.** Para cada prueba preservar: precondiciones, comandos exactos, base/motor, salida relevante, comparación con esperado, fecha, responsable y evidencia en `evidencias/`.
+**Estado: aceptación funcional pendiente; ejecución estática parcial registrada al final.** Para cada prueba preservar: precondiciones, comandos exactos, base/motor, salida relevante, comparación con esperado, fecha, responsable y evidencia en `evidencias/`.
 
 | ID | Procedimiento previsto | Resultado esperado | Requisito |
 |---|---|---|---|
@@ -43,3 +43,120 @@
 ### Condición final
 
 El proyecto solo pasa aceptación si los tres motores están conectados, las operaciones exigidas funcionan, y los resultados están probados y documentados. La documentación por sí sola **no sustituye** ejecución real.
+
+## Ejecución parcial — 22/10/2026, Joseph
+
+| Prueba | Resultado local |
+|---|---|
+| Compose base y overlay, red, secretos, volúmenes y healthchecks | PASA validación estática |
+| Sintaxis de tres scripts PowerShell | PASA |
+| Inicializador repetido sin rotar secretos existentes | PASA |
+| POSTGRES_DB vacío | PASA negativo: Compose rechaza |
+| .env y tres secretos ignorados / git diff --check | PASA |
+| Build Docker PG con FDW | NO EJECUTADO: comando falla antes de compilar, daemon ausente |
+| P01 facturación real | BLOQUEADO POR DEPENDENCIA de Joyce |
+| P12 PostgreSQL | Script preparado, NO EJECUTADO localmente |
+| P14 particiones | PENDIENTE, todavía no hay DDL clínico |
+| P17 FDW | SQL/config preparados; NO EJECUTADO ni login validado |
+| P18 instalación vacía | Solo parte estática probada; arranque local NO EJECUTADO |
+| Otras Pxx | PENDIENTES, conservan responsables |
+
+Evidencia: evidencias/registros/2026-10-22-joseph-local.txt.
+El workflow Ubuntu es una comprobación adicional; no acredita funcionamiento en Windows.
+
+## Cierre verificado — 22/10/2026, Joseph
+
+[CI 39747806912](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39747806912)
+PASA en SHA 89d0754, Ubuntu22/kernel 6.8.0-1070-azure:
+build de tds_fdw/mongo_fdw, tres motores saludables, consultas autenticadas, CREATE EXTENSION/LOAD
+y persistencia PostgreSQL tras reinicio (P12 parcial). No prueba Windows, consultas FDW remotas,
+BSON/escritura, P01, P14 ni el outbox.
+Evidencia: evidencias/registros/2026-10-22-joseph-ci-exito.txt.
+Informe de auditoría: documentacion/INFORME_CHATGPT_JOSEPH_FASE1.md.
+PR #1 permanece en borrador; main conserva 630cca6.
+
+## Regresiones de auditoría — 22/10/2026, Joseph
+
+| Caso | Windows local | CI corregida |
+|---|---|---|
+| H1 Everyone/Users explícitos en carpeta/archivos, DACL final y owner | PASA; sin impersonación | PASA Windows Server 2022 |
+| Valores existentes / .env conservados, nuevo secreto, idempotencia | PASA | PASA Windows Server/Ubuntu |
+| H2 selección base/overlay explícita y COMPOSE_* | PASA estático | PASA Ubuntu base/localhost |
+| H3 ejemplo válido y .env operativo vacío | PASA negativo; archivo temporal, .env real intacto | PASA Ubuntu base/localhost |
+| Puertos/ID/volumen y fila PG tras restart en base/localhost | NO EJECUTADO: daemon ausente | PASA Ubuntu base/localhost |
+| Lectura de secretos por UID de cada motor | NO EJECUTADO | PASA Ubuntu base/localhost |
+
+P12 solo cubre una fila PostgreSQL tras restart y bindings/volumen conservados.
+No acredita recreación/restauración ni persistencia SQL Server/MongoDB.
+CI previa confirmada: 39753627026 / 612d07d; no valida las correcciones nuevas.
+Evidencia local: evidencias/registros/2026-10-22-joseph-auditoria-windows.txt.
+P01/P17/BSON, autenticación propia y privilegios negativos siguen NO EJECUTADOS; gates abiertos.
+
+## Cierre de correcciones de auditoría — 22/10/2026, Joseph
+
+CI [39759092391](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39759092391)
+PASA sobre head a801c88004a7943b96e0355fbaea11ff734c683e: ACL Windows Server2022 y dos variantes
+Ubuntu22 (base/localhost). Lectura de secretos por UID y P12 parcial PASAN; en overlay se conserva
+127.0.0.1:5432 junto con la fila, ID y volumen PG. Marcadores eliminados al pasar.
+Artifacts depurados disponibles 14 días; evidencia versionada: evidencias/registros/2026-10-22-joseph-auditoria-ci.txt.
+H1/H3 y selección estática probados también en Windows local; daemon sigue ausente.
+No se acredita recreación, SQL Server/MongoDB persistentes, restauración, FDW remoto, BSON o login propio.
+Informe: documentacion/INFORME_CORRECCIONES_AUDITORIA_PR1.md.
+Commits correctivos aa1ae16/a801c88; cierre posterior solo documental. PR #1 en borrador, sin aprobación/merge.
+
+## Manual Windows y puerto efectivo — 22/10/2026, Joseph (D-034)
+
+La CI 39759092391 sigue siendo evidencia de H1–H3 en el código anterior, pero su comprobación
+de puertos H2 examinaba `HostConfig.PortBindings` (solicitud) y no
+`NetworkSettings.Ports` ni conexiones al host. El primer arranque Windows reveló que la red
+`internal: true` sola no activaba esos bindings, aunque los tres motores estaban saludables.
+Se conserva ese fallo en el registro Windows.
+
+| Prueba | Resultado Windows local después de agregar `port-gateway` |
+|---|---|
+| Build imagen PostgreSQL con tds_fdw/mongo_fdw | PASA; ambos artefactos cargan mediante `LOAD` |
+| Compose base/overlay + H1/H3 + sintaxis | PASA; `.env` y secretos existentes conservados |
+| Tres healthchecks y consultas autenticadas | PASA; PostgreSQL, SQL Server y MongoDB |
+| Lectura de secretos por UID | PASA; usuarios postgres, SQL Server 10001:0, mongodb |
+| Red y puertos localhost | PASA; motores solo en `medical-network` interna, gateway con tres bindings activos y sondas TCP Windows |
+| Cliente Windows PostgreSQL/SQL Server | PASA; consultas autenticadas por 127.0.0.1 y puertos alternativos |
+| Selección Compose incorrecta sin overlay | PASA negativo; rechaza el gateway existente antes de escribir marcador |
+| P12 PostgreSQL | PASA **parcial**: fila sintética tras `restart`, mismo contenedor/volumen/gateway/puertos, marcador eliminado |
+| P12 tres motores / recreación / restauración | NO EJECUTADAS |
+| P01/P17 remoto y Mongo BSON/INSERT/UPDATE | BLOQUEADAS por objetos, cuentas, tipos y fixture de Joyce; gate abierto |
+
+MongoDB autenticó dentro de su contenedor; solo se probó TCP desde Windows, no `mongosh`
+cliente en Windows. El kernel efectivo Docker fue `6.18.33.2-microsoft-standard-WSL2`.
+Pruebas de host y CI deben seguir distinguiéndose. Evidencia Windows y comandos:
+`evidencias/registros/2026-10-22-joseph-despliegue-windows.txt`.
+
+### CI del gateway verificada
+
+[39807402214](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39807402214)
+terminó SUCCESS en head `0b5e507`: tres jobs, artifacts revisados. Base: sin puertos
+publicados, P12 parcial PG. Overlay: tres puertos 127.0.0.1 activos y conexiones TCP del
+runner, P12 parcial PG con gateway estable. Windows Server solo probó ACL. Checkout de merge
+`533079c3c16a57f14b82729e0eb9d8f9093d0f31`. Evidencia:
+`evidencias/registros/2026-10-22-joseph-gateway-ci.txt`.
+Este PASS no cierra P01/P17 remotos, Mongo BSON ni P12 completo.
+
+### Regresión menor del gateway — 22/10/2026, Joseph (D-035)
+
+| Caso | Windows 11 local | CI Ubuntu22 localhost |
+|---|---|---|
+| Filtro workflow `docker/port-gateway/**` | Revisado en YAML | Filtro presente; el primer run se disparó con varios archivos modificados. NO PROBADO con cambio exclusivo de esa ruta. |
+| HAProxy `/ready` y healthcheck Docker | PASA en estado normal tras recrear solo gateway; tres motores conservaron ID | PASA en overlay; el modo base no crea gateway |
+| P12 parcial PostgreSQL con gateway actualizado | PASA: fila sintética tras `restart`, mismo ID/volumen/gateway/bindings, tabla eliminada | PASA base/localhost; marcador eliminado |
+| Backend PostgreSQL detenido; frontend TCP aún abierto; gateway no saludable; recuperación con mismo volumen/puertos | NO EJECUTADA: la regresión impide afectar el proyecto local | PASS con `stop/start` en proyecto efímero, tras FALLA informativa con `pause` en 39811585204 |
+| Exposición host | `NetworkSettings.Ports` del gateway: solo 127.0.0.1:11433/15432/37017; endpoint 8404 no publicado | PASS: solo 127.0.0.1:1433/5432/27017; base sin puertos |
+
+La [CI 39812197292](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39812197292)
+terminó SUCCESS en `ee5ce970e61428b5c68440d2ce3b39f0f39b500d`, checkout de merge
+`ed428667f13fce9a717c4cf198cb43805cb7ce25`: tres jobs y artifacts descargados.
+La prueba negativa no acredita persistencia nueva ni consultas FDW. El check TCP de HAProxy
+no detectó `pause` porque el socket del backend quedó abierto; sí detecta `stop`.
+P12 conserva el alcance parcial documentado arriba. Evidencia durable:
+`evidencias/registros/2026-10-22-joseph-gateway-backend-ci.txt`.
+Al cierre, Docker Desktop dejó de exponer el daemon Windows de nuevo; el PASS local
+corresponde a la ejecución anterior a esa pérdida de disponibilidad, no a una comprobación
+del estado actual. La CI Ubuntu no sustituye la estabilidad del host Windows.

@@ -1,0 +1,102 @@
+name: estudios-medicos
+
+x-service-defaults: &service-defaults
+  restart: unless-stopped
+  networks: [medical-network]
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  postgres:
+    <<: *service-defaults
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: docker/postgres/Dockerfile
+    image: estudios-medicos/postgres-fdw:joseph-fase1
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_DB: ${POSTGRES_DB:?Defina POSTGRES_DB en .env}
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_INITDB_ARGS: "--auth-local=peer --auth-host=scram-sha-256 --data-checksums"
+    command: ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+    secrets: [postgres_password]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./integracion:/opt/proyecto/integracion:ro
+      - ./pruebas/infraestructura:/opt/proyecto/pruebas:ro
+    shm_size: 128mb
+    mem_limit: 1g
+    cpus: 1.5
+    healthcheck:
+      test: ["CMD-SHELL", "PGPASSWORD=\"$$(cat /run/secrets/postgres_password)\" psql -X -h 127.0.0.1 -U postgres -d \"$$POSTGRES_DB\" -v ON_ERROR_STOP=1 -tAc 'SELECT 1' | grep -qx 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  sqlserver:
+    <<: *service-defaults
+    platform: linux/amd64
+    image: mcr.microsoft.com/mssql/server:2022-latest@sha256:cf8f0ab2ebe61feec2eed2629061a07d247f791c2a8ddda74a4ac9f06a291718
+    environment:
+      ACCEPT_EULA: ${ACCEPT_EULA:?Revise la licencia y defina ACCEPT_EULA=Y}
+      MSSQL_PID: Developer
+      MSSQL_MEMORY_LIMIT_MB: "2048"
+    # La imagen no documenta MSSQL_SA_PASSWORD_FILE: leer el secret al arrancar.
+    entrypoint: ["/bin/bash", "-ec", "export MSSQL_SA_PASSWORD=\"$$(cat /run/secrets/sqlserver_sa_password)\"; exec /opt/mssql/bin/sqlservr"]
+    secrets: [sqlserver_sa_password]
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    mem_limit: 3g
+    cpus: 2.0
+    healthcheck:
+      test: ["CMD-SHELL", "SQLCMDPASSWORD=\"$$(cat /run/secrets/sqlserver_sa_password)\" /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -b -l 3 -Q 'SET NOCOUNT ON; SELECT 1' -o /dev/null"]
+      interval: 15s
+      timeout: 8s
+      retries: 20
+      start_period: 60s
+
+  mongodb:
+    <<: *service-defaults
+    platform: linux/amd64
+    image: mongo:8.0@sha256:4c7d0fb8fde0681e2ae443b0b09371ec9c31a81caab05af9579458bfcb30d656
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:?Defina MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD_FILE: /run/secrets/mongo_root_password
+    command: ["mongod", "--bind_ip_all", "--wiredTigerCacheSizeGB", "0.5"]
+    secrets: [mongo_root_password]
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    mem_limit: 1536m
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--host", "127.0.0.1", "--eval", "const fs = require('fs'); const a = db.getSiblingDB('admin'); if (!a.auth(process.env.MONGO_INITDB_ROOT_USERNAME, fs.readFileSync('/run/secrets/mongo_root_password', 'utf8').trim())) quit(1); if (a.runCommand({ping:1}).ok !== 1) quit(1);"]
+      interval: 10s
+      timeout: 8s
+      retries: 15
+      start_period: 30s
+
+networks:
+  medical-network:
+    name: medical-network
+    driver: bridge
+    internal: true
+
+volumes:
+  postgres_data:
+  sqlserver_data:
+  mongodb_data:
+  mongodb_config:
+
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password.txt
+  sqlserver_sa_password:
+    file: ./secrets/sqlserver_sa_password.txt
+  mongo_root_password:
+    file: ./secrets/mongo_root_password.txt

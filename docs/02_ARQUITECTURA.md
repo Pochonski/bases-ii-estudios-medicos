@@ -64,3 +64,30 @@ flowchart TB
 - **Pendiente**: confirmar con el docente que tres servidores lógicos en una PC bastan para el requisito «distribuido».
 - **Pendiente**: compilación real de `tds_fdw` y `mongo_fdw` con imágenes y dependencias elegidas.
 - **Pendiente**: confirmar puertos libres, SSD suficiente, WSL 2 y recursos.
+
+## Preparación de infraestructura — 22/10/2026, Joseph
+
+`compose.yaml` implementa la topología prevista y `compose.local.yaml` ofrece publicación opcional
+solo localhost. La red `medical-network` usa `internal: true`; no hay puertos host por defecto.
+Se agregó volumen `mongodb_config` para /data/configdb, sin modificar el modelo MongoDB.
+Límites: PostgreSQL 1 GiB, SQL Server 3 GiB (límite interno 2048 MB), MongoDB 1.5 GiB (caché 0.5 GB).
+No hay medición de rendimiento ni prueba local de arranque. Versiones siguen como candidatos de spike;
+ver `documentacion/COMPATIBILIDAD_FDW.md` y D-027.
+
+## Puertos locales efectivos — 22/10/2026, Joseph (D-034)
+
+Una ejecución Windows mostró que el primer overlay guardaba los bindings solicitados en
+`HostConfig.PortBindings`, pero `NetworkSettings.Ports` quedó vacío y el host no escuchaba:
+Docker no publicó puertos de contenedores conectados **solo** a `medical-network` interna.
+El overlay corregido agrega una pasarela TCP `port-gateway` (HAProxy 3.2.26) sin credenciales
+ni datos persistentes. Es el único servicio conectado a `host-access` (bridge no interno)
+y a `medical-network`; publica 5432, 1433 y 27017 solamente en 127.0.0.1 (puertos host
+configurables). Los tres motores conservan solo `medical-network`, `internal: true`.
+Es un cuarto contenedor auxiliar, **no** un cuarto motor ni un cambio de autoridad de datos.
+En modo base no se crea la pasarela ni se publican puertos. El acceso desde Windows es
+opcional y no reemplaza las conexiones motor a motor dentro de la red interna.
+
+El gateway comprueba disponibilidad de los **tres** backends con el endpoint HTTP `/ready`
+de HAProxy, enlazado a 127.0.0.1:8404 **dentro** del contenedor. Devuelve 503 si un backend
+no tiene servidor activo. Docker usa ese endpoint para su healthcheck; 8404 no se publica
+en el host. Una conexión TCP al frontend, por sí sola, no acredita backend disponible.

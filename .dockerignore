@@ -1,0 +1,5 @@
+# Lista permitida: ningún secret, .env, evidencia ni documento del curso entra al build.
+**
+!docker/
+!docker/postgres/
+!docker/postgres/**

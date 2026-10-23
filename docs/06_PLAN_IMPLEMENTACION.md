@@ -1,8 +1,8 @@
-# Plan de implementación reproducible (SIN código todavía)
+# Plan de implementación reproducible
 
 ## Principio
 
-La estructura en este repositorio es **especificación, no implementación**. Añadir scripts, imágenes y configuraciones solo cuando el grupo autorice programar. Las siguientes rutas son **previstas**.
+La estructura siguiente es la **especificación inicial**; consultar la actualización al final para la implementación parcial autorizada. Añadir scripts, imágenes y configuraciones solo cuando el grupo autorice programar. Las siguientes rutas son **previstas**.
 
 ## Árbol de implementación esperado
 
@@ -80,3 +80,12 @@ Orden exacto de ejecución entre módulos se actualizará cuando existan scripts
 | `evidencias/`, `documentacion/`, `video/` | Todos por su módulo | Revisión grupal |
 
 No crear tres Docker Compose incompatibles: **un único `compose.yaml` compartido**.
+
+## Inicio autorizado parcial — 22/10/2026, Joseph
+
+Se implementó la preparación de la etapa 1 y el build/pruebas del spike de etapa 2.
+El motor Docker local no respondió; las pruebas de conectores aún no habilitan la etapa 3.
+No se crearon las 12 tablas clínicas ni se delegaron tareas ajenas. La infraestructura incluye
+un workflow Ubuntu para ejecutar el mismo build y smoke de extensiones/motores.
+Manual: documentacion/JOSEPH_FASE1_WINDOWS.md. No usar creación de extensión como prueba
+de lectura/escritura remota ni de sincronización.

@@ -58,3 +58,144 @@
 ## Registro de nuevas decisiones
 
 Agregar filas `D-024` y siguientes con **fecha**, **proponente**, **fuente** (curso/grupo/propuesta), **estado**, **consecuencias**, **archivos afectados** y **evidencia** si ya se probó. No borrar decisiones anteriores: marcarlas supersedidas y enlazar reemplazo.
+
+### D-025 — Inicio limitado a Joseph (21–22/10/2026)
+
+- Proponente/fuente: autorización explícita de Joseph en esta sesión.
+- Estado: IMPLEMENTACIÓN AUTORIZADA solo para infraestructura/PostgreSQL/lectura SQL Server de Joseph.
+- Impacto: rama feature/joseph-infra-postgresql, PR en borrador; sin merge ni módulos de Joyce/Armando.
+- Archivos: README, docs de estado/bitácora y entregables de Joseph.
+
+### D-026 — Respetar spike previo al esquema (22/10/2026)
+
+- Proponente: Joseph mediante agente; fuente: gate 2 de docs/06.
+- Estado: ejecutado como orden de trabajo; DDL clínico permanece PENDIENTE.
+- Motivo: Docker Linux no expone su named pipe incluso tras intentar iniciar Desktop.
+- Impacto: entregar archivos y pruebas de infraestructura, investigar conectores, preparar CI Ubuntu;
+  no declarar compilación, FDW real ni Windows funcional sin evidencia.
+
+### D-027 — Candidatos inmutables para el spike (22/10/2026)
+
+- Proponente: Joseph mediante agente; fuente: repositorios y manifiestos oficiales.
+- Estado: PROPUESTA TÉCNICA verificable por artefactos; compatibilidad funcional SIN APROBAR.
+- Elección: PG 16.15/bookworm, SQL Server 2022 Developer y MongoDB 8.0.34-noble por digest amd64;
+  tds_fdw 2.0.5, mongo_fdw 5.5.3, driver C 1.30.2, json-c 0.18.
+- Motivo: respetar preselección y release mongo_fdw que declara MongoDB 8; evitar master/latest flotantes.
+- Archivos: compose.yaml, docker/postgres/Dockerfile, documentacion/COMPATIBILIDAD_FDW.md.
+- Evidencia: manifiestos consultados, commits oficiales y cuatro SHA-256 calculados desde descargas;
+  apt no está inmovilizado por snapshot. Fijación definitiva pendiente de pruebas con Joyce.
+
+### D-028 — Secretos por archivo y límites de seguridad (22/10/2026)
+
+- Proponente: Joseph mediante agente; fuente: mínimo privilegio de docs/05 y Compose secrets.
+- Estado: IMPLEMENTADO; validación estática y generación/idempotencia probadas en Windows.
+- Motivo: .env sin contraseñas, secretos fuera del contexto build/Git y solo en su motor.
+- Impacto: scripts/Initialize-Local.ps1, .env.example, .gitignore, .dockerignore, configuración PG/FreeTDS;
+  pruebas y manual. Sin cambios de columnas o IDs compartidos.
+- Límites: red interna; TLS TDS sin CA, sin TLS PG/Mongo, cuentas remotas de Joyce pendientes.
+  Perfil FDW PostgreSQL preparado NOLOGIN; no declarar roles plenamente implementados.
+
+### D-029 — Kernel del entorno de prueba MongoDB (22/10/2026)
+
+- Proponente: Joseph mediante agente; fuente: error real de MongoDB y documentación oficial.
+- Estado: PROBADO EN CI: runner Ubuntu22, kernel real 6.8.0-1070-azure; run 39747806912 PASA.
+- Evidencia: runs 39744770706 y 39747121313 compilaron ambos FDW; PG/SQL Server saludables,
+  MongoDB abortó con id 12257600 por kernel 6.19 o posterior.
+- Decisión: probar el mismo candidato en runner ubuntu-22.04 (kernel 6.8 según runner-images);
+  registrar uname -r. No bajar la versión de MongoDB ni desactivar su protección.
+- Impacto: .github/workflows/joseph-infra.yml, manual, compatibilidad y evidencia.
+  Sin modificaciones al kernel Windows/WSL ni a contratos compartidos.
+- Fuentes: https://jira.mongodb.org/browse/SERVER-121912 y
+  https://www.mongodb.com/docs/v8.0/release-notes/8.0/ .
+
+### D-030 — Corregir DACL de secretos (22/10/2026, Joseph; auditoría H1)
+
+- Fuente: reproducción de auditoría y autorización explícita para corregir PR #1.
+- Decisión: reconstruir DACL completa, proteger herencia y propietario actual; solo usuario/SYSTEM
+  en carpeta y todos los archivos normales existentes. Valores conservados. Corrige la garantía de D-028.
+- Archivos: Initialize-Local.ps1, Test-Secrets.ps1, docs/05 y guía.
+- Evidencia Windows: regresión con Everyone/Users explícitos y archivos preexistentes PASA;
+  DACL/propietario verificados, sin impersonación. API .NET evita el fallo local SeSecurityPrivilege.
+- Linux conserva directorio 700/archivos 644; lectura por UID SQL Server y demás motores PASA en CI 39759092391.
+
+### D-031 — Selección Compose compartida y restart sin reconciliar (22/10/2026, Joseph; H2)
+
+- Decisión: ComposeFile/EnvFile/ProjectName/ProjectDirectory comunes a operación y pruebas;
+  respetar selección nativa COMPOSE_* si no hay parámetros. Ejemplos usan selección explícita aislada.
+- Persistencia espera inspect del contenedor original; no ejecuta up. Verifica ID/bindings/volumen
+  y fila sintética PG; limpia al pasar y documenta limpieza del marcador si falla.
+- Alcance P12 permanece parcial: restart PG, no tres motores/recreación/restauración.
+- Archivos: Compose-Context.ps1, Invoke-Compose.ps1, Test-Infra/Test-Persistence, regresiones y CI.
+- Resultado: selección local estática PASA; runtime base/overlay PASA en CI 39759092391. Windows sin daemon.
+
+### D-032 — Validación separada del entorno operativo (22/10/2026, Joseph; H3)
+
+- Decisión: conservar ejemplo base/localhost y añadir config efectiva operativa con fases PASS/FAIL distintas.
+- Prueba negativa en proyecto temporal con ejemplo válido y .env operativo POSTGRES_DB vacío.
+- Resultado: rechazo operativo reproducido y corregido; .env real no se escribe y se verifica intacto.
+- Impacto: Test-Infra y Test-ComposeValidation; sin cambios de contrato o datos.
+
+### D-033 — Evidencia por plataforma y selección (22/10/2026, Joseph)
+
+- CI añade ACL Windows Server2022 y matriz Ubuntu22 base/localhost con lectura de secretos por UID
+  y persistencia PG acotada; secretos efímeros enmascarados, artifacts depurados con retención 14 días.
+- CI del head auditado 612d07d PASA (39753627026); código corregido a801c88 PASA en 39759092391, tres jobs y artifacts revisados.
+- Windows local: daemon ausente, servicio detenido; sin reinstalación ni cambios WSL/kernel/volúmenes.
+- FDW remoto, BSON, login propio/privilegios negativos e INT siguen pendientes de Joyce/gates.
+
+### D-034 — Pasarela localhost y validación del puerto activo (22/10/2026, Joseph)
+
+- Fuente/motivación: autorización de continuar el manual local; reproducción Windows con
+  `HostConfig.PortBindings` solicitado pero `NetworkSettings.Ports` vacío. Los tres motores
+  estaban saludables, pero Windows no escuchaba. H1–H3 ya habían sido aceptados técnicamente
+  por Joseph; esta prueba encontró una limitación adicional de la infraestructura.
+- Decisión: `compose.local.yaml` incorpora un `port-gateway` TCP sin secretos ni volumen,
+  imagen HAProxy 3.2-alpine por digest. Mantiene los **tres motores** solo en la red
+  `medical-network` interna. Únicamente el gateway une esa red con `host-access` bridge y
+  publica 127.0.0.1. El modo base permanece sin puertos/gateway.
+- Motivo: un motor conectado exclusivamente a una red interna no obtuvo puertos reales;
+  relajar `internal: true` de los motores habría cambiado su aislamiento.
+- Verificación: `Get-PostgresSnapshot` observa `NetworkSettings.Ports` del gateway, su ID,
+  salud y proyecto; sondas TCP alcanzan los tres puertos; selección base ante despliegue
+  overlay falla. En Windows PASAN healthchecks, consultas nativas PG/SQL Server y P12 parcial.
+- Archivos: `compose.local.yaml`, `docker/port-gateway/haproxy.cfg`, `scripts/Compose-Context.ps1`,
+  `Test-Infra.ps1`, `Test-Persistence.ps1`, workflow, guía, matriz, estado y evidencia.
+- Impacto/limitación: cuarto **contenedor auxiliar**, no motor ni modificación de contrato
+  clínico. El gateway tiene salida por bridge; no contiene credenciales y monta config read-only.
+  No prueba conectores FDW ni persistencia de los otros motores. CI del cambio pendiente al
+  elaborar esta entrada; registrar run y resultado efectivo en evidencia antes de cierre.
+
+**Cierre de verificación D-034:** CI [39807402214](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39807402214)
+SUCCESS en head `0b5e507`, Windows ACL y Ubuntu base/localhost. Artifact localhost confirma
+bindings activos en `NetworkSettings.Ports`, TCP desde host y P12 parcial. Registros separados
+en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 11.
+
+### D-035 — Salud real del gateway y regresión de backend (22/10/2026, Joseph)
+
+- Fuente: observaciones menores de la revisión técnica de PR #1; alcance de infraestructura de Joseph.
+- Motivo: la sonda TCP del host y el antiguo healthcheck `haproxy -c` podían pasar con un
+  backend caído; validaban listener y sintaxis, no disponibilidad de destinos.
+- Decisión: HAProxy ofrece `/ready` **solo en 127.0.0.1:8404 dentro del contenedor**;
+  responde 503 si alguno de los tres backends carece de servidor activo. El healthcheck
+  de Docker consulta ese endpoint. El overlay sigue publicando solo 5432/1433/27017
+  hacia 127.0.0.1 del host; 8404 no se publica.
+- Prueba controlada: solo en el proyecto efímero `joseph-audit-localhost` de CI, detener
+  PostgreSQL, exigir que gateway y validación runtime rechacen el backend caído,
+  iniciarlo en `finally` y comprobar salud/IDs/volumen/puertos restaurados. No elimina datos
+  ni volúmenes; causa indisponibilidad breve únicamente en ese proyecto de CI.
+- Archivos: workflow, `compose.local.yaml`, `docker/port-gateway/haproxy.cfg`,
+  `pruebas/infraestructura/Test-GatewayBackendFailure.ps1`, guía, matriz, estado, bitácora
+  y evidencia. No cambia contratos clínicos ni módulos de Joyce/Armando.
+- Evidencia inicial Windows: sintaxis HAProxy, configuración Compose, salud 200, consulta
+  runtime y tres bindings host 127.0.0.1 PASAN tras recrear **solo el gateway**. Los tres
+  IDs de motores permanecieron estables. La caída controlada se ejecuta solo en CI.
+- Primera ejecución CI 39811585204 **FALLÓ** solo en el test negativo: `docker compose pause`
+  congeló PostgreSQL, pero su socket TCP siguió aceptando conexiones; el check TCP de
+  HAProxy permaneció UP. El test ejecutó `unpause` en `finally`. Se corrigió el estímulo a
+  `stop/start`, que conserva contenedor y volumen pero cierra realmente el listener.
+- Cierre CI: [39812197292](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39812197292)
+  SUCCESS en `ee5ce97`, tres jobs. Artifact localhost: el frontend TCP aceptó conexión
+  con PG detenido, el gateway se marcó no saludable y la validación runtime lo rechazó;
+  tras `start` recuperó salud con mismos contenedores/volumen/bindings. P12 parcial pasó
+  después. No demuestra detección cuando un proceso congelado mantiene el socket TCP abierto,
+  ni pérdida de funcionalidad que no cierre el puerto del backend.

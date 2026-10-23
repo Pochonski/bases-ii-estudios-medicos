@@ -1,0 +1,7 @@
+Evidencia CI, 22/10/2026. Entorno GitHub Actions Ubuntu; no Windows.
+Commit bd4ce09, run 39744770706: build de ambos FDW PASA; arranque conjunto FALLA.
+Commit 4785086, run 39747121313: build PASA; PG y SQL Server saludables; MongoDB reinicia.
+Salida literal relevante de gh run view --log (recortada a la línea del error):
+infraestructura	Estado final	2026-10-22T08:23:12.5048076Z mongodb-1    | {"t":{"$date":"2026-10-22T08:23:06.358Z"},"s":"F",  "c":"CONTROL",  "id":12257600,"ctx":"main","msg":"MongoDB cannot start: Linux kernel versions 6.19 and newer has a known incompatibility with this version of MongoDB. See https://jira.mongodb.org/browse/SERVER-121912 for more information."}
+Fuente completa: https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39747121313
+Los pasos de consultas y persistencia fueron SKIPPED; no presentarlos como aprobados.

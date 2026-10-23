@@ -72,3 +72,14 @@ El enunciado p. 2 menciona `mongo_fdw` **o integración intermedia**, pero p. 3 
 - **Armando:** consume estructuras congeladas después del traspaso del 25/10, crea `api.vw_paciente_facturacion` y agregaciones.
 
 Los cambios de campos requieren registrar: columna, tipo anterior/nuevo, compatibilidad de datos, propietarios afectados y prueba de regresión.
+
+## Preparación del consumidor SQL Server — 22/10/2026, Joseph
+
+`integracion/01_fdw_sqlserver.sql` conserva nombres e identidad de este contrato; no crea la
+vista de Joyce ni la vista API de Armando. Recibe el nombre de base como parámetro explícito.
+Cadenas se leen como text, monto numeric(12,2), y fecha timestamptz mediante proyección ISO-8601
+en la consulta SQL Server para evitar depender de DATETIMEOFFSET en DB-Library.
+No se cambia el objeto remoto. Tipos concretos, offset/precisión, estados, cardinalidad y fixture
+requieren revisión con Joyce y prueba real antes de integrar.
+La preparación NO certifica compatibilidad: P01 está bloqueada; P17 solo tiene archivos.
+El perfil usr_fdw_pg_mssql es NOLOGIN y el mapping no se otorga a PUBLIC.

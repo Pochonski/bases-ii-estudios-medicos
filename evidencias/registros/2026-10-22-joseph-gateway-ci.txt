@@ -1,0 +1,50 @@
+CI JOSEPH — PASARELA Y PUERTOS ACTIVOS — 2026-10-22
+
+Run: https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39807402214
+Comandos: gh run view 39807402214 --json status,conclusion,headSha,url,jobs;
+gh api repos/Pochonski/bases-ii-estudios-medicos/actions/runs/39807402214/artifacts;
+gh run download 39807402214 --dir .tmp/ci-gateway-final-39807402214.
+Resultado autoritativo: status=completed, conclusion=success.
+Head PR: 0b5e507491781f1eb9e455ba011006d4d07458ab.
+Checkout de merge PR: 533079c3c16a57f14b82729e0eb9d8f9093d0f31.
+No confundir head con checkout. El posterior commit de cierre documental no cambia código.
+
+Jobs:
+- secretos-windows: success; Windows Server 2022, PowerShell 7.6.6;
+  Everyone/Users explícitos retirados de carpeta/cuatro archivos, valores conservados.
+- infraestructura base: success; Ubuntu22, kernel 6.8.0-1070-azure;
+  build PG/FDW, health, consultas/UID, puertos=[], fila PG tras restart y DROP.
+- infraestructura localhost: success; Ubuntu22, mismo kernel;
+  build PG/FDW, gateway, health, consultas/UID, puertos activos y TCP host,
+  fila PG tras restart y DROP.
+Docker CI cliente/servidor 28.0.4; Compose 2.38.2; PowerShell Ubuntu 7.6.7.
+
+Extractos revisados de artifacts depurados:
+base runtime: "PASS selección runtime PG: puertos=; volumen=joseph-audit-base_postgres_data."
+base P12: "PASS P12 parcial PG: fila tras restart; mismo contenedor/volumen;
+sin puertos publicados; marcador eliminado."
+localhost runtime: "PASS selección runtime PG: puertos=1433/tcp|127.0.0.1|1433;
+27017/tcp|127.0.0.1|27017;5432/tcp|127.0.0.1|5432".
+localhost runtime: "PASS conexiones TCP del host a los tres puertos localhost del gateway."
+localhost P12: "PASS P12 parcial PG: fila tras restart; mismo
+contenedor/gateway/volumen/puertos [...] ; marcador eliminado."
+Extensiones: mongo_fdw extversion 1.1; tds_fdw extversion 2.0.5.
+Motores: PostgreSQL 16.15, SQL Server 2022 CU27-GDR 16.0.4305.5, MongoDB 8.0.34.
+Regresión H3: ejemplo válido y entorno operativo POSTGRES_DB vacío rechazado;
+.env de usuario intacto. Test-Secrets: valores conservados.
+La salida de matriz confirma estado antes del artifact success. No se infieren
+consultas FDW remotas, BSON o autenticación propia a partir de estos checks.
+
+Artifacts descargados y revisados, retención declarada 14 días:
+- joseph-infra-base id 12438985496
+- joseph-infra-localhost id 12437809727
+- joseph-acl-windows id 12438172716
+No se versionaron logs completos ni .env/secretos; solo este extracto sin valores.
+
+Precedente: CI 39806854571 success en head 9b22c98 probó el mismo diseño;
+el commit 0b5e507 solo precisó mensajes de salida base/host y volvió a pasar.
+Windows local de Joseph es evidencia distinta: ver
+evidencias/registros/2026-10-22-joseph-despliegue-windows.txt.
+P12 sigue limitada a una fila PostgreSQL tras restart. Persistencia SQL Server/MongoDB,
+recreación/restauración, FDW TDS remoto, Mongo BSON/INSERT/UPDATE, login propio
+y permisos negativos NO EJECUTADOS. Gate de conectores abierto.

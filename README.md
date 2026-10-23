@@ -1,6 +1,6 @@
 # Bases de Datos II · Sistema de Gestión de Estudios Médicos Distribuido
 
-> **Estado: PLANIFICACIÓN DOCUMENTADA — NO IMPLEMENTADO.** Corte de contexto: 21 de octubre de 2026 (America/Costa_Rica). Proyecto académico del Instituto Tecnológico de Costa Rica, Campus Tecnológico San Carlos. **Entrega indicada en el enunciado: 28/10/2026 a las 23:59; confirmar en Moodle la inconsistencia del día de la semana.**
+> **Estado: IMPLEMENTACIÓN PARCIAL AUTORIZADA PARA JOSEPH.** Corte de contexto: 21 de octubre de 2026 (America/Costa_Rica). Proyecto académico del Instituto Tecnológico de Costa Rica, Campus Tecnológico San Carlos. **Entrega indicada en el enunciado: 28/10/2026 a las 23:59; confirmar en Moodle la inconsistencia del día de la semana.**
 
 Este repositorio es la **fuente común de contexto** de Joseph, Joyce, Armando y sus agentes de desarrollo. Se elaboró a partir del enunciado original y de las fases de planificación acordadas en conversación. Su objetivo es prevenir decisiones contradictorias y facilitar trabajo paralelo y revisable.
 
@@ -49,7 +49,7 @@ Se deben demostrar las conexiones PostgreSQL ↔ SQL Server y PostgreSQL ↔ Mon
 
 **No asignar a Armando un bloqueante de la fase inicial.** Su desarrollo depende de interfaces acordadas y validadas hasta el 25 de octubre.
 
-## Estado real
+## Estado al corte de planificación (histórico)
 
 - [x] Enunciado recopilado, arquitectura planeada y división propuesta por el grupo.
 - [x] Modelos conceptuales, contratos, seguridad y pruebas descritos.
@@ -66,3 +66,59 @@ Se deben demostrar las conexiones PostgreSQL ↔ SQL Server y PostgreSQL ↔ Mon
 Actualizar `docs/10_DECISIONES_Y_PENDIENTES.md` al tomar decisiones nuevas, `docs/00_ESTADO_Y_FUENTES.md` al cambiar el estado real, y `docs/11_BITACORA.md` al terminar una sesión. Todas las modificaciones técnicas deben acompañarse de una prueba reproducible. Nunca incluir contraseñas, datos de salud reales ni secretos en commits.
 
 **Publicación:** repositorio **público** elegido por el grupo: https://github.com/Pochonski/bases-ii-estudios-medicos. La documentación publicada NO incluye el archivo original del profesor, datos clínicos reales, credenciales ni información privada. Invitaciones de escritura a Joyce y Armando siguen pendientes de sus usuarios de GitHub. La planificación fue trasladada al repositorio remoto el 21/10/2026.
+
+## Implementación autorizada de Joseph — 22/10/2026
+
+Joseph autorizó iniciar exclusivamente su alcance. Infraestructura y preparación FDW en
+`feature/joseph-infra-postgresql`; sin merge a main.
+
+- **IMPLEMENTADO Y PROBADO:** validación estática de Compose, sintaxis PowerShell, inicializador
+  idempotente, rechazo de configuración incompleta y exclusión Git de secretos.
+- **IMPLEMENTADO Y PROBADO EN CI UBUNTU:** build de ambos FDW, tres motores saludables,
+  consultas autenticadas, carga de extensiones y persistencia PostgreSQL tras reinicio.
+- **IMPLEMENTADO, NO PROBADO EN WINDOWS:** despliegue de los motores; Docker Desktop no expone
+  el motor Linux local.
+- **BLOQUEADO POR DEPENDENCIA:** lectura de facturación real, requiere vista/usuario/base de Joyce.
+- **PENDIENTE:** DDL clínico, particiones, outbox y datos ficticios (después del spike de conectores),
+  login de perfiles y validación mongo_fdw con Joyce. Módulos de Armando conservan su responsable.
+
+Guía exacta: [Windows / PowerShell 7](documentacion/JOSEPH_FASE1_WINDOWS.md).
+[Compatibilidad y fuentes](documentacion/COMPATIBILIDAD_FDW.md).
+[Registro local real](evidencias/registros/2026-10-22-joseph-local.txt).
+[CI aprobado en Ubuntu 22.04, SHA 89d0754](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39747806912).
+El resultado no prueba este Windows. [Informe completo para ChatGPT](documentacion/INFORME_CHATGPT_JOSEPH_FASE1.md).
+
+## Correcciones de auditoría PR #1 — 22/10/2026
+
+H1: DACL/propietario reparados también en archivos preexistentes, sin rotar secretos.
+H2: selección Compose compartida y restart sin up; bindings/ID/volumen/fila PG comprobados.
+H3: ejemplo y .env operativo validados por separado, con negativo temporal y .env real intacto.
+
+[CI corregida a801c88, tres jobs PASAN](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39759092391):
+ACL Windows Server y motores Ubuntu base/localhost; artifacts depurados con retención 14 días.
+P12 sigue parcial: solo PostgreSQL tras restart. Windows local no tiene daemon disponible.
+FDW remoto, BSON y autenticación propia siguen pendientes; gate abierto, sin módulos ajenos.
+
+[Informe de correcciones y evidencias](documentacion/INFORME_CORRECCIONES_AUDITORIA_PR1.md).
+La [guía Windows](documentacion/JOSEPH_FASE1_WINDOWS.md) muestra una selección consistente para operación y tests.
+PR #1 sigue en borrador, sin aprobación ni merge.
+
+## Validación local posterior — 22/10/2026
+
+Docker Desktop 4.91.0 volvió a exponer el motor Linux tras conservar y reemplazar sus carpetas
+de sockets de ejecución dañados. En Windows 11 se construyó la imagen PostgreSQL y arrancaron
+los tres motores con healthchecks y consultas autenticadas. El kernel efectivo fue
+`6.18.33.2-microsoft-standard-WSL2`. La primera ejecución del overlay reveló que Docker no
+publicaba puertos de contenedores conectados solo a la red `internal: true`; la prueba anterior
+comprobaba la solicitud, no el puerto activo. El overlay corregido usa una pasarela HAProxy
+sin secretos: solo ella une la red interna a una red bridge y publica puertos en `127.0.0.1`.
+PostgreSQL y SQL Server respondieron también desde clientes Windows. P12 sigue limitado a
+una fila PostgreSQL tras `restart`; FDW remoto y BSON permanecen pendientes de Joyce.
+
+[Evidencia y comandos Windows](evidencias/registros/2026-10-22-joseph-despliegue-windows.txt) ·
+[informe técnico actualizado](documentacion/INFORME_WINDOWS_Y_PUERTOS_JOSEPH.md).
+El párrafo anterior de correcciones registra el estado *antes* de esta validación local.
+
+La [CI del gateway](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39807402214)
+PASÓ en head `0b5e507` con tres jobs: Windows Server ACL y Ubuntu base/localhost;
+[registro revisado](evidencias/registros/2026-10-22-joseph-gateway-ci.txt).

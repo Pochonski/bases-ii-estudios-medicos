@@ -37,3 +37,36 @@ La identidad de ejecución del procesador outbox (cuenta de aplicación/servicio
 ## Criterio de aprobación
 
 Ningún rol se considera implementado sin scripts, verificación de inicio de sesión y evidencia de una operación permitida más una operación denegada.
+
+## Implementación parcial — 22/10/2026, Joseph (D-028)
+
+La configuración no secreta está en .env; contraseñas aleatorias en secrets/ ignorado.
+Compose monta solo el secreto de cada motor; no hay contraseñas en environment del modelo Compose.
+El wrapper de SQL Server exporta su contraseña al proceso en tiempo de arranque: un administrador
+del contenedor aún puede acceder a ella. No se promete aislamiento frente al dueño de Docker.
+SCRAM PostgreSQL, peer Unix local, red interna y puertos localhost opcionales preparados.
+TLS de FreeTDS es obligatorio pero sin CA validada; PostgreSQL y MongoDB no configuran TLS.
+No hay prueba funcional de roles ni habilitación de perfiles externos. Consultar el manual local.
+
+## Corrección de auditoría H1 — 22/10/2026, Joseph (D-030)
+
+La versión auditada conservaba autorizaciones explícitas de terceros. Se reconstruye la DACL y se
+verifican propietario/herencia/reglas tanto en carpeta como archivos existentes, conservando valores.
+Regresión Windows con Everyone/Users PASA; no se impersonó otro usuario ni se certifica protección
+frente a administradores que puedan tomar posesión. Linux mantiene 700/644 para Compose por archivo.
+Las pruebas de login y permisos negativos de los roles FDW continúan NO EJECUTADAS.
+
+## Puertos opcionales — 22/10/2026, Joseph (D-034)
+
+Los motores quedan exclusivamente en `medical-network` interna. En modo local, la pasarela
+TCP no recibe secretos, usa sistema de archivos de solo lectura y conecta esa red a
+`host-access` no interna; solo ella publica 127.0.0.1. La pasarela puede tener salida de red
+por su bridge, por lo que se limita a forwarding TCP y no ejecuta lógica de aplicación.
+Los clientes Windows autenticaron PostgreSQL/SQL Server; MongoDB solo fue autenticado dentro
+del contenedor, aunque su puerto localhost aceptó TCP. Estas pruebas usan cuentas de
+administración inicial, no acreditan login de roles propios ni permisos negativos.
+
+El endpoint de salud del gateway se enlaza únicamente al loopback **interno** del
+contenedor (`127.0.0.1:8404`) y no figura en `ports` del overlay. Los únicos bindings
+host permitidos por la comprobación estática y runtime siguen siendo los tres puertos
+de motores, todos en 127.0.0.1. El endpoint no contiene secretos.

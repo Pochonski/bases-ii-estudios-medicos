@@ -1,0 +1,71 @@
+Joseph — PR #1, observaciones menores de infraestructura — 22/10/2026
+Rama: feature/joseph-infra-postgresql; base main 630cca6b14f23d73579ccab2a0106ab1fa68f7fc.
+PR: https://github.com/Pochonski/bases-ii-estudios-medicos/pull/1 (OPEN/DRAFT al verificar).
+
+COMANDOS Y RESULTADOS WINDOWS 11 LOCAL
+- docker info / docker ps: antes del cambio, Engine 29.8.0 y kernel efectivo
+  6.18.33.2-microsoft-standard-WSL2; tres motores y gateway saludables.
+- docker exec ... haproxy -c -f /usr/local/etc/haproxy/haproxy.cfg: código 0.
+- ./scripts/Test-Infra.ps1 -StaticOnly -ComposeFile compose.yaml,compose.local.yaml
+  -EnvFile .env,.tmp/windows-local/ports.env -ProjectName estudios-medicos: PASS ejemplo
+  base, ejemplo localhost y selección operativa. No se imprimieron secretos.
+- ./scripts/Invoke-Compose.ps1 [misma selección] -Command @('restart','port-gateway'):
+  PASS; después wget a /ready devolvió HTTP 200. Para aplicar el healthcheck Compose
+  nuevo se usó up -d --no-deps --force-recreate --wait port-gateway: PASS. Se recreó
+  solo el gateway; IDs de postgres 1322cb02b1b9, mongodb 82d1a88db1f9 y SQL Server
+  069b5a4c4229 se conservaron. No se borraron volúmenes.
+- docker inspect port-gateway: healthcheck = wget -q -O /dev/null
+  http://127.0.0.1:8404/ready; NetworkSettings.Ports solo
+  1433/tcp=127.0.0.1:11433, 5432/tcp=127.0.0.1:15432,
+  27017/tcp=127.0.0.1:37017. No hay binding 8404.
+- ./scripts/Test-Infra.ps1 [misma selección]: PASS runtime, tres motores saludables,
+  lecturas de secretos por UID y consultas autenticadas PG/SQL Server/MongoDB.
+- ./scripts/Test-Persistence.ps1 [misma selección]: PASS P12 parcial PG; fila sintética
+  sobrevivió restart; mismo ID/gateway/volumen/bindings; tabla marcador eliminada.
+- NO EJECUTADA en Windows local: prueba de backend caído, protegida para CI efímera.
+- Al cerrar el informe, docker info FALLÓ por named pipe dockerDesktopLinuxEngine
+  ausente; docker desktop status no pudo obtener estado, com.docker.service Stopped,
+  no se observaron procesos Docker Desktop. La estabilidad tras este punto no se
+  acreditó; no se reinstaló/reinició Docker ni se tocaron volúmenes, WSL o kernel.
+
+CI FALLIDA QUE SE CONSERVA
+- https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39811585204
+  head 5d73d9e55d19a2f11201787e4c99ea80f73f9024: ACL Windows PASS, base PASS,
+  localhost FAIL solo en negativo. docker compose pause postgres congeló el proceso,
+  pero el socket TCP siguió aceptando conexiones; HAProxy no pasó a unhealthy en 60 s.
+  El finally ejecutó unpause. P12 localhost NO EJECUTADO en ese run. No se ocultó el fallo.
+
+CI CORREGIDA Y ARTIFACTS
+- https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39812197292
+  head ee5ce970e61428b5c68440d2ce3b39f0f39b500d; checkout merge
+  ed428667f13fce9a717c4cf198cb43805cb7ce25. SUCCESS en 3 jobs:
+  secretos-windows, infraestructura base, infraestructura localhost.
+- Artifact joseph-infra-localhost/backend-failure.txt:
+  "PASS negativo: TCP localhost acepta conexiones, pero la salud del gateway y la
+  validación runtime rechazan PostgreSQL detenido."
+  "PASS recuperación: mismos contenedores, volumen y bindings localhost; tres
+  motores/gateway disponibles antes de P12."
+  Estímulo: docker compose stop postgres, seguido de start postgres en finally.
+  No hubo down -v, rm ni borrado de volumen.
+- Artifact joseph-infra-localhost/runtime.txt: PASS selección runtime PG con
+  1433/tcp|127.0.0.1|1433;27017/tcp|127.0.0.1|27017;
+  5432/tcp|127.0.0.1|5432; tres consultas autenticadas/UID PASS.
+- Artifact joseph-infra-localhost/persistencia.txt: PASS P12 parcial PG tras restart,
+  mismo contenedor/gateway/volumen/puertos; marcador eliminado.
+- Artifact joseph-infra-base/persistencia.txt: PASS P12 parcial PG sin puertos publicados.
+- Artifact joseph-acl-windows/acl.txt: PASS DACL carpeta y cuatro archivos,
+  valores conservados, solo usuario/SYSTEM; Windows Server 2022, PowerShell 7.6.6.
+- Artifacts de los tres jobs descargados en .tmp/ci-gateway-final-39812197292
+  (ignorado por Git), vigencia remota 14 días. Extracto depurado durable en este archivo.
+- Runner Ubuntu22: kernel 6.8.0-1070-azure, Docker 28.0.4, Compose 2.38.2,
+  PowerShell 7.6.7. Windows local: Docker Compose 5.5.1, PowerShell 7.6.5.
+
+ALCANCE Y LÍMITES
+- `/ready` comprueba los checks TCP de HAProxy. Detecta un backend detenido; no
+  detectó un backend pausado con socket abierto y no equivale a consulta autenticada
+  de extremo a extremo en cada puerto. Las consultas autenticadas de motores son
+  pruebas separadas y dentro de sus contenedores.
+- P12 solo acredita una fila PostgreSQL tras restart. No acredita SQL Server/MongoDB,
+  recreación, respaldo o restauración.
+- FDW remoto, BSON, login de cuentas restringidas y permisos negativos: NO EJECUTADOS;
+  dependen de objetos/cuentas/fixture de Joyce y mantienen el gate abierto.
