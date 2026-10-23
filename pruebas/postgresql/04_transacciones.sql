@@ -28,6 +28,8 @@ BEGIN
 END;
 $test$;
 
+\echo PASS P04: COMMIT local de resultado y evento pendiente
+
 BEGIN;
 UPDATE clinico.estudios
 SET estado = 'FINALIZADO', fecha_realizacion = TIMESTAMPTZ '2026-10-22 10:00:00+00'
@@ -52,3 +54,5 @@ BEGIN
     RAISE NOTICE 'PASS ROLLBACK local: resultado/evento ausentes, estudio sin cambio';
 END;
 $test$;
+
+\echo PASS P13 parcial: ROLLBACK local sin resultado ni evento
