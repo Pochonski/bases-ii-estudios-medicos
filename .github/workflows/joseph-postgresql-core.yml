@@ -57,6 +57,7 @@ jobs:
           ) | Set-Content .tmp/ci/resumen.txt
           docker version --format 'Docker cliente={{.Client.Version}} servidor={{.Server.Version}}' | Add-Content .tmp/ci/resumen.txt
           docker compose version | Add-Content .tmp/ci/resumen.txt
+          docker compose exec -T --user postgres postgres psql -X -U postgres -d postgres -Atc 'SHOW server_version' | ForEach-Object { "PostgreSQL servidor: $_" } | Add-Content .tmp/ci/resumen.txt
           docker compose ps -a
       - name: Guardar evidencia depurada
         if: always()

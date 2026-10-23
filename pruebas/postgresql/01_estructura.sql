@@ -32,6 +32,8 @@ BEGIN
 END;
 $test$;
 
+\echo PASS estructura: 12 tablas, 3 particiones y PK/FK compuestas
+
 DO $test$
 DECLARE
     conteos bigint[];
@@ -56,3 +58,5 @@ BEGIN
     RAISE NOTICE 'PASS fixture: conteos %; outbox vacío', conteos;
 END;
 $test$;
+
+\echo PASS fixture: conteos exactos y outbox inicialmente vacío

@@ -41,3 +41,5 @@ BEGIN
     RAISE NOTICE 'PASS P14: tableoid SJ/AL/CA=10/10/10, pruning AL y atención AL->SJ';
 END;
 $test$;
+
+\echo PASS P14: tableoid 10/10/10, EXPLAIN podó a AL, atención AL hacia SJ

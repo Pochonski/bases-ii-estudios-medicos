@@ -18,6 +18,8 @@ BEGIN
     RAISE NOTICE 'PASS inserción válida: paciente SJ atendido en CA';
 END;
 $test$;
+
+\echo PASS inserción válida: paciente SJ atendido en CA
 ROLLBACK;
 
 DO $test$
@@ -87,3 +89,5 @@ BEGIN
     RAISE NOTICE 'PASS integridad: FK compuesta, partición, UNIQUE, CHECK, FK diagnóstico y ROLLBACK';
 END;
 $test$;
+
+\echo PASS integridad: seis rechazos y ROLLBACK sin filas temporales

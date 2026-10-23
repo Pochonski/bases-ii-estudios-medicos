@@ -15,3 +15,5 @@ BEGIN
     RAISE NOTICE 'PASS persistencia parcial: 30 pacientes, resultado/evento COMMIT; ROLLBACK ausente';
 END;
 $test$;
+
+\echo PASS P12 parcial: registros clínicos PostgreSQL tras restart del mismo contenedor
