@@ -55,6 +55,8 @@ jobs:
             $rejected = $true
           }
           if (-not $rejected) { throw 'Un error SQL no produjo fallo de Compose/psql.' }
+          # GitHub Actions termina pwsh con LASTEXITCODE; limpiar solo el error esperado.
+          $global:LASTEXITCODE = 0
           'PASS: SQL inválido devolvió código no cero; el runner propaga el error a CI.' |
             Tee-Object -FilePath .tmp/ci/sql-error.txt
       - name: Probar núcleo en dos bases vacías y restart
