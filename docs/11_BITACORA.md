@@ -278,3 +278,78 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   locales Windows no se repitieron porque DDL, fixture y runner no cambiaron.
   Infraestructura [40029751368](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029751368)
   PASÓ los tres jobs del mismo head.
+
+## 2026-10-24 — Joseph, fase 4 tds_fdw autónoma
+
+- **Objetivo:** ejecutar lectura real PostgreSQL → SQL Server antes de recibir la
+  vista y cuenta finales de Joyce; conservar PR #3 intacto y abrir PR #4 apilado.
+- **Estado inicial:** `main=0a42732`, PR #1/#2 MERGED, PR #3 OPEN/DRAFT en
+  `f46dd9b`; árbol local limpio. No hay módulos `sqlserver/` ni `mongodb/` de
+  Joyce ni PR abiertos de ella. Rama nueva `feature/joseph-tds-fdw-spike` desde
+  `origin/feature/joseph-core-main-integration`, sin cambiar `main`.
+- **Archivos y razón:** runner `scripts/Test-TdsFdwSpike.ps1`, workflow
+  `.github/workflows/joseph-tds-fdw-spike.yml`, fixtures/scripts solo en
+  `pruebas/integracion/` y guía `documentacion/JOSEPH_FASE4_TDS_FDW.md`.
+  Cambio documental registrado aquí y en D-039: explica el límite del spike,
+  pruebas y dependencias sin alterar contratos compartidos.
+- **Comandos y evidencia inicial:** `git fetch/status/diff`, `gh pr view/list`,
+  `docker info`, `docker context show`, `wsl --status`, `Get-Service`,
+  `pwsh -File scripts/Test-TdsFdwSpike.ps1 -StaticOnly`, `git diff --check`,
+  `git commit/push`, `gh pr create`. Estático Windows PASÓ; runtime Windows
+  NO EJECUTADO: `com.docker.service` detenido y pipe
+  `dockerDesktopLinuxEngine` ausente. No se tocó WSL, Desktop ni volúmenes.
+- **Commit inicial:** `e57de54` con runner, scripts de prueba y workflow.
+  [PR #4](https://github.com/Pochonski/bases-ii-estudios-medicos/pull/4)
+  OPEN/DRAFT dirigido a la rama del PR #3. CI inicial en curso al redactar esta
+  entrada; resultado y SHA finales se añaden tras revisión de artifacts.
+- **Dependencias/siguiente:** Joyce debe proveer base, vista, cuenta limitada,
+  tipos/fixture y agregación acordada; Mongo FDW/BSON sigue separado. Ejecutar
+  y depurar CI, repetir manual Windows cuando haya daemon, mantener ambos PR en
+  borrador y solicitar revisión de contratos antes de integración definitiva.
+- **Fallo real de la primera CI:** [40102260838](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40102260838)
+  FALLÓ en `e57de54`: cuatro filas reales vía login FDW y permisos negativos
+  SQL Server pasaron, pero `1002/AL` pareció existir. El runner limpió las dos
+  bases, login, contenedores, red y volúmenes temporales. Diagnóstico en
+  `581b7f5`, [40102446960](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40102446960):
+  listado remoto = `1001/AL, 2001/SJ, 3001/CA, 5000000000/AL`; la consulta
+  `WHERE 1002/AL` devolvió **count=4** y `EXPLAIN` no incluyó filtro ni WHERE
+  remoto. Ambas CI rojas detectaron un bug real, no se contabilizan como PASS.
+- **Corrección D-040:** commit `1c0367e` añade parche local al build de
+  `tds_fdw` fijado, y aserciones de filtro/orden/LEFT JOIN. Se validó que el
+  parche aplica al archivo fuente del commit upstream; la compilación y la
+  regresión CI del nuevo SHA siguen en verificación al registrar esta línea.
+- **CI con parche:** [40102791877](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40102791877)
+  en `1c0367e` FALLÓ al clasificar textualmente el error de desconexión, pero
+  compiló el parche y pasó cuatro filas, Unicode, BIGINT, DECIMAL, UTC, filtro,
+  orden y JOIN. `EXPLAIN` mostró `Filter` local; el SQL Server detenido produjo
+  código no cero mientras PG local respondió. `e514ee7` exige ese código y
+  elimina solo el filtro de palabras del mensaje. La [CI 40103007250](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103007250)
+  PASÓ dos jobs en ese head: consulta real, negativos, caída/recuperación y
+  limpieza, más estático Windows Server. Artifacts descargados/revisados:
+  `evidencias/registros/2026-10-24-joseph-tds-fdw-ci.txt`.
+- **Infraestructura:** [40103007202](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103007202)
+  PASÓ tres jobs en `e514ee7`: ACL Windows y Ubuntu base/localhost. Los cambios
+  posteriores de instrumentación/documentación requieren verificar nueva CI.
+- **Cierre propuesto:** se agregan versiones efectivas PostgreSQL, SQL Server y
+  FreeTDS a la salida depurada, verificación de ausencia de contenedores/
+  volúmenes tras limpieza y filtros CI para documentos de esta fase. La guía,
+  matriz, seguridad, decisiones, informe y evidencia se actualizan por el
+  hallazgo D-040; no se cambia `integracion/01_fdw_sqlserver.sql` ni contrato
+  del outbox. El commit final y su CI se contrastarán antes del informe externo.
+- **CI de instrumentación:** [40103357010](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103357010)
+  en `f3b6327` quedó ROJA pese a completar consulta, seguridad, caída,
+  recuperación y limpieza; `docker volume inspect` devolvió 1 al confirmar
+  ausencia de volúmenes, y PowerShell conservó ese código al salir. La nueva
+  corrección limpia solo el código esperado después de comprobar ausencia y
+  hace **fallar** el job si la limpieza realmente queda incompleta. Se repite
+  CI en el siguiente commit; no se declara verde este run.
+- **Cierre funcional:** commit `8f25634` y [CI FDW 40103545333](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103545333)
+  SUCCESS: cuatro filas remotas, tipos/Unicode/offsets, WHERE/ORDER/JOIN,
+  permisos negativos, caída y recuperación, ausencia de contenedores y
+  volúmenes efímeros. Artifact descargado, head y checkout verificados,
+  versiones en `evidencias/registros/2026-10-24-joseph-tds-fdw-ci.txt`.
+  [Infraestructura 40103545352](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103545352)
+  SUCCESS tres jobs del mismo head. Windows local siguió sin daemon; no hubo
+  consulta FDW local. Esta actualización documental registra fecha, responsable,
+  motivo y efecto; no cambia contratos. Verificar CI del commit documental
+  posterior por separado.

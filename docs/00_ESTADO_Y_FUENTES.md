@@ -180,3 +180,20 @@ El outbox admite duplicados lógicos y eventos con revisión sin correspondencia
 resultado; tampoco obliga a que toda escritura clínica emita evento. D-038 documenta
 alternativas pendientes de Joyce. No se cambió DDL ni se afirma exportación, FDW
 remoto o transacción global.
+
+## Spike TDS de Joseph — 24/10/2026 (D-039)
+
+Al verificar GitHub, `main` seguía en `0a42732`; [PR #3](https://github.com/Pochonski/bases-ii-estudios-medicos/pull/3)
+continuaba OPEN/DRAFT con HEAD `f46dd9b`. No había módulos de Joyce en el árbol ni
+PR abiertos de ella. Se abrió [PR #4](https://github.com/Pochonski/bases-ii-estudios-medicos/pull/4),
+también en borrador, desde `feature/joseph-tds-fdw-spike` hacia la rama del PR #3.
+Solo agrega infraestructura de **prueba aislada** para consultar una vista
+temporal SQL Server con `tds_fdw`; no cambia el esquema clínico, contratos de
+Joyce, API de Armando ni `main`. La guía y el estado verificable están en
+`documentacion/JOSEPH_FASE4_TDS_FDW.md` y `docs/07_PRUEBAS.md`.
+
+La configuración estática pasó en Windows local. El daemon Linux de Docker
+Desktop no estaba disponible (pipe ausente, servicio detenido), por lo que las
+consultas remotas locales quedaron NO EJECUTADAS; la CI se revisa por separado.
+Incluso si el spike pasa, P01/P17 con vista, cuenta y fixture **definitivos** de
+Joyce y el gate MongoDB seguirán pendientes.

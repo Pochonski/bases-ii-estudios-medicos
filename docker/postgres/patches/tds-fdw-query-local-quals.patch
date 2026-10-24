@@ -1,0 +1,21 @@
+--- a/src/tds_fdw.c
++++ b/src/tds_fdw.c
+@@ -2432 +2432,10 @@
+-	classifyConditions(root, baserel, baserel->baserestrictinfo,
++	if (option_set.query)
++	{
++		/* A fixed query cannot accept pushed WHERE clauses. Let PostgreSQL
++		 * enforce every restriction, including join-derived restrictions. */
++		fpinfo->remote_conds = NIL;
++		fpinfo->local_conds = baserel->baserestrictinfo;
++	}
++	else
++	{
++		classifyConditions(root, baserel, baserel->baserestrictinfo,
+@@ -2433,0 +2443 @@
++	}
+@@ -2648,0 +2659,4 @@
++	/* A fixed query is neither sorted nor parameterized by outer relations.
++	 * Claiming otherwise can silently skip ORDER BY or join predicates. */
++	if (option_set.query)
++		return;
