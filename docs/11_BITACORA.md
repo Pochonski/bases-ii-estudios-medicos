@@ -336,3 +336,10 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   matriz, seguridad, decisiones, informe y evidencia se actualizan por el
   hallazgo D-040; no se cambia `integracion/01_fdw_sqlserver.sql` ni contrato
   del outbox. El commit final y su CI se contrastarán antes del informe externo.
+- **CI de instrumentación:** [40103357010](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103357010)
+  en `f3b6327` quedó ROJA pese a completar consulta, seguridad, caída,
+  recuperación y limpieza; `docker volume inspect` devolvió 1 al confirmar
+  ausencia de volúmenes, y PowerShell conservó ese código al salir. La nueva
+  corrección limpia solo el código esperado después de comprobar ausencia y
+  hace **fallar** el job si la limpieza realmente queda incompleta. Se repite
+  CI en el siguiente commit; no se declara verde este run.
