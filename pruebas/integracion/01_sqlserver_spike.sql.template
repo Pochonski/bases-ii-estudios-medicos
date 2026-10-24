@@ -1,0 +1,49 @@
+-- SPIKE AISLADO. No es el esquema de Joyce ni una migración de producción.
+:ON ERROR EXIT
+USE master;
+GO
+IF DB_ID(N'joseph_fdw_spike') IS NOT NULL
+    THROW 51001, 'La base aislada ya existe; revisar antes de repetir.', 1;
+IF SUSER_ID(N'svc_pg_mssql_ro') IS NOT NULL
+    THROW 51002, 'El login aislado ya existe; revisar antes de repetir.', 1;
+CREATE DATABASE joseph_fdw_spike;
+GO
+USE joseph_fdw_spike;
+GO
+CREATE TABLE dbo.facturacion_spike (
+    id_paciente BIGINT NOT NULL,
+    codigo_region CHAR(2) NOT NULL,
+    nombre_aseguradora NVARCHAR(100) NOT NULL,
+    estado_cobertura NVARCHAR(20) NOT NULL,
+    estado_facturacion NVARCHAR(20) NOT NULL,
+    total_facturado_crc DECIMAL(12,2) NOT NULL,
+    fecha_actualizacion DATETIMEOFFSET(0) NOT NULL,
+    CONSTRAINT PK_facturacion_spike PRIMARY KEY (id_paciente, codigo_region)
+);
+INSERT INTO dbo.facturacion_spike VALUES
+    (1001, 'AL', N'Clínica Ñandú', N'VIGENTE', N'PENDIENTE', 12345.67,
+     CONVERT(DATETIMEOFFSET(0), '2026-10-22T15:30:00-06:00')),
+    (2001, 'SJ', N'Seguro Público', N'INACTIVA', N'PAGADA', 0.01,
+     CONVERT(DATETIMEOFFSET(0), '2026-10-23T09:15:00+00:00')),
+    (3001, 'CA', N'Cobertura Cartago', N'PENDIENTE', N'SIN_FACTURAS', 9999999999.99,
+     CONVERT(DATETIMEOFFSET(0), '2026-10-23T12:00:00+02:00')),
+    (5000000000, 'AL', N'Identificador Grande', N'VIGENTE', N'PENDIENTE', 18.25,
+     CONVERT(DATETIMEOFFSET(0), '2026-10-24T07:00:00-06:00'));
+GO
+CREATE VIEW dbo.vw_estado_facturacion AS
+SELECT id_paciente, codigo_region, nombre_aseguradora, estado_cobertura,
+       estado_facturacion, total_facturado_crc, fecha_actualizacion
+FROM dbo.facturacion_spike;
+GO
+USE master;
+GO
+CREATE LOGIN svc_pg_mssql_ro WITH PASSWORD = N'__FDW_PASSWORD__', CHECK_POLICY = ON;
+GO
+USE joseph_fdw_spike;
+GO
+CREATE USER svc_pg_mssql_ro FOR LOGIN svc_pg_mssql_ro;
+GRANT SELECT ON OBJECT::dbo.vw_estado_facturacion TO svc_pg_mssql_ro;
+-- La cadena de propiedad dbo permite SELECT de la vista sin SELECT de la tabla.
+GO
+SELECT 'PASS SQL Server: base, vista, cuatro filas y login limitado creados' AS resultado;
+GO
