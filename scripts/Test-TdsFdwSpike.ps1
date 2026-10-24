@@ -26,11 +26,13 @@ function Assert-CleanProject {
     $existing = @(& docker ps -a --quiet --filter "label=com.docker.compose.project=$project")
     if ($LASTEXITCODE -ne 0) { throw 'No se pudo consultar contenedores Docker.' }
     if ($existing.Count) { throw "Proyecto aislado ya existe: $project" }
-    foreach ($volume in 'postgres_data','sqlserver_data') {
+    foreach ($volume in 'postgres_data','sqlserver_data','mongodb_data','mongodb_config') {
         $name = "${project}_$volume"
         & docker volume inspect $name *> $null
         if ($LASTEXITCODE -eq 0) { throw "Volumen preexistente inesperado: $name" }
     }
+    & docker network inspect "$project-network" *> $null
+    if ($LASTEXITCODE -eq 0) { throw "Red preexistente inesperada: $project-network" }
 }
 function Wait-SqlServerHealthy {
     $id = @(Invoke-Spike @('ps','--all','--quiet','sqlserver'))
@@ -83,6 +85,7 @@ try {
     Invoke-Spike @('exec','-T','postgres','bash','/opt/proyecto/tds-spike/check-postgres.sh')
     Invoke-Spike @('stop','sqlserver')
     try {
+        Invoke-Spike @('exec','-T','postgres','bash','-c', 'export PGPASSWORD="$(cat /run/secrets/pg_fdw_login_password)"; psql -X -h 127.0.0.1 -U usr_fdw_pg_mssql -d joseph_tds_spike_pg -v ON_ERROR_STOP=1 -Atc "SELECT 1"')
         $composeArgs = $context.Arguments
         $failure = @(& docker compose @composeArgs exec -T postgres bash -c 'export PGPASSWORD="$(cat /run/secrets/pg_fdw_login_password)"; psql -X -h 127.0.0.1 -U usr_fdw_pg_mssql -d joseph_tds_spike_pg -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM externo.ft_estado_facturacion"' 2>&1)
         if ($LASTEXITCODE -eq 0) { throw 'Consulta remota funcionó con SQL Server detenido.' }
