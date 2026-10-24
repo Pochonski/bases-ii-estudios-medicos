@@ -111,3 +111,20 @@ funcional posterior es que el workflow se ejecute también al proponer cambios a
 `main` y verifique la propagación de un error SQL controlado. No se reescribieron
 ramas compartidas ni se duplicó Docker/Compose. La revisión del outbox queda como
 propuesta pendiente de Joyce, sin modificar el contrato ni el gate 2.
+
+## Spike TDS aislado — 24/10/2026, Joseph
+
+Fase 4 autorizada: PR #4 apilado sobre PR #3 mientras éste siga sin merge.
+`scripts/Test-TdsFdwSpike.ps1` levanta un proyecto efímero con solo PostgreSQL y
+SQL Server; instala únicamente objetos SQL Server de **prueba de compatibilidad**
+en `pruebas/integracion/`, sin sustituir los módulos de Joyce. Reutiliza el
+consumidor `integracion/01_fdw_sqlserver.sql` y consulta con login PostgreSQL
+propio. El runner comprueba tipos, varias filas, ausencia remota, mínimos
+privilegios, caída y recuperación; la CI da la evidencia del runtime mientras
+Docker Desktop Windows no está disponible. Guía:
+`documentacion/JOSEPH_FASE4_TDS_FDW.md`.
+
+El gate 2 se descompone para seguimiento: **TDS contra fixture temporal** se
+evalúa en este PR; **TDS contra vista real de Joyce** y **Mongo FDW/BSON** siguen
+pendientes. No avanzar la vista API de Armando ni afirmar integración completa
+por el resultado del spike.

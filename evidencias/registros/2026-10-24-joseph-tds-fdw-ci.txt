@@ -1,0 +1,58 @@
+Joseph fase 4 — evidencia depurada del spike TDS (24/10/2026)
+Repositorio: https://github.com/Pochonski/bases-ii-estudios-medicos
+PR #4: https://github.com/Pochonski/bases-ii-estudios-medicos/pull/4
+Base del PR: feature/joseph-core-main-integration (PR #3, sin merge)
+
+Run verde inicial de la corrección:
+https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103007250
+Head: e514ee7f1c30240a67cf6af7b822e9ec2f52f7f4
+Checkout merge: dae6488981ca82f796a8f77cbd15b0091a69ec47
+Jobs: fdw-real SUCCESS; estatico-windows SUCCESS.
+Artifact: joseph-tds-spike-real (entorno.txt, consultas.txt), descargado y revisado.
+Kernel Ubuntu: 6.8.0-1064-azure; PowerShell 7.6.6; Docker 28.0.4;
+Compose 2.38.2. Versiones PostgreSQL/SQL Server/FreeTDS se imprimirán en una
+regresión posterior; aquí no se atribuye una versión de servidor no registrada.
+
+Extractos de consultas reales desde SQL Server, ejecutadas por login PostgreSQL
+usr_fdw_pg_mssql y mapping hacia svc_pg_mssql_ro:
+
+  fdw_login         remote_rows
+  usr_fdw_pg_mssql            4
+
+  SELECT count(*) ... WHERE id_paciente=1002 AND codigo_region='AL' -> 0
+  EXPLAIN VERBOSE -> Foreign Scan con Filter local de id_paciente y codigo_region;
+                     Remote query SELECT ... FROM dbo.vw_estado_facturacion
+
+  LEFT JOIN clinico.pacientes / externo.ft_estado_facturacion:
+  1001 AL  Clínica Ñandú        12345.67       2026-10-22 21:30:00 UTC
+  1002 AL  NULL                 NULL           NULL
+  2001 SJ  Seguro Público       0.01           2026-10-23 09:15:00 UTC
+  3001 CA  Cobertura Cartago    9999999999.99  2026-10-23 10:00:00 UTC
+  5000000000 AL Identificador Grande 18.25    2026-10-24 13:00:00 UTC
+
+El SQL de aserciones también exigió 4 claves únicas, decimal exacto, Unicode,
+BIGINT fuera de Int32, offsets UTC, filtro presente, orden DESC y LEFT JOIN sin
+fila remota. SQL Server confirmó ORIGINAL_LOGIN=svc_pg_mssql_ro y cuatro filas;
+SELECT directo sobre tabla base e INSERT fueron rechazados.
+
+Caída controlada: se detuvo solo el SQL Server del proyecto efímero. PostgreSQL
+local respondió SELECT 1; la consulta FDW dio código 1. Tras start/healthcheck,
+el mismo login volvió a leer las cuatro filas y el runner imprimió
+"PASS recuperación". Se eliminaron las dos bases y el login temporales; el log
+de CI muestra retiro de contenedores, red y dos volúmenes de nombre aleatorio
+del proyecto del spike. No se tocó el proyecto ni volúmenes compartidos.
+
+Fallas conservadas:
+40102260838 (e57de54): WHERE 1002/AL devolvía filas, primer hallazgo.
+40102446960 (581b7f5): count=4 y plan sin Filter; confirma bug upstream #444.
+40102791877 (1c0367e): parche compiló, filtro/JOIN/orden pasaron, pero el
+  runner exigía palabras específicas en el mensaje de error durante la caída;
+  job rojo por esa clasificación textual. e514ee7 exige código no cero.
+
+Windows 11 local: -StaticOnly PASÓ. docker info FALLÓ por pipe
+dockerDesktopLinuxEngine ausente; com.docker.service Stopped, contexto
+desktop-linux, WSL2 predeterminado. Consulta/runtime FDW local NO EJECUTADOS.
+
+Alcance: COMPATIBILIDAD FDW PROBADA EN SPIKE TEMPORAL. P01/P17 contra la
+vista/cuenta/fixture definitivos de Joyce, Mongo FDW/BSON, TLS con validación
+de CA y estabilidad de Docker Desktop Windows siguen PENDIENTES.

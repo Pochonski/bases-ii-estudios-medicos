@@ -13,6 +13,16 @@ on:
       - 'postgresql/**'
       - 'docker/postgres/**'
       - 'compose.yaml'
+      - 'docs/00_ESTADO_Y_FUENTES.md'
+      - 'docs/04_CONTRATOS_INTEGRACION.md'
+      - 'docs/05_SEGURIDAD.md'
+      - 'docs/06_PLAN_IMPLEMENTACION.md'
+      - 'docs/07_PRUEBAS.md'
+      - 'docs/10_DECISIONES_Y_PENDIENTES.md'
+      - 'docs/11_BITACORA.md'
+      - 'documentacion/JOSEPH_FASE4_TDS_FDW.md'
+      - 'documentacion/INFORME_CHATGPT_JOSEPH_FASE4.md'
+      - 'evidencias/registros/*joseph-tds-fdw*'
       - '.github/workflows/joseph-tds-fdw-spike.yml'
   workflow_dispatch:
 permissions:

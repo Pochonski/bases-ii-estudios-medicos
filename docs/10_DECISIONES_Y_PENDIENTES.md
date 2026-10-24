@@ -271,3 +271,59 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
 - Impacto: la consolidación del **núcleo aislado** puede revisarse, pero la
   integración MongoDB y el gate FDW/BSON siguen bloqueados; P04/P13 solo prueban
   atomicidad de la transacción local usada por el test, no todas las escrituras.
+
+### D-039 — Spike tds_fdw autónomo y temporal (24/10/2026, Joseph)
+
+- **Fuente y motivo:** autorización explícita de Joseph para fase 4; PR #3 sigue
+  abierto en borrador, y no existen archivos ni PR de los módulos SQL Server/MongoDB
+  definitivos de Joyce. El requisito académico pide consultas FDW reales; instalar
+  la extensión no basta.
+- **Decisión de implementación:** PR #4 se apila sobre el HEAD del PR #3. Un
+  proyecto Compose con nombre aleatorio, red interna, volúmenes nuevos y sin puertos
+  host levanta PostgreSQL y SQL Server. Solo en él se crean una base/vista de prueba
+  SQL Server con el contrato de columnas, cuatro filas ficticias y login de lectura
+  limitada. El script FDW de Joseph se ejecuta sin modificarlo y las consultas se
+  hacen mediante autenticación PostgreSQL propia. Tras la prueba se eliminan objetos
+  y recursos **del proyecto temporal**, nunca volúmenes preexistentes compartidos.
+- **Impacto:** no se aprueba ni modifica `dbo.vw_estado_facturacion` de Joyce, la
+  política de factura agregada, `api.vw_paciente_facturacion` de Armando ni el
+  outbox. P01/P17 finales quedan pendientes de vista/base/fixture/cuenta reales.
+  La prueba de conectividad/tipos/permisos será solo **compatibilidad de spike**,
+  y el gate `mongo_fdw`/BSON continúa abierto.
+- **Seguridad y riesgo:** `encryption=require` en FreeTDS no acredita verificación
+  de identidad del servidor; la CA/TLS definitiva requiere revisión. Los secretos
+  son efímeros e ignorados; no hay mapping `PUBLIC`. La limpieza `down --volumes`
+  se limita a un nombre aleatorio previamente verificado ausente y creado en la
+  misma ejecución; no se autoriza para proyectos compartidos.
+- **Pruebas y estado:** `scripts/Test-TdsFdwSpike.ps1 -StaticOnly` pasó en Windows
+  11; Docker Desktop no exponía `dockerDesktopLinuxEngine` y el runtime local no se
+  ejecutó. La CI [40103007250](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103007250)
+  de `e514ee7` PASÓ lectura real, negativos y recuperación en Ubuntu y estático
+  Windows Server; evidencia en `docs/07_PRUEBAS.md`. No certifica el host Windows
+  local ni objetos definitivos.
+
+### D-040 — Corregir pérdida silenciosa de WHERE/ORDER BY en tds_fdw (24/10/2026, Joseph)
+
+- **Hallazgo reproducido:** CI `40102446960` con extensión 2.0.5 y opción
+  `query` obtuvo cuatro filas para `WHERE id_paciente=1002 AND codigo_region='AL'`,
+  pese a que ninguna de las cuatro claves remotas era `1002/AL`. `EXPLAIN VERBOSE`
+  mostró `Foreign Scan` sin `Filter` y `Remote query` sin predicado. La primera
+  CI `40102260838` había detectado el problema, y la segunda lo aisló. Es un
+  riesgo de respuesta clínica/facturación incorrecta, no una simple falla de test.
+- **Causa contrastada:** [issue abierto #444 de tds_fdw](https://github.com/tds-fdw/tds_fdw/issues/444)
+  describe exactamente que el planner clasifica condiciones como remotas para
+  `query`, pero el SQL remoto fijo no recibe WHERE; también reclama orden remoto
+  sin enviar ORDER BY. Nuestro runtime coincidió con ese mecanismo.
+- **Corrección propuesta dentro de Joseph:** mantener el commit upstream fijado y
+  aplicar un parche local explícito durante el build de PostgreSQL. Cuando una
+  tabla FDW usa `query`, todas sus condiciones quedan `local_conds` y no se
+  crean rutas de orden ni joins parametrizados que el SQL fijo no puede cumplir.
+  Se conserva la proyección ISO de DATETIMEOFFSET y no se cambia la vista de Joyce
+  ni el contrato externo. La regresión exige filtro ausente/presente, orden
+  descendente y `LEFT JOIN` correcto. Las tablas FDW basadas en `table` mantienen
+  el comportamiento upstream.
+- **Impacto y revisión:** la imagen sigue partiendo de `tds_fdw` 2.0.5, pero
+  **incluye parche local**; indicar esto en cualquier despliegue. Joyce debe
+  revisar el contrato/resultado antes de integración definitiva. La CI `40103007250`
+  mostró `Filter` local, ausencia 1002/AL, orden y JOIN correctos. Mantener el
+  gate definitivo abierto hasta repetir con la vista/cuenta de Joyce y TLS validado.

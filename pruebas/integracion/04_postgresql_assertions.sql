@@ -1,5 +1,7 @@
 \set ON_ERROR_STOP on
 \pset pager off
+SELECT current_setting('server_version') AS postgresql_version,
+       (SELECT extversion FROM pg_extension WHERE extname='tds_fdw') AS tds_fdw_version;
 SELECT current_user AS fdw_login, count(*) AS remote_rows
 FROM externo.ft_estado_facturacion;
 SELECT id_paciente, codigo_region FROM externo.ft_estado_facturacion ORDER BY id_paciente;
