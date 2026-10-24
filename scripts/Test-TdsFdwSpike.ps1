@@ -11,6 +11,7 @@ $tempRoot = Join-Path $root '.tmp/tds-spike-root'
 $envPath = Join-Path $tempRoot '.env'
 $started = $false
 $ready = $false
+$cleanupError = $null
 
 function New-SecretFile([string]$Name) {
     $path = Join-Path $tempRoot "secrets/$Name.txt"
@@ -52,6 +53,8 @@ function Assert-SpikeRemoved {
         & docker volume inspect "${project}_$volume" *> $null
         if ($LASTEXITCODE -eq 0) { throw "Persiste volumen del spike: $volume" }
     }
+    # inspect devuelve 1 cuando confirma ausencia; no propagar ese negativo esperado al job.
+    $global:LASTEXITCODE = 0
     Write-Output 'PASS limpieza Docker: sin contenedores ni volúmenes del proyecto temporal'
 }
 
@@ -112,16 +115,24 @@ try {
             Invoke-Spike @('exec','-T','postgres','bash','-c', 'export PGPASSWORD="$(cat /run/secrets/postgres_password)"; psql -X -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS joseph_tds_spike_pg WITH (FORCE)"')
             Invoke-Spike @('exec','-T','sqlserver','bash','-c', 'export SQLCMDPASSWORD="$(cat /run/secrets/sqlserver_sa_password)"; /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -b -i /opt/proyecto/tds-spike/02_sqlserver_cleanup.sql')
             Write-Output 'PASS limpieza: bases y login temporales eliminados'
-        } catch { Write-Warning "Limpieza de objetos temporales incompleta: $_" }
+        } catch {
+            $cleanupError = $_
+            Write-Warning "Limpieza de objetos temporales incompleta: $_"
+        }
     }
     if ($started) {
         try {
             Invoke-Spike @('down','--volumes','--remove-orphans')
             Assert-SpikeRemoved
         }
-        catch { Write-Warning "Limpieza del proyecto aislado incompleta: $_" }
+        catch {
+            $cleanupError = $_
+            Write-Warning "Limpieza del proyecto aislado incompleta: $_"
+        }
     }
     if (Test-Path -LiteralPath $tempRoot) {
         Remove-Item -LiteralPath $tempRoot -Recurse -Force
     }
+    if ($cleanupError) { throw "Limpieza del spike incompleta: $cleanupError" }
+    $global:LASTEXITCODE = 0
 }

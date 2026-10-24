@@ -262,3 +262,11 @@ PASÓ sus tres jobs en el mismo head `e514ee7`. Los cambios finales de
 instrumentación y documentos tendrán CI propia: no atribuir estos runs a un
 SHA posterior. **P01/P17 definitivos siguen pendientes de Joyce** y Mongo
 FDW/BSON no se ejecutó.
+
+La [CI 40103357010](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103357010)
+del SHA `f3b6327` quedó ROJA aunque las pruebas funcionales, versiones
+efectivas, caída/recuperación y limpieza concluyeron. El último
+`docker volume inspect` devolvió 1 por ausencia esperada, y PowerShell propagó
+ese estado residual al paso. La corrección posterior pone `LASTEXITCODE=0`
+solo tras verificar que no queda ningún volumen ni contenedor; cualquier
+error real de limpieza lanza excepción. Requiere regresión del nuevo SHA.
