@@ -1,0 +1,31 @@
+# Solo para el spike aislado de Joseph. El primer archivo Compose es compose.yaml.
+services:
+  postgres:
+    secrets: [postgres_password, fdw_password, pg_fdw_login_password]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./integracion:/opt/proyecto/integracion:ro
+      - ./pruebas/infraestructura:/opt/proyecto/pruebas:ro
+      - ./postgresql:/opt/proyecto/postgresql:ro
+      - ./pruebas/integracion:/opt/proyecto/tds-spike:ro
+  sqlserver:
+    secrets: [sqlserver_sa_password, fdw_password]
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+      - ./pruebas/integracion:/opt/proyecto/tds-spike:ro
+
+networks:
+  medical-network:
+    name: ${TDS_SPIKE_PROJECT:?Proyecto aislado requerido}-network
+
+secrets:
+  postgres_password:
+    file: ./.tmp/tds-spike-root/secrets/postgres_password.txt
+  sqlserver_sa_password:
+    file: ./.tmp/tds-spike-root/secrets/sqlserver_sa_password.txt
+  mongo_root_password:
+    file: ./.tmp/tds-spike-root/secrets/mongo_root_password.txt
+  fdw_password:
+    file: ./.tmp/tds-spike-root/secrets/fdw_password.txt
+  pg_fdw_login_password:
+    file: ./.tmp/tds-spike-root/secrets/pg_fdw_login_password.txt
