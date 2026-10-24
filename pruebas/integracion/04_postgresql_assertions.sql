@@ -8,7 +8,7 @@ WHERE id_paciente = 1002 AND codigo_region = 'AL';
 EXPLAIN (VERBOSE, COSTS OFF) SELECT id_paciente FROM externo.ft_estado_facturacion
 WHERE id_paciente = 1002 AND codigo_region = 'AL';
 DO $$
-DECLARE n integer;
+DECLARE n integer; ordered_ids bigint[];
 BEGIN
   SELECT count(*) INTO n FROM externo.ft_estado_facturacion;
   IF n <> 4 THEN RAISE EXCEPTION 'Se esperaban 4 filas remotas, llegaron %', n; END IF;
@@ -38,6 +38,14 @@ BEGIN
   SELECT count(*) INTO n FROM externo.ft_estado_facturacion
   WHERE id_paciente = 1002 AND codigo_region = 'AL';
   IF n <> 0 THEN RAISE EXCEPTION 'Fila remota inesperada; count=%', n; END IF;
+  SELECT count(*) INTO n FROM externo.ft_estado_facturacion
+  WHERE id_paciente = 1001 AND codigo_region = 'AL';
+  IF n <> 1 THEN RAISE EXCEPTION 'Filtro exacto 1001/AL devolvió % filas', n; END IF;
+  SELECT array_agg(id_paciente) INTO ordered_ids FROM (
+    SELECT id_paciente FROM externo.ft_estado_facturacion ORDER BY id_paciente DESC
+  ) sorted;
+  IF ordered_ids <> ARRAY[5000000000,3001,2001,1001]::bigint[]
+  THEN RAISE EXCEPTION 'ORDER BY de tabla foránea incorrecto: %', ordered_ids; END IF;
   SELECT count(*) INTO n FROM clinico.pacientes p
   LEFT JOIN externo.ft_estado_facturacion f
     ON f.id_paciente = p.id_paciente AND f.codigo_region = p.codigo_region

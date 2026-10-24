@@ -5,14 +5,16 @@ FROM ${PG_BASE} AS fdw-build
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential ca-certificates curl cmake pkg-config freetds-dev \
+    build-essential ca-certificates curl cmake pkg-config patch freetds-dev \
     libssl-dev libsasl2-dev zlib1g-dev "postgresql-server-dev-16=${PG_VERSION}" \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
+COPY docker/postgres/patches/tds-fdw-query-local-quals.patch /src/tds-fdw-query-local-quals.patch
 RUN curl -fsSL --retry 3 https://codeload.github.com/tds-fdw/tds_fdw/tar.gz/5830577908683cb35c760079ec0f105ef7e3ff98 -o tds.tar.gz \
     && echo '03c644bae1e40131e8974884d7aa41c8e6023aceb299ed33ba83bf1474f6d4d6  tds.tar.gz' | sha256sum -c - \
     && mkdir tds_fdw && tar -xzf tds.tar.gz --strip-components=1 -C tds_fdw \
+    && patch --batch --fuzz=0 -d tds_fdw -p1 < /src/tds-fdw-query-local-quals.patch \
     && make -C tds_fdw USE_PGXS=1 PG_CONFIG=/usr/lib/postgresql/16/bin/pg_config -j2 \
     && make -C tds_fdw USE_PGXS=1 PG_CONFIG=/usr/lib/postgresql/16/bin/pg_config DESTDIR=/out install
 

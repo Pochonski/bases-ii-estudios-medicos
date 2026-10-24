@@ -1,0 +1,33 @@
+--- a/src/tds_fdw.c
++++ b/src/tds_fdw.c
+@@ -2429,8 +2429,18 @@
+ 	 * Identify which baserestrictinfo clauses can be sent to the remote
+ 	 * server and which can't.
+ 	 */
+-	classifyConditions(root, baserel, baserel->baserestrictinfo,
++	if (option_set.query)
++	{
++		/* A fixed query cannot accept pushed WHERE clauses. Let PostgreSQL
++		 * enforce every restriction, including join-derived restrictions. */
++		fpinfo->remote_conds = NIL;
++		fpinfo->local_conds = baserel->baserestrictinfo;
++	}
++	else
++	{
++		classifyConditions(root, baserel, baserel->baserestrictinfo,
+ 					   &fpinfo->remote_conds, &fpinfo->local_conds);
++	}
+ 
+ 	/*
+ 	 * Identify which attributes will need to be retrieved from the remote
+@@ -2646,6 +2656,10 @@
+ #endif /* PG_VERSION_NUM < 90500 */
+ 	
+ 	add_path(baserel, (Path *) path);
++	/* A fixed query is neither sorted nor parameterized by outer relations.
++	 * Claiming otherwise can silently skip ORDER BY or join predicates. */
++	if (option_set.query)
++		return;
+ 
+ 	/*
+ 	 * Determine whether we can potentially push query pathkeys to the remote
