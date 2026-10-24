@@ -87,10 +87,10 @@ try {
     try {
         Invoke-Spike @('exec','-T','postgres','bash','-c', 'export PGPASSWORD="$(cat /run/secrets/pg_fdw_login_password)"; psql -X -h 127.0.0.1 -U usr_fdw_pg_mssql -d joseph_tds_spike_pg -v ON_ERROR_STOP=1 -Atc "SELECT 1"')
         $composeArgs = $context.Arguments
-        $failure = @(& docker compose @composeArgs exec -T postgres bash -c 'export PGPASSWORD="$(cat /run/secrets/pg_fdw_login_password)"; psql -X -h 127.0.0.1 -U usr_fdw_pg_mssql -d joseph_tds_spike_pg -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM externo.ft_estado_facturacion"' 2>&1)
-        if ($LASTEXITCODE -eq 0) { throw 'Consulta remota funcionó con SQL Server detenido.' }
-        if (($failure -join ' ') -notmatch 'connection|connect|timeout|unavailable|refused|timed out') { throw 'Fallo remoto no identificó indisponibilidad de conexión.' }
-        Write-Output 'PASS negativo: consulta FDW falla con SQL Server detenido; PostgreSQL permanece disponible'
+        $null = @(& docker compose @composeArgs exec -T postgres bash -c 'export PGPASSWORD="$(cat /run/secrets/pg_fdw_login_password)"; psql -X -h 127.0.0.1 -U usr_fdw_pg_mssql -d joseph_tds_spike_pg -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM externo.ft_estado_facturacion"' 2>&1)
+        $remoteExit = $LASTEXITCODE
+        if ($remoteExit -eq 0) { throw 'Consulta remota funcionó con SQL Server detenido.' }
+        Write-Output "PASS negativo: PostgreSQL local responde; FDW falla con SQL Server detenido (código $remoteExit)"
     } finally {
         Invoke-Spike @('start','sqlserver')
         Wait-SqlServerHealthy

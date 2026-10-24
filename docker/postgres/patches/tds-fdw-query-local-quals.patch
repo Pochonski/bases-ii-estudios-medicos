@@ -1,9 +1,6 @@
 --- a/src/tds_fdw.c
 +++ b/src/tds_fdw.c
-@@ -2429,8 +2429,18 @@
- 	 * Identify which baserestrictinfo clauses can be sent to the remote
- 	 * server and which can't.
- 	 */
+@@ -2432 +2432,10 @@
 -	classifyConditions(root, baserel, baserel->baserestrictinfo,
 +	if (option_set.query)
 +	{
@@ -15,19 +12,10 @@
 +	else
 +	{
 +		classifyConditions(root, baserel, baserel->baserestrictinfo,
- 					   &fpinfo->remote_conds, &fpinfo->local_conds);
+@@ -2433,0 +2443 @@
 +	}
- 
- 	/*
- 	 * Identify which attributes will need to be retrieved from the remote
-@@ -2646,6 +2656,10 @@
- #endif /* PG_VERSION_NUM < 90500 */
- 	
- 	add_path(baserel, (Path *) path);
+@@ -2648,0 +2659,4 @@
 +	/* A fixed query is neither sorted nor parameterized by outer relations.
 +	 * Claiming otherwise can silently skip ORDER BY or join predicates. */
 +	if (option_set.query)
 +		return;
- 
- 	/*
- 	 * Determine whether we can potentially push query pathkeys to the remote
