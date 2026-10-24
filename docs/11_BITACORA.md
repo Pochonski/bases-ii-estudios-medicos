@@ -343,3 +343,13 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   corrección limpia solo el código esperado después de comprobar ausencia y
   hace **fallar** el job si la limpieza realmente queda incompleta. Se repite
   CI en el siguiente commit; no se declara verde este run.
+- **Cierre funcional:** commit `8f25634` y [CI FDW 40103545333](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103545333)
+  SUCCESS: cuatro filas remotas, tipos/Unicode/offsets, WHERE/ORDER/JOIN,
+  permisos negativos, caída y recuperación, ausencia de contenedores y
+  volúmenes efímeros. Artifact descargado, head y checkout verificados,
+  versiones en `evidencias/registros/2026-10-24-joseph-tds-fdw-ci.txt`.
+  [Infraestructura 40103545352](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103545352)
+  SUCCESS tres jobs del mismo head. Windows local siguió sin daemon; no hubo
+  consulta FDW local. Esta actualización documental registra fecha, responsable,
+  motivo y efecto; no cambia contratos. Verificar CI del commit documental
+  posterior por separado.

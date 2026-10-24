@@ -76,6 +76,9 @@ FreeTDS está configurado con `encryption=require`; falta validar identidad del
 certificado/CA en el despliegue definitivo. La conversión ISO-8601 de
 `DATETIMEOFFSET` a `timestamptz` se prueba con offsets del fixture, pero formatos,
 escala temporal y collation de la vista definitiva requieren repetición con Joyce.
+El parche de `tds_fdw` fuerza filtro/orden local para la opción `query`: esto
+puede transferir todas las filas de la vista a PostgreSQL antes de filtrar.
+Medir cardinalidad/rendimiento con Joyce y revisar una solución upstream.
 No se prueba escritura por TDS, no se prueba MongoDB ni sincronización global.
 Windows local solo puede acreditar el runtime cuando Docker Desktop vuelva a
 exponer el daemon Linux; una CI Ubuntu verde no demuestra eso.
