@@ -220,3 +220,45 @@ No se borraron volúmenes ni se reinició el PostgreSQL compartido. FDW remoto,
 BSON/escrituras MongoDB, autenticación propia y sincronización siguen NO EJECUTADOS.
 Evidencia detallada: `evidencias/registros/2026-10-23-joseph-core-main-ci.txt`.
 Ambos workflows deben repetirse o verificarse después del commit documental final.
+
+## Fase 4 — tds_fdw contra SQL Server temporal (24/10/2026, Joseph)
+
+**Configuración:** [guía reproducible](../documentacion/JOSEPH_FASE4_TDS_FDW.md).
+El runner usa un proyecto Compose con nombre aleatorio, red interna, cero puertos
+host y volúmenes propios; crea y elimina solo `joseph_fdw_spike` y
+`joseph_tds_spike_pg`. La vista y el login SQL Server están exclusivamente en
+`pruebas/integracion/`; nunca sustituyen los de Joyce.
+
+| Caso | Windows 11 local | CI Ubuntu22 / Windows Server 2022 |
+|---|---|---|
+| Estructura Compose, secretos temporales, aislamiento | PASA `-StaticOnly` | Windows Server estático PASÓ en [40103007250](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103007250). |
+| SELECT remoto con login propio, 4 filas, tipos/Unicode/fecha | NO EJECUTADO: daemon `dockerDesktopLinuxEngine` ausente | PASA en `e514ee7`: cuatro filas SQL Server, Unicode, DECIMAL, offsets UTC y BIGINT > Int32. |
+| SELECT vista permitido; tabla base/INSERT rechazados | NO EJECUTADO | PASA con `svc_pg_mssql_ro`, sin `sa` para consulta FDW. |
+| WHERE/ORDER BY y LEFT JOIN sin fila remota | NO EJECUTADO | PASA tras D-040: `1002/AL` remoto 0; JOIN conserva paciente; plan muestra `Filter` local; orden DESC comprobado. |
+| SQL Server detenido, error remoto y recuperación | NO EJECUTADO | PASA: PG local `SELECT 1`, FDW código 1 con SQL Server detenido; tras `start`/healthcheck, cuatro filas otra vez. |
+| Regresión infraestructura | NO EJECUTADO runtime | [40103007202](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103007202) PASÓ tres jobs en mismo head `e514ee7`: ACL Windows y Ubuntu base/localhost. |
+| Objetos definitivos de Joyce / P01 y P17 finales | BLOQUEADO POR DEPENDENCIA | BLOQUEADO POR DEPENDENCIA: no hay base/vista/cuenta/fixture reales de Joyce. |
+| Mongo FDW/BSON/escrituras | NO EJECUTADO | NO EJECUTADO; gate separado. |
+
+La primera ejecución de la CI en `e57de54` [40102260838](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40102260838)
+**FALLÓ**, como debe suceder ante SQL no esperado. Su log confirma 4 filas
+desde SQL Server y `usr_fdw_pg_mssql` como login PostgreSQL, seguido de
+`ERROR: Fila remota inesperada`; `finally` eliminó bases, login, contenedores,
+red y los dos volúmenes **de ese proyecto nuevo**. `581b7f5` agrega listado de
+claves, conteo filtrado y `EXPLAIN VERBOSE` para diagnosticar sin ocultar el fallo.
+La [segunda ejecución 40102446960](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40102446960)
+también FALLÓ pero aisló que `WHERE 1002/AL` devolvía `count=4` y no existía
+filtro en el plan, coincidiendo con el issue upstream #444. El commit `1c0367e`
+aplicó parche local; en la [tercera CI 40102791877](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40102791877)
+el `Foreign Scan` mostró `Filter`, pasaron tipos/orden/JOIN y el SQL Server
+detenido provocó código no cero mientras PG local respondía. El job FALLÓ porque
+el runner exigía palabras inglesas específicas en el error; `e514ee7` quitó esa
+clasificación textual, sin permitir código cero. La [cuarta CI 40103007250](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103007250)
+PASÓ dos jobs: caída, código no cero, recuperación y limpieza, además de
+tipos/seguridad; artifact descargado en
+`evidencias/registros/2026-10-24-joseph-tds-fdw-ci.txt`. La regresión de
+infraestructura [40103007202](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103007202)
+PASÓ sus tres jobs en el mismo head `e514ee7`. Los cambios finales de
+instrumentación y documentos tendrán CI propia: no atribuir estos runs a un
+SHA posterior. **P01/P17 definitivos siguen pendientes de Joyce** y Mongo
+FDW/BSON no se ejecutó.

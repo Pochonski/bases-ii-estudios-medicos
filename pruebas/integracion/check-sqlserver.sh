@@ -3,6 +3,7 @@ set -euo pipefail
 export SQLCMDPASSWORD
 SQLCMDPASSWORD="$(cat /run/secrets/fdw_password)"
 sqlcmd=(/opt/mssql-tools18/bin/sqlcmd -S localhost -U svc_pg_mssql_ro -d joseph_fdw_spike -C -b -f 65001 -h -1 -W)
+"${sqlcmd[@]}" -Q "SET NOCOUNT ON; SELECT CAST(SERVERPROPERTY('ProductVersion') AS varchar(40)) AS sqlserver_version, CAST(SERVERPROPERTY('ProductLevel') AS varchar(40)) AS sqlserver_level;"
 "${sqlcmd[@]}" -Q 'SET NOCOUNT ON; SELECT ORIGINAL_LOGIN() AS login_name, COUNT(*) AS rows_read FROM dbo.vw_estado_facturacion;'
 if "${sqlcmd[@]}" -Q 'SELECT COUNT(*) FROM dbo.facturacion_spike;' >/dev/null 2>&1; then
   echo 'FAIL: cuenta limitada puede leer tabla base' >&2; exit 1

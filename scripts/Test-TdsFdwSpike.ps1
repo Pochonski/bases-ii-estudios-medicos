@@ -45,6 +45,15 @@ function Wait-SqlServerHealthy {
     }
     throw 'SQL Server no recuperó healthcheck tras start.'
 }
+function Assert-SpikeRemoved {
+    $remaining = @(& docker ps -a --quiet --filter "label=com.docker.compose.project=$project")
+    if ($LASTEXITCODE -ne 0 -or $remaining.Count) { throw 'Persisten contenedores del spike.' }
+    foreach ($volume in 'postgres_data','sqlserver_data','mongodb_data','mongodb_config') {
+        & docker volume inspect "${project}_$volume" *> $null
+        if ($LASTEXITCODE -eq 0) { throw "Persiste volumen del spike: $volume" }
+    }
+    Write-Output 'PASS limpieza Docker: sin contenedores ni volúmenes del proyecto temporal'
+}
 
 try {
     if (Test-Path -LiteralPath $tempRoot) {
@@ -106,7 +115,10 @@ try {
         } catch { Write-Warning "Limpieza de objetos temporales incompleta: $_" }
     }
     if ($started) {
-        try { Invoke-Spike @('down','--volumes','--remove-orphans') }
+        try {
+            Invoke-Spike @('down','--volumes','--remove-orphans')
+            Assert-SpikeRemoved
+        }
         catch { Write-Warning "Limpieza del proyecto aislado incompleta: $_" }
     }
     if (Test-Path -LiteralPath $tempRoot) {
