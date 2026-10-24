@@ -2,6 +2,11 @@
 \pset pager off
 SELECT current_user AS fdw_login, count(*) AS remote_rows
 FROM externo.ft_estado_facturacion;
+SELECT id_paciente, codigo_region FROM externo.ft_estado_facturacion ORDER BY id_paciente;
+SELECT count(*) AS missing_remote_probe FROM externo.ft_estado_facturacion
+WHERE id_paciente = 1002 AND codigo_region = 'AL';
+EXPLAIN (VERBOSE, COSTS OFF) SELECT id_paciente FROM externo.ft_estado_facturacion
+WHERE id_paciente = 1002 AND codigo_region = 'AL';
 DO $$
 DECLARE n integer;
 BEGIN
@@ -30,8 +35,14 @@ BEGIN
     WHERE id_paciente = 5000000000 AND codigo_region = 'AL'
       AND total_facturado_crc = 18.25::numeric(12,2)
   ) THEN RAISE EXCEPTION 'Error de BIGINT fuera de rango Int32'; END IF;
-  IF EXISTS (SELECT 1 FROM externo.ft_estado_facturacion WHERE id_paciente = 1002 AND codigo_region = 'AL')
-  THEN RAISE EXCEPTION 'Fila remota inesperada'; END IF;
+  SELECT count(*) INTO n FROM externo.ft_estado_facturacion
+  WHERE id_paciente = 1002 AND codigo_region = 'AL';
+  IF n <> 0 THEN RAISE EXCEPTION 'Fila remota inesperada; count=%', n; END IF;
+  SELECT count(*) INTO n FROM clinico.pacientes p
+  LEFT JOIN externo.ft_estado_facturacion f
+    ON f.id_paciente = p.id_paciente AND f.codigo_region = p.codigo_region
+  WHERE p.id_paciente = 1002 AND p.codigo_region = 'AL' AND f.id_paciente IS NULL;
+  IF n <> 1 THEN RAISE EXCEPTION 'LEFT JOIN perdió paciente sin facturación'; END IF;
 END $$;
 SELECT p.id_paciente, p.codigo_region, f.nombre_aseguradora,
        f.total_facturado_crc, f.fecha_actualizacion AT TIME ZONE 'UTC' AS fecha_utc
