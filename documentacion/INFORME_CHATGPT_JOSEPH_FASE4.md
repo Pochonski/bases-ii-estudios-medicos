@@ -129,3 +129,15 @@ manual Windows cuando el daemon responda y repetir todos los negativos con
 objetos de Joyce antes de considerar integración. El PR #4 puede recibir
 revisión técnica del spike, pero no habilita merge automático del PR #3/#4 ni
 cierra toda la parte de Joseph.
+
+**Cierre comprobado del HEAD de código `8f25634`:**
+[FDW 40103545333](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103545333)
+SUCCESS dos jobs y [infraestructura 40103545352](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103545352)
+SUCCESS tres jobs. Artifact FDW: checkout `ed0b178c7f0d568072e11c2c2c137630b710412c`,
+PostgreSQL 16.15, `tds_fdw` 2.0.5 con parche, SQL Server 16.0.4305.5 RTM,
+FreeTDS 1.3.17+ds-2. El runner verificó que no quedaran contenedores ni
+volúmenes del spike. La CI previa `40103357010` quedó roja por código residual
+de una comprobación negativa de volumen; se conserva el fallo y la corrección.
+El filtrado local de `query` evita la respuesta errónea pero puede transferir
+toda la vista remota: medir cardinalidad/costo antes de integración real. La
+CI del commit documental que registra este cierre se verifica aparte.

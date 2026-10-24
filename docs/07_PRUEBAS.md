@@ -270,3 +270,15 @@ efectivas, caída/recuperación y limpieza concluyeron. El último
 ese estado residual al paso. La corrección posterior pone `LASTEXITCODE=0`
 solo tras verificar que no queda ningún volumen ni contenedor; cualquier
 error real de limpieza lanza excepción. Requiere regresión del nuevo SHA.
+
+**Cierre CI del HEAD de código `8f25634`:** [FDW 40103545333](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103545333)
+SUCCESS en Ubuntu real y Windows Server estático; [infraestructura 40103545352](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40103545352)
+SUCCESS en tres jobs (ACL, base, localhost). Artifact descargado: head
+`8f256341af2ee0a27bc3ea971802ac072dc48002`, checkout
+`ed0b178c7f0d568072e11c2c2c137630b710412c`, PostgreSQL 16.15,
+`tds_fdw` 2.0.5 con parche, SQL Server 16.0.4305.5 RTM, FreeTDS
+1.3.17+ds-2, Docker 28.0.4, Compose 2.38.2, PowerShell 7.6.6 y kernel
+Ubuntu `6.8.0-1064-azure`. El runner imprimió PASS de ausencia de
+contenedores/volúmenes del proyecto temporal; artifact sin prefijo de
+contraseñas. Extracto versionado en `evidencias/registros/2026-10-24-joseph-tds-fdw-ci.txt`.
+La CI del commit documental posterior se verificará por separado.

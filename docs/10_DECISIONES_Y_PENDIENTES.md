@@ -327,3 +327,6 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
   revisar el contrato/resultado antes de integración definitiva. La CI `40103007250`
   mostró `Filter` local, ausencia 1002/AL, orden y JOIN correctos. Mantener el
   gate definitivo abierto hasta repetir con la vista/cuenta de Joyce y TLS validado.
+  El filtrado local evita respuestas incorrectas pero lee la consulta fija
+  completa: medir costo y cardinalidad de la vista real; un arreglo upstream o
+  diseño que preserve pushdown seguro sería preferible si el volumen crece.
