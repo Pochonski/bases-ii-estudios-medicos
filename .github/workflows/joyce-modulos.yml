@@ -21,14 +21,9 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - name: Secretos efímeros enmascarados
+      - name: Registrar contexto sin secretos
         shell: pwsh
         run: |
-          . ./scripts/Joyce-Common.ps1
-          Initialize-JoyceSecrets
-          foreach ($file in Get-ChildItem secrets/*.txt) {
-            "::add-mask::$([IO.File]::ReadAllText($file.FullName).Trim())"
-          }
           $null = New-Item -ItemType Directory -Force .tmp/ci
           "Head PR: ${{ github.event.pull_request.head.sha || github.sha }}; checkout: $(git rev-parse HEAD); kernel: $(uname -r)" |
             Set-Content .tmp/ci/contexto.txt
@@ -41,9 +36,7 @@ jobs:
         run: |
           if (-not (Test-Path .tmp/ci/joyce-entrega.txt)) { return }
           $evidencia = Get-Content .tmp/ci/joyce-entrega.txt -Raw
-          foreach ($file in Get-ChildItem secrets/*.txt) {
-            if ($evidencia.Contains([IO.File]::ReadAllText($file.FullName).Trim())) { throw "Secreto en evidencia: $($file.Name)" }
-          }
+          if ($evidencia -match 'Aa1![A-F0-9]{64}') { throw 'Secreto generado presente en artifact.' }
           'PASS: evidencia sin valores secretos'
       - name: Guardar evidencia
         if: always()

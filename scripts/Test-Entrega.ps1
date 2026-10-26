@@ -94,6 +94,19 @@ try {
     Out-Log "Verificación de entrega - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz') - commit $((git -C $script:JoyceRoot rev-parse --short HEAD).Trim())"
     if ($StaticOnly) {
         New-IsolatedContext -NoDocker
+        $originalOverlay = [IO.File]::ReadAllText($env:JOYCETEST_OVERLAY_PATH)
+        try {
+            $tampered = $originalOverlay | ConvertFrom-Json -AsHashtable
+            $tampered.networks.'medical-network'.name = 'medical-network'
+            [IO.File]::WriteAllText($env:JOYCETEST_OVERLAY_PATH, ($tampered | ConvertTo-Json -Depth 8))
+            $rejected = $false
+            try { $null = Assert-JoyceEphemeralContext } catch { $rejected = $true }
+            if (-not $rejected) { throw 'La red compartida fue aceptada por la protección P18.' }
+            Out-Log 'PASS negativo estático: red global medical-network rechazada'
+        } finally {
+            [IO.File]::WriteAllText($env:JOYCETEST_OVERLAY_PATH, $originalOverlay)
+        }
+        $null = Assert-JoyceEphemeralContext
         Out-Log 'PASS estático: Compose efectivo validado; motores, pruebas y limpieza Docker NO EJECUTADOS.'
         return
     }
@@ -120,8 +133,47 @@ try {
     $suite = & $pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-JoyceModulos.ps1') 2>&1
     $suiteText = ($suite | ForEach-Object { "$_" }) -join "`n"
     Out-Log (($suite | Where-Object { "$_" -match 'PASS|FALLA|RESULTADO' }) -join "`n")
-    if ($LASTEXITCODE -ne 0 -or $suiteText -notmatch 'RESULTADO: PASA') { throw 'FALLA: suite funcional' }
+    if ($LASTEXITCODE -ne 0 -or $suiteText -notmatch 'RESULTADO: PASA') {
+        Out-Log (($suite | Select-Object -Last 80) -join "`n")
+        throw 'FALLA: suite funcional'
+    }
     if ($DesdeCero) { Out-Log 'PASS P18: desde volúmenes vacíos, instalación y suite completa sin intervención manual' }
+
+    Step 'Instalación ordinaria repetida: conservar factura sintética y rechazar recarga inicial'
+    $null = Invoke-JoyceScript -Service sqlserver -Text @'
+:on error exit
+USE integracion_externa;
+EXEC dbo.sp_registrar_factura_externa @id_factura=99971, @id_estudio=30023,
+  @id_paciente=2003, @codigo_region='SJ', @monto=6789.12, @estado='PENDIENTE';
+GO
+'@
+    try {
+        $normal = & $pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Install-JoyceModulos.ps1') -SkipUp 2>&1
+        if ($LASTEXITCODE -ne 0) { Out-Log (($normal | Select-Object -Last 40) -join "`n"); throw 'Instalación normal repetida falló.' }
+        $negative = & $pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Install-JoyceModulos.ps1') -SkipUp -LoadInitialData 2>&1
+        if ($LASTEXITCODE -eq 0 -or (($negative | ForEach-Object { "$_" }) -join "`n") -notmatch 'Carga inicial SQL Server denegada') {
+            throw 'La carga inicial no rechazó tablas pobladas como se esperaba.'
+        }
+        $global:LASTEXITCODE = 0
+        $invoice = Invoke-JoyceScript -Service sqlserver -Text @'
+SET NOCOUNT ON;
+USE integracion_externa;
+SELECT CAST(COUNT(*) AS varchar(20)) FROM dbo.facturas_externas
+WHERE id_factura=99971 AND monto=6789.12 AND estado='PENDIENTE';
+'@
+        if (@($invoice -split '\r?\n' | Where-Object { $_.Trim() -eq '1' }).Count -ne 1) {
+            throw 'La instalación normal cambió o borró la factura sintética.'
+        }
+        Out-Log 'PASS instalación normal repetida conserva factura/importe; carga inicial sobre datos existentes es rechazada'
+    } finally {
+        $null = Invoke-JoyceScript -Service sqlserver -Text @'
+:on error exit
+USE integracion_externa;
+DELETE FROM dbo.facturas_externas WHERE id_factura=99971;
+EXEC dbo.sp_recalcular_resumen_facturacion @id_paciente=2003, @codigo_region='SJ';
+GO
+'@
+    }
 
     Step 'P12 persistencia de los TRES motores tras reinicio'
     $antes = Get-Conteos
@@ -211,6 +263,13 @@ finally {
         }
     }
     if ($EvidencePath) {
+        if ($env:JOYCETEST_SECRET_DIR -and (Test-Path -LiteralPath $env:JOYCETEST_SECRET_DIR)) {
+            $textLog = $log -join "`n"
+            foreach ($file in Get-ChildItem -LiteralPath $env:JOYCETEST_SECRET_DIR -File) {
+                $secret = [IO.File]::ReadAllText($file.FullName).Trim()
+                if ($secret -and $textLog.Contains($secret)) { throw "Secreto detectado en evidencia: $($file.Name)" }
+            }
+        }
         $full = Join-Path $script:JoyceRoot $EvidencePath
         $null = New-Item -ItemType Directory -Force -Path (Split-Path -Parent $full)
         [IO.File]::WriteAllLines($full, $log, [Text.UTF8Encoding]::new($false))

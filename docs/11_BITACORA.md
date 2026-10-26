@@ -435,3 +435,11 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   sintética de 2000 filas al spike TDS, con EXPLAIN ANALYZE para el coste local. Los
   workflows del núcleo y TDS escuchan la base de Joyce en este PR apilado. Resultados
   del nuevo SHA aún pendientes, sin atribuirles el CI anterior.
+- **Segundo CI del PR #7 (`285506a`):** infraestructura (base/localhost), núcleo y
+  estático Windows PASARON; módulo integrado y TDS quedaron ROJOS. El módulo pasó
+  P01, P04–P07, BSON/índice único, pero falló al iniciar el nuevo negativo de cuenta
+  MongoDB; el runner solo imprimía marcas, por lo que se añadió salida acotada de
+  diagnóstico de la suite. TDS pasó lectura real y mostró pushdown en `table_name`,
+  pero una aserción combinada de filtro/Unicode/DECIMAL devolvió 0; se separaron
+  los predicados e imprimió la fila para aislar la causa. Ningún fallo se marca PASS.
+  Ambos proyectos de prueba limpiaron sus recursos propios.

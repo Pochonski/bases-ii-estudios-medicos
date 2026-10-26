@@ -356,3 +356,13 @@ P01–P17 NO SE EJECUTÓ en ese run. El parseo corregido requiere CI nueva.
 La regresión TDS nueva usa `table_name` en una vista temporal separada y luego
 agrega 2000 filas ficticias al spike para medir EXPLAIN ANALYZE y estimar bytes de
 columnas remotas. **Estado: IMPLEMENTADA, NO PROBADA** hasta su CI del SHA nuevo.
+
+**CI `285506a`:** infraestructura (3 jobs) y núcleo PostgreSQL PASAN;
+[módulos 40278430083](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40278430083)
+FALLA después de P07: el nuevo test de cuenta MongoDB requiere diagnóstico
+detallado. P01/P04–P07, BSON ObjectId/Int64/Int32/Date e índice único sí
+imprimieron PASS, pero la suite global NO PASÓ y P08–P18 no se acreditan en
+este SHA. [TDS 40278430129](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40278430129)
+FALLA en aserción compuesta de `table_name`; su plan sí mostró SQL remoto con
+`WHERE` enviado. Se separan los predicados para identificar la discrepancia.
+Ambos runners retiraron sus recursos efímeros; no se reetiquetan como éxitos.
