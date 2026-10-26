@@ -552,3 +552,29 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
   DECIMAL/TLS/EJSON/outbox documentados. Sin cambios a modelos o datos.
 - **Documentos afectados:** README, matriz de cumplimiento, estado,
   guía de cierre, decisiones y bitácora.
+
+### D-050 — Publicar evidencia auténtica de Windows sin modificar el código (26/10/2026, Joseph)
+
+- **Motivo y autorización:** Joseph solicitó conservar y publicar la ejecución
+  integral local, sin repetir P18 ni tocar `main` o recursos compartidos.
+- **Fuente comprobada:** log original de 18824 bytes en el worktree separado
+  de `origin/main` `2840743917364d137c5298b6456fef15862b3a92`;
+  comienza 07:54:28 UTC−06:00, contiene P01–P18/INT según matriz y termina
+  `RESULTADO: PASA`/`PASS limpieza`. Docker Desktop Linux Engine 29.8.0,
+  kernel WSL 2 `6.18.33.2-microsoft-standard-WSL2`. El resultado Windows
+  es independiente de la CI Ubuntu del código `3d50894`.
+- **Decisión de publicación:** copiar el log byte por byte tras revisión de
+  secretos; su SHA-256 es
+  `2EB27B4825FA4FD6A9D0E88A443F47D8C2E729137054FE609CD23BFDB4B39ACB`.
+  Los dos inventarios JSON originales tienen el mismo SHA-256
+  `3F5402E28FCC429043743285369B612F3B1C94DC7795AF9B62FA12C3B923CC9B`
+  y cero diferencias de IDs (7 contenedores, 17 volúmenes, 6 redes).
+  Publicar solo su resumen: los IDs de otros recursos Docker son innecesarios.
+  Los originales permanecen intactos en `.tmp`.
+- **Impacto:** solo `evidencias/`, `.gitattributes` para conservar los bytes
+  originales del registro en Git, README y documentación de estado,
+  cumplimiento, guía, pruebas y bitácora. No cambian SQL, Compose, scripts,
+  roles ni contratos. El nuevo commit documental **no es el SHA probado**.
+- **Pendientes:** capturas reales, video narrado y Moodle; TLS/CA,
+  `table_name` DECIMAL, respaldo operativo MongoDB y DML externo al
+  procedimiento outbox siguen con su alcance documentado. No hay ACID global.

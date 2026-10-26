@@ -1,12 +1,14 @@
 # Estado real, fuentes y convención de certeza
 
-## Estado vigente confirmado — 26/10/2026 (D-049)
+## Estado vigente confirmado — 26/10/2026 (D-049/D-050)
 
 **Estado de integración verificado el 26/10/2026:** último commit de código probado en [`3d50894`](https://github.com/Pochonski/bases-ii-estudios-medicos/commit/3d50894c9e566d44a2190d6d115331983127f5bd); PR #3, #4 y #5 fusionados en `main`, PR #7 fusionado en la rama de Joyce e incorporado al merge de #5. No quedan PR de integración abiertos. **Cuatro workflows de `main`: siete trabajos de siete aprobados** en ese mismo SHA: [Infraestructura (3/3)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328045185) · [Núcleo PostgreSQL (1/1)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328099902) · [TDS FDW (2/2)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328122775) · [Integración de tres motores (1/1)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328144203).
 
 **Evidencia Ubuntu CI:** P18 desde volúmenes efímeros, P01–P18, INT-01–INT-05, segmentación, FDW reales, permisos API, dos exportadores concurrentes, restauración PG/SQL Server/MongoDB mediante EJSON estricto, P12 tras reinicio y nueve segmentos automáticos de demo.
 
-**No confundir con entrega concluida:** Docker Desktop abierto en Windows según Joseph, pero el motor Linux y P18 en esa PC aún no están verificados; faltan capturas reales, video narrado de 5–8 min y entrega Moodle. El documento del curso indica 28/10/2026 a las 23:59, pendiente de confirmar en Moodle. Límites: TDS `table_name` con igualdad DECIMAL incorrecta (usar `query` probada); TLS/CA no listo para producción; Mongo EJSON no equivale a `mongorestore`; candado outbox no cubre DML directo fuera del procedimiento.
+**Evidencia Windows 11 posterior (D-050):** P18 integral se ejecutó en la PC de Joseph desde un worktree limpio de `origin/main` `2840743917364d137c5298b6456fef15862b3a92`. Docker Linux Engine/WSL 2, P01–P18, INT-01–INT-05 según matriz, permisos, concurrencia, restauración, P12 y demo automatizada PASARON; el proyecto efímero se limpió y los inventarios Docker conservaron los mismos identificadores. [Informe y hashes](../evidencias/2026-10-26-validacion-windows.md). No se atribuye esa ejecución al commit documental nuevo.
+
+**No confundir con entrega concluida:** faltan capturas reales, video narrado de 5–8 min y entrega Moodle. Confirmar allí el cierre indicado como 28/10/2026 a las 23:59. Límites: TDS `table_name` con igualdad DECIMAL incorrecta (usar `query` probada); TLS/CA no listo para producción; Mongo EJSON no equivale a `mongorestore`; el outbox es eventual y su candado no cubre DML directo fuera del procedimiento.
 
 > Las entradas de cronología que siguen reflejan fechas pasadas: menciones a PR
 > no fusionados o CI pendiente son **históricas**, no el estado actual.

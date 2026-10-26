@@ -526,3 +526,32 @@ posterior. No se inició el servicio ni se tocaron WSL o los volúmenes.
   requiere su propia CI antes de atribuirle estos resultados. Windows local
   continúa sin motor Docker disponible; ninguna prueba de motores se ejecutó
   allí. La igualdad DECIMAL en TDS `table_name` sigue PENDIENTE.
+
+## Validación integral Windows 11 — 26/10/2026, Joseph (D-050)
+
+Las afirmaciones anteriores de daemon ausente reflejan **sus ejecuciones
+históricas**. El [registro Windows íntegro](../evidencias/registros/2026-10-26-joseph-validacion-integrada-windows.txt)
+corresponde al worktree limpio de `origin/main`
+`2840743917364d137c5298b6456fef15862b3a92`; comenzó a las
+07:54:28 UTC−06:00 y terminó con código 0, `RESULTADO: PASA` y
+`PASS limpieza`. [Informe, hashes e inventarios resumidos](../evidencias/2026-10-26-validacion-windows.md).
+
+| Caso | Resultado en esta PC Windows 11 |
+|---|---|
+| Docker Desktop 4.91.0 / Engine 29.8.0 / Compose 5.5.1 | PASS Linux Engine, kernel `6.18.33.2-microsoft-standard-WSL2` |
+| Estático | PASS configuración efímera y rechazo de red compartida |
+| P01–P18 e INT-01–INT-05 | PASS según la matriz; INT-01/02/03/05 se acreditan por sus P, INT-04 se imprime directamente |
+| FDW, perfiles y permisos | PASS consultas SQL Server, escrituras MongoDB, P17 y negativos |
+| Dos exportadores y revisiones | PASS un documento, mismo ObjectId, revisión final 4 |
+| Restauración tres motores | PASS PG `pg_dump/pg_restore`, SQL Server `BACKUP/RESTORE`, MongoDB EJSON estricto |
+| P12 tras `restart` | PASS once valores iguales, mismos contenedores, FDW operativo |
+| Demo | PASS nueve segmentos automáticos; video **no grabado** |
+| Aislamiento y limpieza | PASS: 7/17/6 recursos Docker antes y después, cero diferencias de identificadores; proyecto P18 retirado |
+
+Los originales quedaron intactos en `.tmp/validacion-main-2840743/.tmp/`.
+El log publicado es copia idéntica SHA-256; los JSON de inventario completos no
+se publican por contener identificadores internos. No se repitió la suite para
+documentar el resultado. El modo contractual TDS `query` pasó; la igualdad
+DECIMAL de `table_name` permanece defectuosa y no se volvió a ejecutar en
+esta suite. EJSON no equivale a `mongorestore`, TLS/CA sigue pendiente y el
+outbox no es ACID global.
