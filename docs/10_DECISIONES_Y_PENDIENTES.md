@@ -456,3 +456,9 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
   por estudio y escritura condicional en Mongo; requiere revisión de contrato y nueva prueba.
 - **Archivos/impacto:** solo scripts/fixtures del spike, filtros CI y documentación. Estado
   runtime de la nueva regresión pendiente de ejecución; sin cambio a datos compartidos.
+- **Hallazgo inicial de `table_name`:** en CI `40278766277`, la fila 1001/AL mostró
+  `12345.67` correctamente y `EXPLAIN` confirmó pushdown de `id_paciente`, pero el
+  predicado remoto `total_facturado_crc = 12345.67` devolvió cero. Se conserva el
+  resultado y se mide por separado; **no** usar este modo para filtrar montos hasta
+  diagnosticarlo. El consumidor contractual de Joyce usa `query` con filtro local.
+  No se altera el parche ni se presenta `table_name` como plenamente certificado.

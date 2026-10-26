@@ -101,3 +101,12 @@ pwsh -NoProfile -File ./scripts/Test-TdsFdwSpike.ps1
 Este cambio se probará en la CI del PR de endurecimiento; no se declara aprobado
 por los runs anteriores. El volumen de 2004 filas es una muestra académica, no
 una predicción de rendimiento en producción.
+
+**Hallazgo de la primera regresión convencional:** `table_name` devolvió la fila
+1001/AL con monto `12345.67`, pero `WHERE total_facturado_crc = 12345.67`
+devolvió cero. Se imprime `EXPLAIN` y una sonda separada para diagnosticar
+pushdown numérico. No usar ese modo para predicados de monto ni presentarlo como
+certificado; el consumidor real continúa en `query` con filtros locales correctos.
+Esto no acredita que el parche causara el fallo, pues la rama convencional no
+entra en la condición `option_set.query` del parche. Comparación sin parche y
+corrección upstream quedan pendientes si se desea usar `table_name`.

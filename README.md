@@ -30,6 +30,7 @@ Requisitos: Windows 11, Docker Desktop (motor Linux/WSL 2) y PowerShell 7 (`wing
 pwsh -NoProfile -File ./scripts/Install-JoyceModulos.ps1         # estructura/FDW/roles, conserva datos
 pwsh -NoProfile -File ./scripts/Install-JoyceModulos.ps1 -LoadInitialData # solo sobre tablas vacías
 pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero      # P18 efímero + suite + P12/P17
+pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero -RunDemo # demo en proyecto efímero
 ```
 
 `-DesdeCero` crea un proyecto Compose nuevo con red, volúmenes y secretos propios, sin puertos

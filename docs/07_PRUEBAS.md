@@ -366,3 +366,13 @@ este SHA. [TDS 40278430129](https://github.com/Pochonski/bases-ii-estudios-medic
 FALLA en aserción compuesta de `table_name`; su plan sí mostró SQL remoto con
 `WHERE` enviado. Se separan los predicados para identificar la discrepancia.
 Ambos runners retiraron sus recursos efímeros; no se reetiquetan como éxitos.
+
+En `958ca01`, [TDS 40278766277](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40278766277)
+confirmó una discrepancia del modo **convencional**: lectura de `12345.67`
+correcta, `WHERE total_facturado_crc = 12345.67` sin fila. El modo contractual
+`query` no falla. El test ahora registra el plan y la sonda como hallazgo;
+`table_name` con filtro de monto **NO QUEDA APROBADO**. La suite [40278766324](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40278766324)
+pasó P01/P04–P07 y BSON/índice; el permiso negativo MongoDB sí fue rechazado
+con código 13, pero la prueba esperaba respuesta en vez de excepción. La prueba
+se corrige para comprobar el código explícitamente. P08–P18 siguen sin PASS en
+esa ejecución.

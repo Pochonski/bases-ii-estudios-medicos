@@ -74,6 +74,7 @@ pwsh -NoProfile -File ./scripts/Install-JoyceModulos.ps1
 pwsh -NoProfile -File ./scripts/Install-JoyceModulos.ps1 -LoadInitialData # únicamente tablas vacías
 pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -StaticOnly      # valida aislamiento sin daemon
 pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero      # suite en proyecto efímero
+pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero -RunDemo # demo interactiva aislada
 ```
 
 El instalador:

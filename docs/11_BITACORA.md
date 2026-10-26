@@ -443,3 +443,11 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   pero una aserción combinada de filtro/Unicode/DECIMAL devolvió 0; se separaron
   los predicados e imprimió la fila para aislar la causa. Ningún fallo se marca PASS.
   Ambos proyectos de prueba limpiaron sus recursos propios.
+- **Tercer CI (`958ca01`):** TDS sigue ROJO, ahora aisló la causa: `table_name` trae
+  la fila con DECIMAL `12345.67` correcto, pero `WHERE` remoto sobre el monto
+  devuelve cero; el modo `query` permanece correcto. Se mantiene sonda y plan,
+  y la aserción de conversión usa la fila por ID para no llamar éxito a un
+  predicado remoto defectuoso. El módulo integrado avanzó hasta permisos MongoDB:
+  login y `find` positivos; la denegación de `delete` lanzó excepción con código 13,
+  mientras el test esperaba un objeto de respuesta. Se ajustó el test para exigir
+  explícitamente ese código en excepción o respuesta, sin conceder permiso.

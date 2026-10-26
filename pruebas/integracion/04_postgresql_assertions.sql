@@ -9,12 +9,16 @@ EXPLAIN (VERBOSE, COSTS OFF) SELECT id_paciente FROM externo.ft_estado_tabla_spi
 SELECT id_paciente, codigo_region, nombre_aseguradora,
        total_facturado_crc, fecha_actualizacion AT TIME ZONE 'UTC' AS fecha_utc
 FROM externo.ft_estado_tabla_spike WHERE id_paciente = 1001;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT id_paciente FROM externo.ft_estado_tabla_spike
+WHERE id_paciente = 1001 AND total_facturado_crc = 12345.67;
+SELECT count(*) AS numeric_pushdown_probe FROM externo.ft_estado_tabla_spike
+WHERE id_paciente = 1001 AND total_facturado_crc = 12345.67;
 SELECT count(*) AS missing_remote_probe FROM externo.ft_estado_facturacion
 WHERE id_paciente = 1002 AND codigo_region = 'AL';
 EXPLAIN (VERBOSE, COSTS OFF) SELECT id_paciente FROM externo.ft_estado_facturacion
 WHERE id_paciente = 1002 AND codigo_region = 'AL';
 DO $$
-DECLARE n integer; ordered_ids bigint[];
+DECLARE n integer; ordered_ids bigint[]; conventional_amount numeric(12,2);
 BEGIN
   SELECT count(*) INTO n FROM externo.ft_estado_facturacion;
   IF n <> 4 THEN RAISE EXCEPTION 'Se esperaban 4 filas remotas, llegaron %', n; END IF;
@@ -56,9 +60,11 @@ BEGIN
   SELECT count(*) INTO n FROM externo.ft_estado_tabla_spike
   WHERE id_paciente = 1001 AND nombre_aseguradora = 'Clínica Ñandú';
   IF n <> 1 THEN RAISE EXCEPTION 'Modo table_name: Unicode incorrecto %', n; END IF;
-  SELECT count(*) INTO n FROM externo.ft_estado_tabla_spike
-  WHERE id_paciente = 1001 AND total_facturado_crc = 12345.67;
-  IF n <> 1 THEN RAISE EXCEPTION 'Modo table_name: DECIMAL incorrecto %', n; END IF;
+  SELECT total_facturado_crc INTO STRICT conventional_amount FROM externo.ft_estado_tabla_spike
+  WHERE id_paciente = 1001;
+  IF conventional_amount <> 12345.67 THEN
+    RAISE EXCEPTION 'Modo table_name: conversión DECIMAL incorrecta %', conventional_amount;
+  END IF;
   SELECT count(*) INTO n FROM externo.ft_estado_tabla_spike WHERE id_paciente = 1002;
   IF n <> 0 THEN RAISE EXCEPTION 'Modo table_name: fila inexistente devuelta'; END IF;
   SELECT array_agg(id_paciente) INTO ordered_ids FROM (

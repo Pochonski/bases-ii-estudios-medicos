@@ -4,7 +4,8 @@
 #   pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 [-DesdeCero] [-EvidencePath ...]
 # -DesdeCero crea y retira un proyecto Compose efímero, sin puertos host.
 [CmdletBinding()]
-param([switch]$DesdeCero, [switch]$StaticOnly, [string]$EvidencePath)
+param([switch]$DesdeCero, [switch]$StaticOnly, [switch]$RunDemo,
+      [switch]$DemoSinPausa, [string]$EvidencePath)
 . (Join-Path $PSScriptRoot 'Joyce-Common.ps1')
 
 $log = [System.Collections.Generic.List[string]]::new()
@@ -16,11 +17,17 @@ $tempRoot = $null
 $project = $null
 
 function Assert-NoExistingResources {
-    if ((& docker ps -aq --filter "label=com.docker.compose.project=$project") -or
-        (& docker network ls -q --filter "name=^$project-medical-network$") -or
-        (& docker volume ls -q --filter "name=^$project-")) {
-        throw "Ya existen recursos para $project; se cancela P18 sin tocarlos."
+    $containers = @(& docker ps -aq --filter "label=com.docker.compose.project=$project")
+    if ($LASTEXITCODE -ne 0 -or $containers.Count) {
+        throw "No se pudo verificar ausencia de contenedores para $project."
     }
+    & docker network inspect "$project-medical-network" *> $null
+    if ($LASTEXITCODE -eq 0) { throw "Red preexistente para $project; se cancela P18." }
+    foreach ($name in @("$project-postgres_data", "$project-sqlserver_data", "$project-mongodb_data", "$project-mongodb_config")) {
+        & docker volume inspect $name *> $null
+        if ($LASTEXITCODE -eq 0) { throw "Volumen preexistente $name; se cancela P18." }
+    }
+    $global:LASTEXITCODE = 0
 }
 
 function Assert-OwnedResources {
@@ -243,6 +250,12 @@ const u = db.getSiblingDB('reportes_medicos').getUser('svc_pg_mongo_rw', { showP
 printjson({ user: u.user, db: u.db, mechanisms: u.mechanisms, roles: u.roles, privilegios: u.inheritedPrivileges });
 '@)
     Out-Log 'PASS P17: servidores, mappings, tablas foráneas, perfiles y permisos documentados desde los motores'
+    if ($RunDemo) {
+        Step 'Demostración en el mismo proyecto efímero (sin afectar datos compartidos)'
+        & $pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Demo-Video.ps1') -SinPausa:$DemoSinPausa
+        if ($LASTEXITCODE -ne 0) { throw 'FALLA: demostración efímera.' }
+        Out-Log 'PASS demostración: nueve segmentos ejecutados dentro de P18 efímero'
+    }
     Out-Log "`nRESULTADO: PASA - verificación de entrega completa."
 }
 catch {

@@ -209,10 +209,15 @@ const a = db.getSiblingDB('admin'); a.logout();
 const r = db.getSiblingDB('reportes_medicos');
 if (!r.auth('svc_pg_mongo_rw', process.env.FDW_MONGO_PASSWORD)) { print('FALLA: login svc'); quit(1); }
 if (!r.resumenes_estudios.findOne({id_estudio:30031})) { print('FALLA: find svc'); quit(1); }
-const denied = r.runCommand({ delete: 'resumenes_estudios', deletes: [{q:{id_estudio:30031},limit:1}] });
-if (denied.ok !== 0 || denied.code !== 13) { print('FALLA: delete svc no fue denegado'); quit(1); }
-const other = r.runCommand({ find: 'indicadores_mensuales', filter: {}, limit: 1 });
-if (other.ok !== 0 || other.code !== 13) { print('FALLA: lectura ajena permitida'); quit(1); }
+function expectDenied(label, action) {
+  let code = null;
+  try { const result = action(); code = result.code || null; }
+  catch (e) { code = e.code || null; }
+  if (code !== 13) { print('FALLA: ' + label + ' no fue denegado con código 13 (' + code + ')'); quit(1); }
+}
+expectDenied('delete svc', () => r.runCommand({ delete: 'resumenes_estudios', deletes: [{q:{id_estudio:30031},limit:1}] }));
+expectDenied('lectura ajena', () => r.runCommand({ find: 'indicadores_mensuales', filter: {}, limit: 1 }));
+if (!r.resumenes_estudios.findOne({id_estudio:30031})) { print('FALLA: documento borrado'); quit(1); }
 print('PASS svc_pg_mongo_rw: login/find permitidos; delete y colección ajena denegados');
 '@)
 
