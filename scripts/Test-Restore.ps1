@@ -65,7 +65,7 @@ try {
     indices: origen.getCollection(nombre).getIndexes().filter(i => i.name !== '_id_'),
     documentos: origen.getCollection(nombre).find().toArray()
   }));
-  filesystem.writeFileSync(ruta, EJSON.stringify(paquete, {relaxed:false}), {mode:0o600});
+  filesystem.writeFileSync(ruta, EJSON.stringify(paquete, null, 0, {relaxed:false}), {mode:0o600});
   destino.dropDatabase();
   // El modo relaxed predeterminado convierte Int32/Int64 a Number y el validador
   // rechaza la copia. Deserializar en modo estricto conserva los tipos BSON.
@@ -77,7 +77,7 @@ try {
         {name:indice.name, unique:indice.unique === true});
     }
     if (item.documentos.length) destino.getCollection(item.nombre).insertMany(item.documentos);
-    const ordenar = d => EJSON.stringify(d, {relaxed:false});
+    const ordenar = d => EJSON.stringify(d, null, 0, {relaxed:false});
     const a = origen.getCollection(item.nombre).find().sort({_id:1}).toArray().map(ordenar);
     const b = destino.getCollection(item.nombre).find().sort({_id:1}).toArray().map(ordenar);
     if (JSON.stringify(a) !== JSON.stringify(b)) throw new Error('Documentos restaurados difieren: ' + item.nombre);
