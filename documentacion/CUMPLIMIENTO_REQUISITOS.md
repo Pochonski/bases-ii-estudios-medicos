@@ -6,7 +6,7 @@
 
 **Evidencia Ubuntu CI:** P18 desde volúmenes efímeros, P01–P18, INT-01–INT-05, segmentación, FDW reales, permisos API, dos exportadores concurrentes, restauración PG/SQL Server/MongoDB mediante EJSON estricto, P12 tras reinicio y nueve segmentos automáticos de demo.
 
-**No confundir con entrega concluida:** Docker Desktop abierto en Windows según Joseph, pero el motor Linux y P18 en esa PC aún no están verificados; faltan capturas reales, video narrado de 5–8 min y entrega Moodle. El documento del curso indica 28/10/2026 a las 23:59, pendiente de confirmar en Moodle. Límites: TDS `table_name` con igualdad DECIMAL incorrecta (usar `query` probada); TLS/CA no listo para producción; Mongo EJSON no equivale a `mongorestore`; candado outbox no cubre DML directo fuera del procedimiento.
+**Validación Windows 11 posterior:** P18 integral pasó sobre `origin/main` `2840743917364d137c5298b6456fef15862b3a92`, además de la CI Ubuntu anterior. Ver [registro e informe con hashes](../evidencias/2026-10-26-validacion-windows.md). No atribuir la ejecución al nuevo commit documental. Faltan capturas reales, video narrado de 5–8 min y entrega Moodle; confirmar el cierre efectivo indicado como 28/10/2026 a las 23:59. Límites: TDS `table_name` con igualdad DECIMAL incorrecta (usar `query` probada); TLS/CA no listo para producción; Mongo EJSON no equivale a `mongorestore`; el outbox es eventual y su candado no cubre DML directo fuera del procedimiento.
 
 Los estados por módulo de la tabla siguiente conservan su matriz de aceptación; los
 comentarios fechados de octubre anteriores se sustituyen arriba por el cierre verificado.
@@ -14,6 +14,9 @@ comentarios fechados de octubre anteriores se sustituyen arriba por el cierre ve
 **Evidencias:**
 - **Local:** Windows 11, archivos `evidencias/registros/2026-10-25-joyce-pruebas-local.txt` y
   `2026-10-25-joyce-entrega-p12-p17-p18.txt`.
+- **Local final de Joseph:** [P18 integral 26/10](../evidencias/2026-10-26-validacion-windows.md)
+  y [registro original copiado íntegro](../evidencias/registros/2026-10-26-joseph-validacion-integrada-windows.txt),
+  código `2840743`, Docker Desktop Linux Engine en Windows 11.
 - **CI:** Ubuntu 22.04, run [40274339076](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40274339076),
   artifact `joyce-modulos-evidencia`.
 - **Infraestructura de Joseph:** runs de `joseph-infra.yml`, por ejemplo
@@ -74,19 +77,15 @@ comentarios fechados de octubre anteriores se sustituyen arriba por el cierre ve
 
 ## Lo que todavía no está terminado (acciones del grupo)
 
-1. **Windows:** comprobar Docker Linux Engine y ejecutar `Test-Entrega.ps1 -StaticOnly`
-   y después `Test-Entrega.ps1 -DesdeCero -RunDemo -DemoSinPausa` en el
-   proyecto P18 efímero. Conservar SHA, versiones y resultados reales;
-   **no ejecutado todavía en esta PC**.
-2. **Capturas y video:** obtener evidencia visual auténtica de las
+1. **Capturas y video:** obtener evidencia visual auténtica de las
    conexiones, tres motores, cinco operaciones y permisos; grabar video
    narrado de 5–8 minutos con participación realmente acreditada.
-3. **Coordinación docente:** confirmar plazo/hora efectiva en Moodle;
+2. **Coordinación docente:** confirmar plazo/hora efectiva en Moodle;
    aclarar aceptación del grupo de 3 y del despliegue lógico en una PC,
    y el alcance de cada integrante.
-4. **Entrega:** preparar ZIP desde el `main` definitivo, revisar contenido,
+3. **Entrega:** preparar ZIP desde el `main` definitivo, revisar contenido,
    adjuntar evidencias y video, y subir a Moodle; **no entregado aún**.
-5. **Bibliografía:** revisar referencias usadas y normas de cita/IA del curso.
+4. **Bibliografía:** revisar referencias usadas y normas de cita/IA del curso.
 
 ## Limitaciones declaradas (no son incumplimientos)
 

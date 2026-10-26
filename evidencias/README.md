@@ -30,3 +30,19 @@ El informe de correcciones contiene el head, comandos, resultados, archivos y l�
 - `registros/2026-10-22-joseph-gateway-ci.txt`: CI 39807402214 SUCCESS sobre
   0b5e507, Windows Server ACL y Ubuntu base/localhost con puertos activos y P12 parcial.
   Artifacts descargados y revisados; no sustituyen la prueba en Windows 11.
+
+## Validación integral final de Joseph en Windows 11 — 26/10/2026
+
+- [Informe, matriz, hashes y límites](2026-10-26-validacion-windows.md).
+- [Registro P18 local íntegro](registros/2026-10-26-joseph-validacion-integrada-windows.txt):
+  copia byte por byte del original del worktree `origin/main` `2840743`,
+  `RESULTADO: PASA`, P01–P18/INT, dos FDW, concurrencia, restauración,
+  P12 y nueve segmentos de demo.
+- [Inventario Docker resumido](registros/2026-10-26-joseph-inventario-docker.md):
+  7 contenedores, 17 volúmenes y 6 redes antes/después, cero diferencias
+  de identificadores. Los JSON originales siguen intactos bajo `.tmp`
+  y no se publican para evitar divulgar IDs internos.
+
+Los encabezados antiguos de esta página son evidencia **histórica** de
+fases anteriores. La validación integral Windows posterior está acreditada
+por los archivos anteriores. No se han fabricado capturas ni grabado video.

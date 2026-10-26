@@ -4,7 +4,9 @@
 >
 > **Evidencia Ubuntu CI:** P18 desde volúmenes efímeros, P01–P18, INT-01–INT-05, segmentación, FDW reales, permisos API, dos exportadores concurrentes, restauración PG/SQL Server/MongoDB mediante EJSON estricto, P12 tras reinicio y nueve segmentos automáticos de demo.
 >
-> **No confundir con entrega concluida:** Docker Desktop abierto en Windows según Joseph, pero el motor Linux y P18 en esa PC aún no están verificados; faltan capturas reales, video narrado de 5–8 min y entrega Moodle. El documento del curso indica 28/10/2026 a las 23:59, pendiente de confirmar en Moodle. Límites: TDS `table_name` con igualdad DECIMAL incorrecta (usar `query` probada); TLS/CA no listo para producción; Mongo EJSON no equivale a `mongorestore`; candado outbox no cubre DML directo fuera del procedimiento.
+> **Evidencia Windows 11 posterior:** la suite integral P18 pasó localmente sobre `origin/main` `2840743917364d137c5298b6456fef15862b3a92`, con Docker Linux Engine/WSL 2, P01–P18, INT-01–INT-05, restauración, concurrencia y limpieza efímera. Ver [informe y hashes](evidencias/2026-10-26-validacion-windows.md) y [registro real](evidencias/registros/2026-10-26-joseph-validacion-integrada-windows.txt). Esta prueba Windows es distinta de los siete trabajos Ubuntu CI del código `3d50894`.
+>
+> **Entrega aún pendiente:** faltan capturas reales, video narrado de 5–8 min y subida a Moodle; confirmar allí el cierre indicado como 28/10/2026 a las 23:59. Límites: TDS `table_name` con igualdad DECIMAL incorrecta (usar `query` probada); TLS/CA no listo para producción; Mongo EJSON no equivale a `mongorestore`; el outbox es eventual y su candado no cubre DML directo fuera del procedimiento.
 
 Este repositorio es la **fuente común de contexto** de Joseph, Joyce, Armando y sus agentes de desarrollo. Se elaboró a partir del enunciado original y de las fases de planificación acordadas en conversación. Su objetivo es prevenir decisiones contradictorias y facilitar trabajo paralelo y revisable.
 

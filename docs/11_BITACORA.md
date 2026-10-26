@@ -565,3 +565,28 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   la PC. Joseph indica Docker Desktop abierto, pero falta comprobar Engine Linux
   y ejecutar P18 real. No afirmar que pasó hasta tener el registro.
 - **Pendientes:** capturas auténticas, video, coordinación docente, ZIP y Moodle.
+
+## 2026-10-26 — Joseph, evidencia Windows local final (D-050)
+
+- **Objetivo:** verificar, preservar y publicar los tres archivos originales
+  de la ejecución P18 Windows sin repetir la suite ni modificar `main`.
+- **Contexto y archivos:** worktree original limpio de `origin/main`
+  `2840743917364d137c5298b6456fef15862b3a92`; log
+  `.tmp/entrega-local.txt` e inventarios `docker-before.json` y
+  `docker-after.json`. Copia íntegra del log, resumen de inventarios y
+  `evidencias/2026-10-26-validacion-windows.md`; `.gitattributes` protege
+  el hash del blob publicado frente a normalización CRLF; README, estado, matriz,
+  guía, pruebas, decisiones y `evidencias/README.md` actualizados.
+- **Comandos:** `Get-Content`, `Get-FileHash -Algorithm SHA256`,
+  `Compare-Object`, `docker ps/volume ls/network ls` de solo lectura,
+  `git fetch/worktree/status`, comprobación de patrones sensibles y
+  validaciones de Git/ZIP. Los comandos funcionales ejecutados previamente
+  sobre `2840743` constan literalmente en el informe y registro.
+- **Resultado:** log de 313 líneas, 18824 bytes, código 0 y
+  `RESULTADO: PASA`; copia SHA idéntico. Inventarios JSON idénticos,
+  7/17/6 antes y después, cero IDs diferentes y cero recursos del P18
+  `joyce-p18-5f7d311360ec` al comprobarlo. Sin secretos detectados.
+  Esta actualización documental requiere sus propias verificaciones de
+  enlaces, inclusión en ZIP y CI; no atribuirle la prueba runtime.
+- **Riesgos/dependencias:** JSON completos omitidos por minimización de IDs;
+  video, capturas, Moodle y límites DECIMAL/TLS/EJSON/outbox permanecen.

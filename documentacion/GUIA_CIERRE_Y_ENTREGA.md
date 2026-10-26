@@ -7,7 +7,7 @@ Responsable: Joseph, 26/10/2026. Esta guía prepara la revisión de los tres mó
 
 **Evidencia Ubuntu CI:** P18 desde volúmenes efímeros, P01–P18, INT-01–INT-05, segmentación, FDW reales, permisos API, dos exportadores concurrentes, restauración PG/SQL Server/MongoDB mediante EJSON estricto, P12 tras reinicio y nueve segmentos automáticos de demo.
 
-**No confundir con entrega concluida:** Docker Desktop abierto en Windows según Joseph, pero el motor Linux y P18 en esa PC aún no están verificados; faltan capturas reales, video narrado de 5–8 min y entrega Moodle. El documento del curso indica 28/10/2026 a las 23:59, pendiente de confirmar en Moodle. Límites: TDS `table_name` con igualdad DECIMAL incorrecta (usar `query` probada); TLS/CA no listo para producción; Mongo EJSON no equivale a `mongorestore`; candado outbox no cubre DML directo fuera del procedimiento.
+**Validación local posterior:** Windows 11 pasó P18 integral sobre `origin/main` `2840743917364d137c5298b6456fef15862b3a92`, con Docker Desktop Linux Engine/WSL 2. [Informe, hashes y registro](../evidencias/2026-10-26-validacion-windows.md). Esa prueba no pertenece al nuevo commit documental. Faltan capturas reales, video narrado de 5–8 min y entrega Moodle; confirmar allí el cierre indicado como 28/10/2026 a las 23:59. Límites: TDS `table_name` con igualdad DECIMAL incorrecta (usar `query` probada); TLS/CA no listo para producción; Mongo EJSON no equivale a `mongorestore`; el outbox es eventual y su candado no cubre DML directo fuera del procedimiento.
 
 ## 1. Estado y condiciones previas
 
@@ -34,11 +34,10 @@ pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -StaticOnly
 
 Si `docker version` no muestra servidor Linux, detener las pruebas de motores;
 no borrar volúmenes, reinstalar Docker ni cambiar WSL automáticamente. Guardar
-la salida diagnóstica sin secretos. En esta sesión `desktop-linux` estaba
-seleccionado, `com.docker.service` detenido y la app Docker Desktop no tenía
-proceso visible. Abrir Docker Desktop de forma ordinaria, esperar que indique
-motor Linux activo y repetir `docker version` antes de ejecutar P18. El arranque
-y su estabilidad en la PC de Joseph siguen pendientes de prueba.
+la salida diagnóstica sin secretos. El diagnóstico anterior de daemon ausente
+fue **histórico**: el 26/10 el servidor respondió como `linux/amd64`, Docker
+Engine 29.8.0, kernel WSL 2 `6.18.33.2-microsoft-standard-WSL2`, y P18 pasó
+en la PC de Joseph. Para una nueva sesión, comprobar otra vez el estado actual.
 
 ## 3. Instalación y validación
 
@@ -61,11 +60,10 @@ publicados antes de iniciar; después retira únicamente los recursos de ese
 proyecto. No usar `docker compose down --volumes` sobre `estudios-medicos`.
 
 ```powershell
-pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero -EvidencePath .tmp/entrega-local.txt
-pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero -RunDemo -DemoSinPausa
+pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero -RunDemo -DemoSinPausa -EvidencePath .tmp/entrega-local.txt
 ```
 
-La primera orden ejecuta P18, núcleo clínico, P01–P17, INT-04/05, permisos,
+La orden ejecuta P18, núcleo clínico, P01–P17, INT-04/05, permisos,
 concurrencia del outbox, restauración en bases nuevas y P12 tras `restart`.
 La prueba MongoDB de restauración usa EJSON estricto; no equivale a un plan
 operativo de `mongodump/mongorestore`. P12 y restauración son pruebas distintas.
@@ -95,8 +93,11 @@ ejecutar en el proyecto efímero (no sobre volúmenes compartidos):
 pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero -RunDemo -DemoSinPausa -EvidencePath .tmp/entrega-local.txt
 ```
 
-Registrar PASS/FAIL, sistema, versiones, SHA y salida sin secretos. **No se ha
-ejecutado la prueba integral en la PC Windows actual en esta revisión**.
+La ejecución del 26/10 **ya pasó** en Windows 11 sobre el SHA `2840743`:
+[registro completo](../evidencias/registros/2026-10-26-joseph-validacion-integrada-windows.txt)
+y [resumen auditable](../evidencias/2026-10-26-validacion-windows.md).
+No repetir la suite solo para producir evidencia documental; registrar un nuevo
+SHA y resultado si se ejecuta otra vez por una razón concreta.
 No ejecutar manualmente `docker compose down --volumes` sobre `estudios-medicos`.
 
 ## 5. Video y entrega

@@ -12,3 +12,4 @@
 Dockerfile text eol=lf
 .gitattributes text eol=lf
 .gitignore text eol=lf
+evidencias/registros/2026-10-26-joseph-validacion-integrada-windows.txt -text whitespace=-trailing-space
