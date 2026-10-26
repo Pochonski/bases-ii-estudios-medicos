@@ -199,3 +199,75 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
   tras `start` recuperó salud con mismos contenedores/volumen/bindings. P12 parcial pasó
   después. No demuestra detección cuando un proceso congelado mantiene el socket TCP abierto,
   ni pérdida de funcionalidad que no cierre el puerto del backend.
+
+### D-036 — Núcleo PostgreSQL aislado antes del gate FDW (22/10/2026, Joseph)
+
+- Fuente: autorización explícita de Joseph para fase 2 independiente; motivo: avanzar y
+  probar el modelo acordado sin inventar resultados de Joyce ni Armando.
+- Decisión: crear 11 tablas en esquema `clinico` y el outbox en `integracion`, con PK
+  compuesta de paciente, FK compuesta en citas y particiones LIST SJ/AL/CA sin DEFAULT.
+  Los nombres de esquema son elección técnica de este PR; Joyce debe revisar la ruta
+  `integracion.eventos_integracion` antes de codificar su worker. No se cambia la
+  identidad intermotor ni el contrato `dbo.vw_estado_facturacion`.
+- DDL/fixture viven en scripts ejecutados explícitamente sobre base vacía. Los datos son
+  ficticios y estables; el outbox del fixture queda vacío. Solo las pruebas locales crean
+  eventos sintéticos tras COMMIT y confirman ROLLBACK local; ningún evento se exporta.
+- Impacto: PR #2 apilado sobre el PR #1; no cambia Compose, SQL Server, MongoDB, roles o
+  vistas API. El gate FDW de `docs/06` **permanece abierto**. Antes de integración revisar
+  con Joyce nombres de esquema, campos de outbox, tipos BSON/revisión y fixture compartido.
+- Prueba: workflow separado sobre Ubuntu22
+  [39878319168](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39878319168)
+  SUCCESS en `502f5fa`; dos bases vacías/restart. Manual Windows y resultado efectivo
+  en `docs/07_PRUEBAS.md` y `evidencias/`, sin atribuir CI al host local.
+
+### D-037 — Consolidar el núcleo de Joseph sobre main (23/10/2026, Joseph)
+
+- Fuente/estado: autorización explícita de fase 3; **implementado en rama/PR**, merge
+  aún no autorizado. PR #1 `0a42732` está en `main`; PR #2 `84cb072` quedó en la
+  rama de infraestructura. El núcleo faltaba en `main` al verificar los árboles.
+- Decisión: crear `feature/joseph-core-main-integration` desde `origin/main` y
+  cherry-pick de los cuatro commits clínicos `0f3614a`, `295bf32`, `502f5fa`,
+  `41c98b4`. El árbol coincidió con la rama de infraestructura fusionada antes
+  de los cambios de CI. No duplicar infraestructura, reescribir historia ni tocar
+  `main` directamente.
+- Motivo/impacto: un PR nuevo y auditable hacia `main`; workflow del núcleo escucha
+  ambas bases, `main` y la rama de infraestructura, con filtros de archivos.
+  SQL erróneo bajo `ON_ERROR_STOP=1` debe propagarse como fallo CI. El primer run
+  `40028582907` quedó rojo tras detectar el SQL inválido por `LASTEXITCODE` residual;
+  `ae3f1b9` limpia solo ese código cuando el negativo esperado fue reconocido.
+  Tras revisar el límite de esa comprobación, `6e9d1bb` la sustituyó por un
+  paso SQL que falla realmente bajo `continue-on-error` limitado a ese paso y
+  una aserción posterior de `outcome=failure`. Así se ensaya la propagación en
+  Actions sin dejar rojo el PR por el error deliberado. La CI del núcleo en
+  [40029751371](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029751371)
+  PASÓ; no se suavizaron los errores de instalación o de pruebas clínicas.
+- Archivos: workflow, estado, plan, matriz de pruebas, decisiones, bitácora, guía,
+  informe y evidencia. Contratos de IDs/tablas y módulos de otros integrantes
+  permanecen intactos.
+
+### D-038 — Riesgos del outbox y opciones para revisión de Joyce (23/10/2026, Joseph)
+
+- Estado: **análisis/propuesta pendiente**, sin DDL, trigger, función ni worker nuevos.
+  `id_evento` es único físicamente, pero `(id_estudio, revision, tipo_evento)` no;
+  dos UUID pueden representar el mismo evento lógico. La FK al estudio no liga
+  `eventos_integracion.revision` con `resultados_estudio.revision` y permite un
+  evento sin resultado. La revisión positiva no impide decrementos en UPDATE.
+  Cualquier escritor puede modificar el resultado sin emitir evento, salvo que
+  permisos o una ruta única de escritura futura lo impidan.
+- Casos: reintento tras guardar MongoDB y antes de marcar PROCESADO; dos escritores
+  concurrentes; eventos fuera de orden; actualización clínica sin outbox; duplicado
+  lógico con distinto UUID; revisión que no existe en el resultado actual.
+- Alternativa A: función/procedimiento PostgreSQL único con permisos de DML
+  restringidos, bloqueo u optimistic locking y resultado+evento en una transacción.
+  Alternativa B: trigger sobre resultado que genere el evento, con política explícita
+  para correcciones/cancelaciones. Alternativa C: escritura coordinada desde
+  aplicación más UNIQUE lógica y pruebas negativas; deja mayor riesgo si existe
+  DML directo. Historial de revisiones inmutable/snapshot sería necesario para
+  una FK formal a cada revisión pasada; una FK simple al resultado mutable no basta.
+- Revisión requerida de Joyce: semántica de `tipo_evento`, unicidad/reintentos,
+  generación y monotonicidad de `revision`, payload histórico o lectura vigente,
+  cuenta/privilegios del worker, concurrencia, idempotencia MongoDB e índice único
+  `id_estudio`. No elegir mecanismo ni editar interfaz compartida hasta acordarlo.
+- Impacto: la consolidación del **núcleo aislado** puede revisarse, pero la
+  integración MongoDB y el gate FDW/BSON siguen bloqueados; P04/P13 solo prueban
+  atomicidad de la transacción local usada por el test, no todas las escrituras.

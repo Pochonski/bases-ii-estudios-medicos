@@ -1,0 +1,67 @@
+Joseph fase 2, 2026-10-22 America/Costa_Rica. Evidencia textual sin secretos.
+Rama: feature/joseph-postgresql-core; base: feature/joseph-infra-postgresql
+PR: https://github.com/Pochonski/bases-ii-estudios-medicos/pull/2 (OPEN/DRAFT)
+
+Windows local, en esta sesión
+-----------------------------
+docker info
+  FALLÓ: npipe:////./pipe/dockerDesktopLinuxEngine ausente.
+  No hubo ejecución SQL/restart clínico en Windows. No se cambió Docker/WSL/volúmenes.
+Parser.ParseFile(scripts/Test-PostgresqlCore.ps1)
+  0 errores sintácticos.
+./scripts/Test-Infra.ps1 -ComposeFile compose.yaml -EnvFile .env -ProjectName estudios-medicos -StaticOnly
+  PASS ejemplo base, ejemplo localhost y entorno operativo efectivo.
+git diff --check
+  Sin errores.
+Python import yaml
+  NO DISPONIBLE localmente: ModuleNotFoundError (PyYAML); la CI sí aceptó el workflow.
+
+CI inicial del núcleo
+---------------------
+Run: https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39878097819
+Head: 295bf32df2a2932e0fedd00b90eb669657b17488
+Checkout merge: f00e266955447f44f13a17af2b4599503fb301bf
+Resultado: SUCCESS, Ubuntu22, PostgreSQL construido y saludable, dos bases vacías.
+Artifact joseph-postgresql-core descargado/revisado; retención 14 días.
+Kernel 6.8.0-1064-azure; Docker 28.0.4; Compose v2.38.2; PowerShell 7.6.6.
+Log: PASS estructura, fixture, inserción válida, integridad, P14, COMMIT/ROLLBACK,
+P12 parcial y limpieza en ambas bases.
+
+CI final del código con marcadores explícitos
+---------------------------------------------
+Run: https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39878319168
+Head: 502f5fa50082b1982d0b56cd356f7cab79bdba9a
+Checkout merge: 16aec74cb602df887ecdd022ca8ad969e4eb2cc7
+Resultado: SUCCESS; artifact joseph-postgresql-core descargado/revisado.
+Servidor PostgreSQL: 16.15 (Debian 16.15-1.pgdg12+2)
+Kernel: 6.8.0-1064-azure; Docker cliente/servidor: 28.0.4;
+Compose v2.38.2; PowerShell 7.6.6.
+Config: PASS ejemplo base sin puertos, overlay solo 127.0.0.1 y entorno operativo.
+Comando funcional: ./scripts/Test-PostgresqlCore.ps1 -Repeat 2 -IncludePersistence
+
+En CADA una de dos bases nuevas desde template0:
+  PASS estructura: 12 tablas, 3 particiones y PK/FK compuestas.
+  PASS fixture: conteos exactos, outbox inicialmente vacío.
+  PASS inserción válida: paciente SJ atendido en CA.
+  PASS integridad: seis rechazos y ROLLBACK sin filas temporales.
+  tableoid: clinico.pacientes_sj=10, pacientes_al=10, pacientes_ca=10.
+  EXPLAIN: Seq Scan on pacientes_al pacientes; no scan SJ/CA.
+  PASS P14: poda AL y paciente 1001/AL atendido en SJ.
+  PASS P04: COMMIT local de resultado y evento PENDIENTE.
+  PASS P13 parcial: ROLLBACK local sin resultado ni evento.
+  PASS P12 parcial: 30 pacientes, resultado/evento COMMIT tras restart de PG;
+    mismo contenedor y volumen; ROLLBACK ausente.
+  PASS limpieza explícita: base sintética eliminada; volumen intacto.
+
+La regresión heredada de infraestructura 39878097833 terminó SUCCESS con tres
+jobs: ACL Windows Server 2022 y Ubuntu base/localhost. Solo el job de ACL corrió
+en Windows CI; no acredita el núcleo clínico en la PC Windows 11 de Joseph.
+La regresión de infraestructura del mismo head final 502f5fa:
+https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39878319636
+SUCCESS en tres jobs; artifacts base, localhost y ACL descargados/revisados.
+Base sin puertos; overlay conserva publicación solo en 127.0.0.1 y P12 parcial.
+
+NO PROBADO / GATE ABIERTO: consulta tds_fdw a vista real, autenticación propia,
+permisos negativos, BSON/ObjectId/Int64/Int32/Date/INSERT/UPDATE/índice Mongo,
+worker/exportación, recreación/restauración, persistencia SQL Server/MongoDB.
+La persistencia descrita acredita solo restart del mismo PostgreSQL.

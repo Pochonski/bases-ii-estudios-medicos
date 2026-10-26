@@ -129,3 +129,54 @@ Evidencia: `evidencias/registros/2026-10-22-joseph-gateway-backend-ci.txt`.
 El daemon local volvió a quedar inaccesible después de esas pruebas Windows; no se
 acredita estabilidad tras reinicio de Desktop/Windows. No altera el resultado CI.
 No cambian los contratos, P12 parcial ni el gate FDW/BSON aún abierto.
+
+## Núcleo PostgreSQL aislado — 22/10/2026, Joseph (D-036)
+
+Joseph autorizó adelantar solo sus 12 tablas clínicas/outbox y pruebas en el PR #2,
+basado en la rama del PR #1. Los scripts SQL, particiones LIST SJ/AL/CA, fixture
+ficticio y runner sobre bases vacías están implementados. En CI Ubuntu22 del código
+`295bf32`, la primera ejecución [39878097819](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39878097819)
+PASÓ dos instalaciones, integridad, `tableoid`/`EXPLAIN`, COMMIT/ROLLBACK locales y
+registros PostgreSQL tras `restart`. Se conserva el artifact y un extracto versionado.
+El código `502f5fa` añade marcadores explícitos al artifact y versión efectiva PG;
+[CI 39878319168](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/39878319168)
+también PASÓ dos bases vacías y dos restart de PostgreSQL 16.15. Evidencia duradera:
+`evidencias/registros/2026-10-22-joseph-postgresql-core-ci.txt`.
+
+**Windows local:** `docker info` falló por ausencia de `dockerDesktopLinuxEngine` durante
+esta fase; SQL/restart NO EJECUTADOS aquí. No se cambiaron WSL, Docker ni volúmenes.
+**Integración:** P01, Mongo BSON/lectura/escritura, cuentas y objetos Joyce siguen
+pendientes. El outbox no tiene worker ni exportación; P04/P13 solo prueban atomicidad
+PostgreSQL. No hay aprobación del gate FDW ni traspaso de interfaz a Armando.
+
+## Consolidación propuesta — 23/10/2026, Joseph (D-037/D-038)
+
+PR #1 fue fusionado en `main` como `0a42732`; PR #2 fue fusionado en la rama de
+infraestructura como `84cb072`. Al iniciar la sesión, `main` no contenía el núcleo:
+el diff entre ambos árboles era exactamente los 21 archivos clínicos/documentales
+de fase 2. Joseph autorizó un PR nuevo; `feature/joseph-core-main-integration`
+parte del `main` actualizado y reaplica los cuatro commits originales sin modificar
+infraestructura. [PR #3](https://github.com/Pochonski/bases-ii-estudios-medicos/pull/3)
+permanece abierto y en borrador. No se ha fusionado ni aprobado.
+
+El workflow del núcleo escucha ahora PRs contra `main`; su prueba negativa de SQL
+separa el error esperado de un fallo real. En Windows 11, Docker Desktop respondió
+durante esta sesión: un proyecto Compose **aislado**, sin puertos host, pasó dos
+instalaciones, integridad, `tableoid`/`EXPLAIN`, COMMIT/ROLLBACK y restart parcial PG.
+El proyecto compartido conservó sus IDs; el contenedor de prueba se retiró y su
+volumen se conservó. La primera CI de PR #3 falló tras detectar SQL inválido porque
+PowerShell retuvo `LASTEXITCODE=1`; `ae3f1b9` corrige solo el cierre de ese negativo.
+La [CI del núcleo](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028827502)
+y la [regresión de infraestructura](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40028827437)
+pasaron en el head `ae3f1b9`; los artifacts registran el SHA y el checkout.
+La CI del commit documental final debe verificarse por separado.
+Tras esa verificación se reforzó el negativo en `6e9d1bb`: el paso SQL falla
+realmente, con `continue-on-error` **solo en ese paso**; la aserción siguiente
+exige su `outcome=failure`. El [run del núcleo](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40029751371)
+PASÓ y el artifact registra la aserción. Los scripts clínicos no tienen esa
+excepción. La CI del cierre documental posterior también debe verificarse.
+
+El outbox admite duplicados lógicos y eventos con revisión sin correspondencia al
+resultado; tampoco obliga a que toda escritura clínica emita evento. D-038 documenta
+alternativas pendientes de Joyce. No se cambió DDL ni se afirma exportación, FDW
+remoto o transacción global.
