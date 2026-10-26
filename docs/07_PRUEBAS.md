@@ -282,3 +282,27 @@ Ubuntu `6.8.0-1064-azure`. El runner imprimió PASS de ausencia de
 contenedores/volúmenes del proyecto temporal; artifact sin prefijo de
 contraseñas. Extracto versionado en `evidencias/registros/2026-10-24-joseph-tds-fdw-ci.txt`.
 La CI del commit documental posterior se verificará por separado.
+
+## Ejecución Joyce — 25/10/2026, Windows 11 local (D-041)
+
+Docker 29.9.2, kernel WSL `6.6.87.2-microsoft-standard-WSL2`, rama `feature/joyce-sqlserver-mongodb`
+sobre `5c89c21` + archivos de Joyce. Ejecutado con `scripts/Test-JoyceModulos.ps1`; repetido tres
+veces con el mismo resultado. Evidencia: `evidencias/registros/2026-10-25-joyce-pruebas-local.txt`.
+
+| Prueba | Resultado |
+|---|---|
+| P15 fragmentación vertical | PASA: 24/24 filas, reconstrucción 24, 0 huérfanos |
+| P16 procedimiento | PASA: resumen = facturas válidas; vista 1 fila/clave; registro de factura cambia la vista; negativo 51010 |
+| Permisos `svc_pg_mssql_ro` | PASA: SELECT vista; tabla base, INSERT y EXECUTE denegados (229) |
+| P01 tds_fdw real | PASA con login `usr_fdw_pg_mssql`: 24 filas remotas únicas, LEFT JOIN 30/24/6, 1001/AL PENDIENTE 23500.00, filtro por clave ausente sin filas |
+| P16b SQL Server → PG | PASA: factura confirmada visible por FDW; retirada y restaurada |
+| P13 ROLLBACK | PASA: sin resultado, evento ni documento |
+| P04 | PASA: resultado + evento PENDIENTE en una transacción |
+| P05 mongo_fdw | PASA: documento insertado por `usr_fdw_pg_mongo`; tipos long/int/date/objectId |
+| P06 | PASA: mismo `_id`, revisión 2 |
+| P07 | PASA: reproceso de revisión 1 → SIN_CAMBIOS, un documento |
+| Permisos `usr_fdw_pg_mongo` | PASA: pacientes, DELETE foráneo y UPDATE de resultados denegados |
+| P08 caída MongoDB | PASA: COMMIT en PG, evento ERROR (intentos 1), recuperado al reiniciar (PROCESADO, intentos 2) |
+| INT-04 exportación masiva | PASA: 32 resultados PG = 32 documentos MongoDB, 0 eventos sin procesar |
+| P09 agregación médico × tipo | Solo vista previa; la prueba formal es de Armando |
+| CI de estos módulos | NO EJECUTADA |

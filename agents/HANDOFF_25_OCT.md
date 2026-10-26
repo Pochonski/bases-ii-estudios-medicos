@@ -25,10 +25,14 @@
 
 ## Recibí de Joyce
 
-- Commit/PR:
-- Estado SQL Server/MongoDB:
-- Documento resumen y su revisión de prueba:
-- Observaciones:
+- Commit/PR: rama `feature/joyce-sqlserver-mongodb` (PR pendiente; Joyce aún sin permiso de escritura).
+- Estado SQL Server/MongoDB: instalado y probado en Windows 11 local con `scripts/Install-JoyceModulos.ps1`
+  y `scripts/Test-JoyceModulos.ps1` (todas PASAN; sin CI). Base `integracion_externa`, vista
+  `dbo.vw_estado_facturacion`; MongoDB `reportes_medicos.resumenes_estudios`.
+- Documento resumen y su revisión de prueba: estudio 30031 exportado por `mongo_fdw` en revisión 1 y
+  actualizado a revisión 2; 32 resúmenes en total (INT-04).
+- Observaciones: campos/tipos en `documentacion/JOYCE_SQLSERVER_MONGODB.md`. Joseph debe revisar el
+  índice `eventos_logico_ux` y la secuencia `clinico.seq_resultados_estudio` (D-041).
 
 ## Armando: aceptación del traspaso
 

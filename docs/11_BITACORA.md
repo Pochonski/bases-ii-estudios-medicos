@@ -353,3 +353,19 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   consulta FDW local. Esta actualización documental registra fecha, responsable,
   motivo y efecto; no cambia contratos. Verificar CI del commit documental
   posterior por separado.
+
+## 2026-10-25 — Joyce, SQL Server, MongoDB, mongo_fdw y outbox
+
+- **Responsable:** Joyce (con agente). **Rama:** `feature/joyce-sqlserver-mongodb`. Decisión D-041.
+- **Motivación:** cumplir el alcance de `agents/JOYCE.md` y desbloquear P01/P17 de Joseph y el
+  handoff a Armando.
+- **Entorno:** Windows 11, Docker Desktop actualizado a Engine 29.9.2 (la actualización automática
+  quedó colgada y hubo que abrir Docker Desktop a mano), kernel WSL 6.6.87.2, PowerShell 7.6 instalado.
+- **Comandos:** `pwsh -NoProfile -File ./scripts/Install-JoyceModulos.ps1` y
+  `pwsh -NoProfile -File ./scripts/Test-JoyceModulos.ps1 -EvidencePath evidencias/registros/2026-10-25-joyce-pruebas-local.txt`.
+- **Resultado:** primera ejecución FALLÓ en P05 (`invalid transaction termination` por `SET` en el
+  procedimiento); corregido. Luego tres ejecuciones seguidas PASAN completas: P15, P16, permisos
+  `svc_pg_mssql_ro`, P01, P16b, P13, P04, P05, P06, P07, permisos `usr_fdw_pg_mongo`, P08 e INT-04.
+- **Impacto:** contrato `dbo.vw_estado_facturacion` cumplido sin cambios; dos objetos añadidos al
+  núcleo de Joseph pendientes de su revisión (D-041). No se tocaron módulos de Armando.
+- **No ejecutado:** CI, P17 formal de Joseph sobre estos objetos, TLS.
