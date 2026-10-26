@@ -458,3 +458,17 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   La demo completa puede ejecutarse dentro de P18 con `-RunDemo`, conservando su ruta
   de uso sin permitir que borre datos del proyecto compartido. Estas adiciones todavía
   necesitan CI del SHA final.
+- **Protección del fixture SQL Server (Joseph, 26/10):** el archivo de datos ahora exige
+  tablas vacías o marcador de reinicialización explícita; verifica las seis tablas y toma
+  bloqueos dentro de la misma transacción antes de borrar. El instalador solo fija ese
+  marcador después de validar el contexto efímero. Se añadió prueba negativa directa
+  con factura centinela. Pendiente CI del SHA que incluye el bloqueo transaccional.
+- **CI integrada `fad6c94` (Joseph, 26/10):** [40279657529](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40279657529)
+  PASÓ la suite y P18: tres motores sanos, autenticación/FDW/BSON, factura centinela
+  conservada, fixture SQL directo rechazado, P12 con 11 conteos y valores idénticos
+  tras `restart`, limpieza del proyecto `joyce-p18-ce6141867e95`. Artifact
+  `joyce-modulos-evidencia`: HEAD `fad6c94494a9e3b1c9b962d014657fbcf7786591`,
+  checkout `5126643347aeb6ea2013182f38043695db5daac3`, Docker 28.0.4,
+  kernel `6.8.0-1064-azure`; sin patrón de secreto generado. Infraestructura,
+  núcleo y TDS del mismo HEAD también pasaron. La modificación posterior de
+  bloqueo en `sqlserver/06_datos_prueba.sql` aún necesita CI propia.

@@ -381,3 +381,24 @@ La próxima CI también debe verificar la instalación normal repetida con una f
 centinela (`99971`, ₡6789,12) que se conserva, el rechazo de `-LoadInitialData`
 con tablas pobladas, los tres valores centinela de P12 y la retirada de la etiqueta
 de imagen efímera. Esos casos son **NO EJECUTADOS en el SHA documental anterior**.
+
+**CI `fad6c94` — [suite integrada 40279657529](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40279657529): PASA.**
+El artifact `joyce-modulos-evidencia` identifica HEAD `fad6c94494a9e3b1c9b962d014657fbcf7786591`,
+checkout merge `5126643347aeb6ea2013182f38043695db5daac3`, Docker 28.0.4 y
+kernel `6.8.0-1064-azure`. P18 usó `joyce-p18-ce6141867e95` y retiró sus
+recursos. La suite P01–P11, P13–P16 e INT-04 terminó con `RESULTADO: PASA`;
+P12 comparó 11 conteos/valores antes y después de `restart`, incluidos revisión
+PostgreSQL 2, monto SQL Server 1.500.000 centavos y revisión MongoDB 2, y el
+FDW SQL Server respondió después. La instalación ordinaria conservó factura
+centinela y rechazó tanto `-LoadInitialData` como ejecución directa del fixture
+SQL sobre tablas pobladas. El patrón de secretos generados no apareció en el
+artifact. P17 imprimió configuración y permisos; la autenticación propia y
+los negativos se verificaron en la suite, no se probó TLS con CA.
+
+[Infraestructura 40279657494](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40279657494),
+[núcleo 40279657479](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40279657479) y
+[TDS 40279657460](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40279657460)
+también PASAN en ese HEAD. La comprobación Windows de permisos fue en runner;
+Docker Desktop de la PC de Joseph sigue sin daemon. La protección adicional
+de bloqueo transaccional en el fixture SQL Server se incorpora en un commit
+posterior y requiere su propio run de CI.

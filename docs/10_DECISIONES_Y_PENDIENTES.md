@@ -435,11 +435,15 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
   un importe de factura SQL Server y la revisión de un resumen MongoDB antes/después de
   `restart`. Sigue sin acreditar restauración desde backup ni recreación de contenedores.
 - **Carga de datos:** `-LoadInitialData` carga fixtures solo si no existen filas; `-ResetLabData`
-  reinicializa el fixture SQL Server solo en contexto efímero comprobado. Los scripts históricos
+  reinicializa el fixture SQL Server solo en contexto efímero comprobado. El propio fixture
+  rechaza datos existentes sin marcador deliberado de sesión y comprueba las seis tablas
+  dentro de la transacción con bloqueos, para impedir una inserción entre la comprobación
+  y los `DELETE`. Los scripts históricos
   y evidencias del 25/10 no se reescriben. No cambian identificadores ni contratos FDW/outbox.
 - **Impacto/archivos:** `scripts/Joyce-Common.ps1`, `Test-Entrega.ps1`, `Install-JoyceModulos.ps1`,
   `Test-JoyceModulos.ps1`, `Demo-Video.ps1`, workflow y guías; PR apilado sobre rama de Joyce,
-  pendiente de su revisión. Validación estática Windows PASA; runtime/CI del nuevo SHA pendiente.
+  pendiente de su revisión. Validación estática Windows PASA y la suite integrada
+  de `fad6c94` PASA en Ubuntu CI; falta repetir el bloqueo transaccional añadido después.
 
 ### D-046 — Regresión TDS y límite de concurrencia del outbox (26/10/2026, Joseph)
 

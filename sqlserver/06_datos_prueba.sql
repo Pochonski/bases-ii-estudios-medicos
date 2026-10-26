@@ -16,14 +16,22 @@ USE integracion_externa;
 GO
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
+BEGIN TRANSACTION;
+-- Mantener el examen de tablas vacías y los DELETE en la misma transacción.
+-- TABLOCKX/HOLDLOCK impide una inserción concurrente entre ambos pasos.
 DECLARE @filas_existentes bigint =
-  (SELECT COUNT(*) FROM dbo.aseguradoras) + (SELECT COUNT(*) FROM dbo.convenios) +
-  (SELECT COUNT(*) FROM dbo.paciente_integracion) + (SELECT COUNT(*) FROM dbo.paciente_cobertura) +
-  (SELECT COUNT(*) FROM dbo.facturas_externas) + (SELECT COUNT(*) FROM dbo.resumen_facturacion);
+  (SELECT COUNT(*) FROM dbo.aseguradoras WITH (TABLOCKX, HOLDLOCK)) +
+  (SELECT COUNT(*) FROM dbo.convenios WITH (TABLOCKX, HOLDLOCK)) +
+  (SELECT COUNT(*) FROM dbo.paciente_integracion WITH (TABLOCKX, HOLDLOCK)) +
+  (SELECT COUNT(*) FROM dbo.paciente_cobertura WITH (TABLOCKX, HOLDLOCK)) +
+  (SELECT COUNT(*) FROM dbo.facturas_externas WITH (TABLOCKX, HOLDLOCK)) +
+  (SELECT COUNT(*) FROM dbo.resumen_facturacion WITH (TABLOCKX, HOLDLOCK));
 IF @filas_existentes > 0 AND
    COALESCE(CONVERT(nvarchar(128), SESSION_CONTEXT(N'joseph_fixture_reset')), N'') <> N'EXPLICIT_LAB_RESET'
+BEGIN
+    ROLLBACK TRANSACTION;
     THROW 51021, 'Fixture SQL Server: existen datos; reinicializacion requiere contexto deliberado.', 1;
-BEGIN TRANSACTION;
+END;
 
 DELETE FROM dbo.facturas_externas;
 DELETE FROM dbo.resumen_facturacion;
