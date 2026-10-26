@@ -7,6 +7,7 @@ param()
 $null = Assert-JoyceEphemeralContext
 Wait-JoyceHealthy
 $pgId = Get-JoyceContainerId postgres
+$mongoId = Get-JoyceContainerId mongodb
 $pgRestored = $false
 try {
     # PostgreSQL: archivo custom dentro del contenedor efímero, nueva base en el mismo
@@ -50,7 +51,14 @@ GO
     if ($sqlOutput -notmatch 'PASS restauración SQL Server') { throw 'SQL Server no confirmó datos restaurados.' }
     Write-Output 'PASS restauración SQL Server: BACKUP/RESTORE nativos, facturas, pacientes y monto verificados'
 
-    # La imagen mongo:8.0 no garantiza mongodump. EJSON estricto conserva tipos BSON;
+    # Verificar disponibilidad de las utilidades oficiales sin instalar nada en el motor.
+    & docker exec $mongoId bash -c 'command -v mongodump >/dev/null 2>&1 && command -v mongorestore >/dev/null 2>&1'
+    if ($LASTEXITCODE -eq 0) {
+        Write-Output 'INFO MongoDB: mongodump/mongorestore disponibles; esta prueba usa EJSON para comparar BSON e índices'
+    } else {
+        Write-Output 'INFO MongoDB: mongodump/mongorestore ausentes; se usa copia lógica EJSON de laboratorio'
+    }
+    # EJSON estricto conserva tipos BSON;
     # archivo local efímero, base destino nueva, validador/índices y comparación completa.
     $mongoOutput = Invoke-JoyceScript -Service mongodb -Text @'
 const filesystem = require('fs');

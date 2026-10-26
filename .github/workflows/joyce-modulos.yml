@@ -27,9 +27,9 @@ jobs:
           $null = New-Item -ItemType Directory -Force .tmp/ci
           "Head PR: ${{ github.event.pull_request.head.sha || github.sha }}; checkout: $(git rev-parse HEAD); kernel: $(uname -r)" |
             Set-Content .tmp/ci/contexto.txt
-      - name: P18 desde cero, suite completa, P12 tres motores y P17
+      - name: P18 desde cero, suite completa, restauración, P12/P17 y demo
         shell: pwsh
-        run: ./scripts/Test-Entrega.ps1 -DesdeCero -EvidencePath .tmp/ci/joyce-entrega.txt
+        run: ./scripts/Test-Entrega.ps1 -DesdeCero -RunDemo -DemoSinPausa -EvidencePath .tmp/ci/joyce-entrega.txt
       - name: La evidencia no contiene secretos
         if: always()
         shell: pwsh
