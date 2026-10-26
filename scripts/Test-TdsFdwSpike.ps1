@@ -109,6 +109,8 @@ try {
     }
     Invoke-Spike @('exec','-T','postgres','bash','/opt/proyecto/tds-spike/check-postgres.sh')
     Write-Output 'PASS recuperación: la consulta remota funciona tras reiniciar SQL Server'
+    Invoke-Spike @('exec','-T','sqlserver','bash','-c', 'export SQLCMDPASSWORD="$(cat /run/secrets/sqlserver_sa_password)"; /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -C -b -i /opt/proyecto/tds-spike/07_sqlserver_bulk.sql')
+    Invoke-Spike @('exec','-T','postgres','bash','-c', 'export PGPASSWORD="$(cat /run/secrets/pg_fdw_login_password)"; psql -X -h 127.0.0.1 -U usr_fdw_pg_mssql -d joseph_tds_spike_pg -v ON_ERROR_STOP=1 -f /opt/proyecto/tds-spike/08_postgresql_performance.sql')
 } finally {
     if ($ready) {
         try {

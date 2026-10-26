@@ -24,25 +24,38 @@ GRANT SELECT ON clinico.pacientes, clinico.regiones, clinico.citas, clinico.medi
                 clinico.sucursales, clinico.ordenes_medicas, clinico.estudios TO api_propietario;
 GRANT EXECUTE ON FUNCTION externo.fn_estado_facturacion() TO api_propietario;
 
+-- La función remota conserva su contrato completo para el perfil interno. El perfil web
+-- recibe una función aparte con exactamente la proyección de su vista: una invocación
+-- directa no puede enumerar filas remotas sin paciente clínico local.
+CREATE OR REPLACE FUNCTION api.fn_paciente_facturacion()
+RETURNS TABLE (
+    id_paciente bigint, codigo_region char(2), region_registro varchar(60),
+    nombre varchar(80), apellidos varchar(120), nombre_aseguradora text,
+    estado_cobertura text, estado_facturacion text,
+    total_facturado_crc numeric(12,2), facturacion_actualizada timestamptz
+)
+LANGUAGE sql STABLE SECURITY DEFINER
+SET search_path = pg_catalog, pg_temp
+AS $$
+SELECT p.id_paciente, p.codigo_region, r.nombre, p.nombre, p.apellidos,
+       f.nombre_aseguradora,
+       COALESCE(f.estado_cobertura, 'SIN_REGISTRO'),
+       COALESCE(f.estado_facturacion, 'SIN_REGISTRO'),
+       f.total_facturado_crc, f.fecha_actualizacion
+FROM clinico.pacientes AS p
+JOIN clinico.regiones AS r ON r.codigo_region = p.codigo_region
+LEFT JOIN externo.fn_estado_facturacion() AS f
+       ON f.id_paciente = p.id_paciente AND f.codigo_region = p.codigo_region
+$$;
+ALTER FUNCTION api.fn_paciente_facturacion() OWNER TO api_propietario;
+REVOKE ALL ON FUNCTION api.fn_paciente_facturacion() FROM PUBLIC;
+
 -- INT-03 (web): datos mínimos del paciente + estado de facturación de SQL Server.
 -- LEFT JOIN por la identidad completa: un paciente sin registro externo aparece con
 -- SIN_REGISTRO y nunca se duplica (la vista remota garantiza 1 fila por paciente-región).
 -- Sin fecha de nacimiento, teléfono, correo ni datos clínicos.
 CREATE OR REPLACE VIEW api.vw_paciente_facturacion WITH (security_barrier) AS
-SELECT p.id_paciente,
-       p.codigo_region,
-       r.nombre AS region_registro,
-       p.nombre,
-       p.apellidos,
-       f.nombre_aseguradora,
-       COALESCE(f.estado_cobertura, 'SIN_REGISTRO') AS estado_cobertura,
-       COALESCE(f.estado_facturacion, 'SIN_REGISTRO') AS estado_facturacion,
-       f.total_facturado_crc,
-       f.fecha_actualizacion AS facturacion_actualizada
-FROM clinico.pacientes AS p
-JOIN clinico.regiones AS r ON r.codigo_region = p.codigo_region
-LEFT JOIN externo.fn_estado_facturacion() AS f
-       ON f.id_paciente = p.id_paciente AND f.codigo_region = p.codigo_region;
+SELECT * FROM api.fn_paciente_facturacion();
 
 -- Web: agenda completa para personal administrativo.
 CREATE OR REPLACE VIEW api.vw_citas_web WITH (security_barrier) AS
@@ -85,11 +98,11 @@ ALTER VIEW api.vw_citas_mobile OWNER TO api_propietario;
 REVOKE ALL ON api.vw_paciente_facturacion, api.vw_citas_web, api.vw_citas_mobile FROM PUBLIC;
 
 GRANT USAGE ON SCHEMA api TO usr_api_web, usr_api_mobile;
--- Web: facturación + agenda completa. Las funciones invocadas en una vista se autorizan
--- con el usuario que consulta, por eso usr_api_web necesita EXECUTE (devuelve solo
--- columnas de facturación, sin nombres; no otorga credenciales remotas).
+-- Web: facturación + agenda completa. La función invocada por la vista necesita EXECUTE
+-- del usuario que consulta, pero solo devuelve la misma proyección de la vista.
 GRANT SELECT ON api.vw_paciente_facturacion, api.vw_citas_web TO usr_api_web;
-GRANT EXECUTE ON FUNCTION externo.fn_estado_facturacion() TO usr_api_web;
+REVOKE EXECUTE ON FUNCTION externo.fn_estado_facturacion() FROM usr_api_web;
+GRANT EXECUTE ON FUNCTION api.fn_paciente_facturacion() TO usr_api_web;
 -- Móvil: solo su vista reducida.
 GRANT SELECT ON api.vw_citas_mobile TO usr_api_mobile;
 COMMIT;

@@ -87,7 +87,7 @@ BEGIN
 END;
 $$;
 
--- Procesador único. Cada evento se confirma por separado: un fallo no bloquea a los demás.
+-- Cada evento se confirma por separado: un fallo no bloquea a los demás.
 -- Lee el estado VIGENTE del resultado (no un payload histórico), por eso un evento viejo
 -- reprocesado no hace retroceder el documento.
 CREATE OR REPLACE PROCEDURE integracion.exportar_pendientes(
@@ -117,6 +117,12 @@ BEGIN
         FOR UPDATE SKIP LOCKED;
         EXIT WHEN NOT FOUND;
         v_vistos := v_vistos || v_evento.id_evento;
+
+        -- Dos exportadores pueden tomar eventos distintos del mismo estudio. El bloqueo
+        -- transaccional por id_estudio serializa la lectura y escritura remota; se libera
+        -- en el COMMIT de este evento, también si ocurre un error en el bloque inferior.
+        -- Se toma fuera del subbloque EXCEPTION para conservarlo durante el manejo del error.
+        PERFORM pg_catalog.pg_advisory_xact_lock(v_evento.id_estudio);
 
         BEGIN
             SELECT r.id_estudio, c.id_paciente, c.codigo_region,

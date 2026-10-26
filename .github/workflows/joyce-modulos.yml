@@ -21,29 +21,22 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-      - name: Secretos efímeros enmascarados
+      - name: Registrar contexto sin secretos
         shell: pwsh
         run: |
-          . ./scripts/Joyce-Common.ps1
-          Initialize-JoyceSecrets
-          foreach ($file in Get-ChildItem secrets/*.txt) {
-            "::add-mask::$([IO.File]::ReadAllText($file.FullName).Trim())"
-          }
           $null = New-Item -ItemType Directory -Force .tmp/ci
           "Head PR: ${{ github.event.pull_request.head.sha || github.sha }}; checkout: $(git rev-parse HEAD); kernel: $(uname -r)" |
             Set-Content .tmp/ci/contexto.txt
-      - name: P18 desde cero, suite completa, P12 tres motores y P17
+      - name: P18 desde cero, suite completa, restauración, P12/P17 y demo
         shell: pwsh
-        run: ./scripts/Test-Entrega.ps1 -DesdeCero -EvidencePath .tmp/ci/joyce-entrega.txt
+        run: ./scripts/Test-Entrega.ps1 -DesdeCero -RunDemo -DemoSinPausa -EvidencePath .tmp/ci/joyce-entrega.txt
       - name: La evidencia no contiene secretos
         if: always()
         shell: pwsh
         run: |
           if (-not (Test-Path .tmp/ci/joyce-entrega.txt)) { return }
           $evidencia = Get-Content .tmp/ci/joyce-entrega.txt -Raw
-          foreach ($file in Get-ChildItem secrets/*.txt) {
-            if ($evidencia.Contains([IO.File]::ReadAllText($file.FullName).Trim())) { throw "Secreto en evidencia: $($file.Name)" }
-          }
+          if ($evidencia -match 'Aa1![A-F0-9]{64}') { throw 'Secreto generado presente en artifact.' }
           'PASS: evidencia sin valores secretos'
       - name: Guardar evidencia
         if: always()
@@ -53,6 +46,5 @@ jobs:
           path: .tmp/ci/
           retention-days: 14
           if-no-files-found: error
-      - name: Limpieza del proyecto efímero
-        if: always()
-        run: docker compose -f compose.yaml down --volumes --remove-orphans
+      # Test-Entrega crea un proyecto único, valida sus recursos y lo limpia en finally.
+      # Nunca ejecutar `down --volumes` sobre el nombre compartido estudios-medicos.

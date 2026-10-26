@@ -4,7 +4,7 @@
 
 ## Jerarquía de autoridad
 
-1. **FUENTE CURSO:** documento original «Segundo Proyecto — Sistema de Gestión de Estudios Médicos Distribuido» (Bases de Datos II, ITCR; 5 páginas), entregado al equipo por el curso. El archivo íntegro no se publica aquí porque el repositorio es público; consúltese mediante Moodle o el grupo. Sus requisitos priman. `docs/01_REQUISITOS.md` resume requisitos con secciones/páginas como referencias.
+1. **FUENTE CURSO:** documento original «Segundo Proyecto — Sistema de Gestión de Estudios Médicos Distribuido» (Bases de Datos II, ITCR; 6 páginas en el PDF local facilitado el 26/10/2026), entregado al equipo por el curso. El archivo íntegro no se publica aquí porque el repositorio es público; consúltese mediante Moodle o el grupo. Sus requisitos priman. `docs/01_REQUISITOS.md` resume requisitos con secciones/páginas como referencias.
 2. **DECISIÓN GRUPO:** decisiones explícitas de conversación: despliegue en una PC; planificación completa antes de distribuir; Joseph/Joyce más trabajo; Armando implementa al final.
 3. **DISEÑO PROPUESTO:** estructura de tablas, campos, nombres, mecanismos de sincronización y porcentajes de reparto diseñados en la conversación. Son baseline para trabajar, pero pueden ajustarse con aprobación.
 4. **VERIFICACIÓN PENDIENTE:** compatibilidad, conectores, recursos, evaluación de Moodle y aceptación del despliegue en una PC.
@@ -216,3 +216,35 @@ Evidencia: `evidencias/registros/2026-10-25-joyce-pruebas-local.txt`. Guía: `do
 |---|---|
 | `usr_api_web` / `usr_api_mobile`, vistas `api`, agregaciones y validaciones MongoDB | IMPLEMENTADO Y PROBADO localmente por Joyce con permiso de Armando; pendiente de su revisión |
 | P12 (3 motores), P17, P18 y demo del video (D-043) | PROBADO localmente; evidencia `2026-10-25-joyce-entrega-p12-p17-p18.txt` |
+
+## Actualización vigente — 26/10/2026, Joseph (D-045 a D-047)
+
+Los PR #3, #4 y #5 permanecen abiertos y en borrador, apilados; `main` continúa
+en `0a42732`. [PR #7](https://github.com/Pochonski/bases-ii-estudios-medicos/pull/7),
+también en borrador, propone cambios a la rama de Joyce sin alterar su HEAD.
+La [CI integrada](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158117)
+del HEAD `0189e58` pasó P18 sobre proyecto/volúmenes/secretos/imagen efímeros,
+P01–P17 e INT-04 y P12 con valores de los tres motores tras `restart` en
+Ubuntu 22.04, Docker 28.0.4, kernel `6.8.0-1064-azure`. El fixture SQL rechaza
+tablas pobladas y la instalación normal conservó una factura centinela.
+Las regresiones de infraestructura, núcleo y TDS también pasaron en ese HEAD;
+`table_name` con predicado DECIMAL sigue fallando en el spike, por lo que no se
+certifica ese camino. En la PC Windows de Joseph, el daemon Linux de Docker
+Desktop sigue ausente: P18 runtime local NO EJECUTADO. Restan revisión de Joyce
+y Armando, exclusividad/concurrencia del outbox, TLS/CA y restauración real.
+
+## Actualización propuesta — 26/10/2026, Joseph (D-048)
+
+En PR #7 el head de código `cedddb9` agrega bloqueo transaccional por estudio
+para exportadores simultáneos, una función web acotada y pruebas de restauración
+en bases efímeras. **Implementado, todavía no probado en motores en este SHA** al
+registrar la decisión. La validación estática Windows pasa; Docker Desktop Linux
+Engine permanece inaccesible. La CI debe probar el nuevo head antes de reemplazar
+los estados del corte anterior. El PDF original sigue fuera de Git.
+
+**Resultado posterior del código:** en `ed2e5b2`, la CI Ubuntu
+[40286756682](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756682)
+pasó P18 y la suite integrada, API huérfana, dos exportadores, restauración
+efectiva de los tres motores y demo de nueve segmentos. Las tres regresiones
+de Joseph del mismo head también pasaron. Esto no acredita Windows local,
+TLS con CA, `mongodump/mongorestore`, video narrado ni revisión de Joyce/Armando.

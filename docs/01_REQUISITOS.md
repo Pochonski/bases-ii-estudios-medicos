@@ -1,6 +1,6 @@
 # Requisitos del enunciado y trazabilidad
 
-**Fuente:** enunciado del curso (5 páginas), «Segundo Proyecto — Sistema de Gestión de Estudios Médicos Distribuido». El documento original no está incluido en este repositorio público; se citan páginas y apartados para que el equipo los contraste con la copia disponible en el curso. No confundir requisitos del profesor con las propuestas del grupo.
+**Fuente:** enunciado del curso (6 páginas en el PDF local facilitado el 26/10/2026), «Segundo Proyecto — Sistema de Gestión de Estudios Médicos Distribuido». El documento original no está incluido en este repositorio público; se citan páginas y apartados para que el equipo los contraste con la copia disponible en el curso. No confundir requisitos del profesor con las propuestas del grupo.
 
 ## Descripción general (p. 1)
 
@@ -40,7 +40,7 @@
 6. Video demostrativo narrado de **5 a 8 min** con arquitectura, mapa de conexiones, consultas en tres servidores, transacciones/integraciones y capturas de conexión; los tres integrantes deben explicar su participación.
 7. Archivos fuente y documentación enviados por Moodle; referencias bibliográficas documentadas.
 
-## Administración (p. 5)
+## Administración (pp. 5–6)
 
 - El enunciado dice que puede desarrollarse en **«grupos de 4 personas»**; nuestro grupo real tiene 3. El texto no aclara expresamente el caso de grupos de 3, por lo que conviene confirmar su aceptación. Prohíbe plagio.
 - Retraso: **10% de nota final por cada hora** según el texto del enunciado.

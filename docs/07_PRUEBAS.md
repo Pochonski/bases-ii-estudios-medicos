@@ -326,3 +326,203 @@ veces con el mismo resultado. Evidencia: `evidencias/registros/2026-10-25-joyce-
 | P12 tres motores | PASA: tras `restart`, mismos contenedores y conteos (PG 30 pacientes/32 resultados, SQL Server 24 pacientes/11 facturas, MongoDB 32 resúmenes/12 indicadores); FDW SQL Server responde 24 filas |
 | P17 configuración FDW | PASA: servidores, mappings (sin contraseña), tablas foráneas, perfiles, `pg_hba`, permisos SQL Server y MongoDB volcados desde los catálogos |
 | P14 particiones (EXPLAIN) | Mostrado en la demo (pruning a `pacientes_ca`); la prueba formal es de Joseph |
+
+## Endurecimiento propuesto del PR #5 — 26/10/2026, Joseph (D-045)
+
+La tabla del 25/10 registra la ejecución histórica de Joyce; aquella P18 **sí** usó
+`down --volumes` sobre `estudios-medicos`. No se atribuye a esa evidencia la seguridad
+del nuevo procedimiento.
+
+| Caso del nuevo código | Estado Windows local | Evidencia / límite |
+|---|---|---|
+| P18 aislamiento de nombre, red, 4 volúmenes, 3 secretos, cero puertos | PROBADO estático | `Test-Entrega.ps1 -StaticOnly` pasa `docker compose config`; no crea motores |
+| Suite directa fuera de P18 | PROBADO negativo | `Test-JoyceModulos.ps1` termina con código 1 antes de borrar filas |
+| Sintaxis de scripts editados y whitespace | PROBADO | parser PowerShell: 0 errores; `git diff --check`: código 0 |
+| P18 real en Docker y limpieza de recursos | NO EJECUTADO local | Docker Engine no disponible: falta `dockerDesktopLinuxEngine`; CI pendiente |
+| P05 BSON ObjectId/Int64/Int32/Date, UNIQUE, P06 `_id`, cuenta Mongo | IMPLEMENTADO, NO PROBADO en nuevo SHA | Nuevas aserciones agregadas; CI pendiente |
+| P12 tres motores, P01–P17, INT-04 en proyecto aislado | NO EJECUTADO en nuevo SHA | Conservar los PASS históricos por separado; esperar CI |
+
+Comandos exactos iniciales: `docker info --format '{{.ServerVersion}} {{.KernelVersion}}'`,
+`pwsh -NoProfile -File scripts/Test-Entrega.ps1 -StaticOnly`,
+`pwsh -NoProfile -File scripts/Test-JoyceModulos.ps1`, parser de cinco scripts y
+`git diff --check`. El runtime de Windows no se infiere de Ubuntu CI.
+
+**Primera CI del PR #7:** [40278085052](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40278085052)
+FALLÓ en `779864d` antes de cargar el fixture: el conteo SQL Server incluyó una línea
+informativa y el parseo la trató como datos. El proyecto `joyce-p18-a0eb09ce6985`
+creó y retiró exclusivamente sus contenedores, red y cuatro volúmenes; la suite
+P01–P17 NO SE EJECUTÓ en ese run. El parseo corregido requiere CI nueva.
+
+La regresión TDS nueva usa `table_name` en una vista temporal separada y luego
+agrega 2000 filas ficticias al spike para medir EXPLAIN ANALYZE y estimar bytes de
+columnas remotas. **Estado: IMPLEMENTADA, NO PROBADA** hasta su CI del SHA nuevo.
+
+**CI `285506a`:** infraestructura (3 jobs) y núcleo PostgreSQL PASAN;
+[módulos 40278430083](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40278430083)
+FALLA después de P07: el nuevo test de cuenta MongoDB requiere diagnóstico
+detallado. P01/P04–P07, BSON ObjectId/Int64/Int32/Date e índice único sí
+imprimieron PASS, pero la suite global NO PASÓ y P08–P18 no se acreditan en
+este SHA. [TDS 40278430129](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40278430129)
+FALLA en aserción compuesta de `table_name`; su plan sí mostró SQL remoto con
+`WHERE` enviado. Se separan los predicados para identificar la discrepancia.
+Ambos runners retiraron sus recursos efímeros; no se reetiquetan como éxitos.
+
+En `958ca01`, [TDS 40278766277](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40278766277)
+confirmó una discrepancia del modo **convencional**: lectura de `12345.67`
+correcta, `WHERE total_facturado_crc = 12345.67` sin fila. El modo contractual
+`query` no falla. El test ahora registra el plan y la sonda como hallazgo;
+`table_name` con filtro de monto **NO QUEDA APROBADO**. La suite [40278766324](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40278766324)
+pasó P01/P04–P07 y BSON/índice; el permiso negativo MongoDB sí fue rechazado
+con código 13, pero la prueba esperaba respuesta en vez de excepción. La prueba
+se corrige para comprobar el código explícitamente. P08–P18 siguen sin PASS en
+esa ejecución.
+
+La próxima CI también debe verificar la instalación normal repetida con una factura
+centinela (`99971`, ₡6789,12) que se conserva, el rechazo de `-LoadInitialData`
+con tablas pobladas, los tres valores centinela de P12 y la retirada de la etiqueta
+de imagen efímera. Esos casos son **NO EJECUTADOS en el SHA documental anterior**.
+
+**CI `fad6c94` — [suite integrada 40279657529](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40279657529): PASA.**
+El artifact `joyce-modulos-evidencia` identifica HEAD `fad6c94494a9e3b1c9b962d014657fbcf7786591`,
+checkout merge `5126643347aeb6ea2013182f38043695db5daac3`, Docker 28.0.4 y
+kernel `6.8.0-1064-azure`. P18 usó `joyce-p18-ce6141867e95` y retiró sus
+recursos. La suite P01–P11, P13–P16 e INT-04 terminó con `RESULTADO: PASA`;
+P12 comparó 11 conteos/valores antes y después de `restart`, incluidos revisión
+PostgreSQL 2, monto SQL Server 1.500.000 centavos y revisión MongoDB 2, y el
+FDW SQL Server respondió después. La instalación ordinaria conservó factura
+centinela y rechazó tanto `-LoadInitialData` como ejecución directa del fixture
+SQL sobre tablas pobladas. El patrón de secretos generados no apareció en el
+artifact. P17 imprimió configuración y permisos; la autenticación propia y
+los negativos se verificaron en la suite, no se probó TLS con CA.
+
+[Infraestructura 40279657494](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40279657494),
+[núcleo 40279657479](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40279657479) y
+[TDS 40279657460](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40279657460)
+también PASAN en ese HEAD. La comprobación Windows de permisos fue en runner;
+Docker Desktop de la PC de Joseph sigue sin daemon. La protección adicional
+de bloqueo transaccional en el fixture SQL Server se incorpora en un commit
+posterior y requiere su propio run de CI.
+
+**CI final de código `0189e58`:** [módulos 40280158117](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158117)
+PASÓ con el bloqueo SQL incluido. Artifact: HEAD
+`0189e58dd741179143abd857408fa8b690cf15eb`, checkout merge
+`eff53241f595ee688c8a14784b3bcab699d0d31e`; proyecto
+`joyce-p18-0ed71df6a88d`, Docker 28.0.4, kernel `6.8.0-1064-azure`.
+P18, P01–P17 e INT-04 imprimieron PASS; tras `restart`, los 11 valores fueron
+idénticos y la limpieza retiró recursos efímeros. La instalación normal conservó
+la factura centinela y el fixture directo fue rechazado. Artifact sin patrón
+de secreto generado. [Infraestructura 40280158123](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158123),
+[núcleo 40280158116](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158116) y
+[TDS 40280158198](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158198)
+corresponden al mismo HEAD y PASARON sus siete trabajos. La próxima modificación
+es documental y requiere su propia CI antes de autorizar integración.
+
+## 2026-10-26 — D-048: concurrencia, permisos API y restauración (estado inicial)
+
+| Prueba | Ejecución Windows local | Ejecución Ubuntu CI del head `cedddb9` |
+|---|---|---|
+| Aislamiento P18 y rechazo de red compartida | PASA `Test-Entrega.ps1 -StaticOnly`; sin motores | En curso al escribir |
+| Dos exportadores simultáneos, revisiones 3 y 4, ObjectId único | NO EJECUTADA: Docker Engine ausente | En curso: `Test-OutboxConcurrency.ps1` dentro de P18 |
+| Web/móvil: función remota interna denegada, función web igual a vista | NO EJECUTADA | En curso: `pruebas/seguridad/01..02` |
+| Fila remota huérfana: visible al perfil interno, excluida de API web, retirada | NO EJECUTADA | En curso: `Test-ApiScope.ps1` dentro de P18 |
+| Restauración PostgreSQL `pg_dump/pg_restore` a base nueva | NO EJECUTADA | En curso: `Test-Restore.ps1` |
+| Restauración SQL Server `BACKUP/RESTORE` a base nueva | NO EJECUTADA | En curso: `Test-Restore.ps1` |
+| Copia lógica MongoDB EJSON estricta a base nueva, documentos/tipos/índices | NO EJECUTADA | En curso: `Test-Restore.ps1`; no es `mongodump` |
+| Regresión `table_name` DECIMAL | NO EJECUTADA | En curso; predicado defectuoso se registra PENDIENTE, modo `query` debe pasar |
+| Nueve segmentos del guion de video en P18 | NO EJECUTADOS localmente | Pendiente de CI con `-RunDemo -DemoSinPausa`; no es grabación |
+
+Comandos Windows: parser PowerShell de `Test-OutboxConcurrency.ps1`, `Test-Restore.ps1`
+y `Test-Entrega.ps1` (0 errores); `git diff --check` (código 0);
+`pwsh -NoProfile -File scripts/Test-Entrega.ps1 -StaticOnly` (PASS);
+`docker version --format '{{.Server.Version}} kernel {{.Server.KernelVersion}}'`
+y `docker info --format '{{.OSType}} {{.OperatingSystem}}'` (ambos fallan por
+ausencia del pipe `dockerDesktopLinuxEngine`). No se ejecutó ningún Docker
+destructivo. Los cuatro workflows de CI del commit
+`cedddb9d4e046279cfee6c073a7379d85bca8b32` se lanzaron; sus resultados
+se registrarán con URL y SHA exactos al terminar.
+
+Diagnóstico no destructivo adicional: `wsl --status` informó versión
+predeterminada 2; `docker context ls` selecciona `desktop-linux`;
+`Get-Service com.docker.service` muestra `Stopped`/`Manual`, y no se encontró
+proceso `Docker Desktop`/`com.docker.backend`. Esto explica que no exista el
+pipe, pero no demuestra por qué la aplicación no se inició ni estabilidad
+posterior. No se inició el servicio ni se tocaron WSL o los volúmenes.
+
+### Resultados posteriores verificables del código D-048
+
+- [CI integrada `a8492ba` 40285647944](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40285647944):
+  PASA suite P01–P18/INT, dos exportadores simultáneos, restauración de los tres
+  motores, P12 y limpieza efímera. Corrige el fallo EJSON del run `40285206675`.
+- [CI integrada `777ffab` 40285814584](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40285814584):
+  PASA con serialización EJSON canónica explícita.
+- [CI integrada `dd44973` 40286173209](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286173209):
+  PASA también el caso de fila remota huérfana: perfil interno la ve (1), web
+  no (0), paciente legítimo permanece y fila sintética retirada. Se observaron
+  dos exportadores bloqueados y un solo documento revisión 4 con ObjectId
+  conservado. PostgreSQL restaurado: 30 pacientes, revisión 4 y 4 eventos;
+  SQL Server restauró facturas/pacientes/monto; MongoDB restauró documentos,
+  índices y tipos BSON con EJSON estricto. P12 mantuvo conteos y valores tras
+  `restart`, y P18 retiró solo `joyce-p18-2897268ff7a1`.
+- Artifact `joyce-modulos-evidencia` descargado y revisado: HEAD
+  `dd449739f71711c6978041331b677ef16696ed20`, checkout de PR
+  `9bc194c27cc33a8e7acf8bd694f7285cc573b731`, Docker 28.0.4,
+  kernel `6.8.0-1064-azure`. No apareció el patrón de secreto generado ni
+  una asignación de contraseña en los archivos de evidencia.
+- [TDS `dd44973` 40286173022](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286173022):
+  PASA lectura remota `query`, modo `table_name` para ID/región, Unicode y
+  lectura DECIMAL. SQL Server 16.0.4305.5 devolvió `12346` para
+  `CAST(12345.67 AS numeric)` y `12345.67` para `DECIMAL(12,2)`;
+  el `EXPLAIN` mostró exactamente el primer cast en el predicado remoto, que
+  devolvió 0. Ese predicado sigue **PENDIENTE**. Con 2004 filas remotas,
+  estimación 190358 bytes de columnas, `query` filtró 2003 localmente
+  (11.996 ms) frente a `table_name` por clave (7.879 ms), medición de un
+  único runner sin valor de benchmark de producción.
+- [Infraestructura `dd44973` 40286173039](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286173039)
+  y [núcleo `dd44973` 40286173037](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286173037)
+  PASAN. Estos runs preceden a la prueba automatizada del guion y a la última
+  limpieza del centinela; se necesita CI del HEAD final.
+
+### Código y demostración juntos en `ed2e5b2`
+
+- [Suite integrada y demo `40286756682`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756682):
+  **PASA** en Ubuntu 22.04, Docker 28.0.4 y kernel `6.8.0-1064-azure`.
+  Ejecutó P18, P01–P17, INT-01–INT-05 según matriz, fila huérfana API,
+  dos exportadores concurrentes, restauraciones comprobadas de los tres
+  motores, P12 tras `restart`, P17 y los nueve segmentos de demo sin pausa.
+  Retiró solo los recursos de `joyce-p18-be0edb26a9e6`.
+- Artifact `joyce-modulos-evidencia` descargado: HEAD
+  `ed2e5b20695aa472a0e0e73be0ad23e3b5471d83`, checkout
+  `476638f6c633205d1db96761774ef43d3cedf92c`; sin patrón de
+  secreto generado. La demo está ejecutada en CI, **no grabada en video**.
+- [Infraestructura `40286756769`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756769),
+  [núcleo PostgreSQL `40286756752`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756752)
+  y [TDS `40286756722`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756722)
+  también **PASAN** para ese HEAD. TDS conserva PENDIENTE la igualdad
+  DECIMAL de `table_name`, aunque el workflow global sea verde porque la
+  ruta contractual `query` y las regresiones exigidas sí pasan.
+- El commit documental final y la marca de disponibilidad de `mongodump`
+  todavía necesitan un run propio; los resultados de `ed2e5b2` no prueban
+  cambios posteriores. Windows local continúa sin motor Docker disponible.
+
+### CI posterior del commit documental `3302ae1` (26/10/2026)
+
+- [Suite integrada `40287276057`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276057),
+  [infraestructura `40287276041`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276041),
+  [núcleo `40287276076`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276076)
+  y [TDS `40287276054`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276054)
+  **PASARON** para HEAD `3302ae1fa96d44647342b81d3d18a08e6060dae2`.
+- Artifact `joyce-modulos-evidencia` descargado: checkout de PR
+  `411036cafc42c2319e6636c06d9050fb47548a3e`, Docker 28.0.4,
+  kernel `6.8.0-1064-azure`. P18 creó y retiró solo
+  `joyce-p18-e0cca5e32aa8`, sin puertos publicados. Pasaron las pruebas
+  funcionales, concurrencia con dos exportadores, API huérfana,
+  restauración PostgreSQL/SQL Server/MongoDB, P12 y nueve segmentos de demo.
+- Las herramientas `mongodump` y `mongorestore` estaban **disponibles** en ese
+  contenedor; **no se ejecutaron**. La restauración MongoDB probada utilizó
+  EJSON canónico estricto con comparación de tipos BSON, datos e índices.
+  El artifact no contiene contraseñas ni valores de secretos generados;
+  aparecen solo nombres de parámetros y la indicación de omisión.
+- El último commit de documentación/bibliografía posterior a `3302ae1`
+  requiere su propia CI antes de atribuirle estos resultados. Windows local
+  continúa sin motor Docker disponible; ninguna prueba de motores se ejecutó
+  allí. La igualdad DECIMAL en TDS `table_name` sigue PENDIENTE.

@@ -2,6 +2,37 @@
 
 **Leyenda:** ✅ implementado y con evidencia ejecutada · ⚠️ depende de una acción del grupo · ❌ falta.
 
+> Corte histórico del 25/10. La corrección D-045 del 26/10 cambia la instalación y P18:
+> su validación estática Windows pasó, pero las afirmaciones ✅ de ejecución integrada
+> corresponden al SHA anterior de Joyce hasta que la CI del PR de endurecimiento pase.
+> La instalación normal nueva no carga el fixture; usar `-LoadInitialData` solo sobre
+> tablas vacías. La suite destructiva requiere `Test-Entrega.ps1 -DesdeCero` aislado.
+
+> **Actualización 26/10/2026:** la [CI del PR #7, HEAD `0189e58`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158117)
+> pasó la instalación aislada, los tres motores y la suite integrada en Ubuntu;
+> artifact `joyce-modulos-evidencia`. El Docker Desktop de Windows de Joseph no
+> estuvo disponible para repetirla localmente. P12 prueba `restart`, no restauración;
+> el outbox concurrente, TLS/CA y `table_name` con predicado DECIMAL siguen
+> abiertos. Los PR #3–#5 y #7 continúan sin fusionar.
+
+> **Propuesta D-048, 26/10/2026:** el código del PR #7 en `cedddb9` añade
+> serialización de exportadores por estudio, limita la función de facturación
+> invocable por web y prueba restauración en bases efímeras. Su CI está en curso;
+> estas pruebas nuevas todavía no reciben ✅. La restauración MongoDB usa EJSON
+> estricto de laboratorio. El PDF original fue leído localmente y confirma la
+> entrega indicada para 28/10/2026 a las 23:59, pendiente de verificar Moodle.
+
+> **Evidencia posterior:** [run integrado `dd44973`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286173209)
+> PASÓ en Ubuntu 22.04 con fila remota huérfana filtrada para web, dos exportadores
+> concurrentes, restauración comprobada en los tres motores y P12. La copia Mongo
+> usa EJSON estricto, no `mongodump`. El mismo head pasó las tres regresiones de
+> Joseph; la ejecución Windows local y el video permanecen pendientes. No se
+> atribuye el run de `dd44973` a cambios posteriores del PR.
+
+> [CI `ed2e5b2` 40286756682](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756682)
+> también ejecutó los nueve segmentos del guion en P18 y terminó con limpieza
+> segura. Es demostración automatizada, no video narrado ni entrega en Moodle.
+
 **Evidencias:**
 - **Local:** Windows 11, archivos `evidencias/registros/2026-10-25-joyce-pruebas-local.txt` y
   `2026-10-25-joyce-entrega-p12-p17-p18.txt`.

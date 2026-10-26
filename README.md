@@ -2,6 +2,23 @@
 
 > **Estado (25/10/2026): IMPLEMENTACIÓN COMPLETA Y PROBADA en ramas/PR #3-#5, pendiente de integrar en `main`, grabar el video y entregar.** Ver [matriz de cumplimiento](documentacion/CUMPLIMIENTO_REQUISITOS.md). Proyecto académico del Instituto Tecnológico de Costa Rica, Campus Tecnológico San Carlos. **Entrega indicada en el enunciado: 28/10/2026 a las 23:59; confirmar en Moodle la inconsistencia del día de la semana.**
 
+> **Actualización (26/10/2026):** [PR #7](https://github.com/Pochonski/bases-ii-estudios-medicos/pull/7) propone endurecer instalación y pruebas del PR #5, sin fusionar ningún PR. La [CI integrada del head `0189e58`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158117) pasó en Ubuntu; la ejecución de Docker en esta PC Windows sigue pendiente. También quedan revisión de Joyce/Armando, concurrencia del outbox, TLS/CA y restauración desde respaldo. El estado del 25/10 anterior es histórico.
+
+> **Cierre técnico propuesto, 26/10:** el commit `cedddb9` de PR #7 agrega serialización
+> por estudio, una función web acotada y pruebas de concurrencia/restauración en P18.
+> La CI del nuevo SHA está en curso; el Docker Linux local sigue sin responder.
+> Guía para validación, revisión y empaquetado: [cierre y entrega](documentacion/GUIA_CIERRE_Y_ENTREGA.md).
+
+> La [CI integrada del código `dd44973`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286173209)
+> confirmó concurrencia, permisos API y restauración de los tres motores en Ubuntu.
+> Cambios posteriores del PR #7 y la demostración automatizada requieren su propio
+> run; Windows Docker Desktop sigue sin motor Linux disponible.
+
+> [CI `ed2e5b2` con demo](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756682):
+> P18, pruebas integradas, restauración y nueve segmentos del guion PASAN en
+> Ubuntu. El video todavía debe grabarse; faltan revisión de Joyce/Armando,
+> CI del commit documental final, validación Windows y las fusiones autorizadas.
+
 Este repositorio es la **fuente común de contexto** de Joseph, Joyce, Armando y sus agentes de desarrollo. Se elaboró a partir del enunciado original y de las fases de planificación acordadas en conversación. Su objetivo es prevenir decisiones contradictorias y facilitar trabajo paralelo y revisable.
 
 ## ¡Leer esto primero!
@@ -27,13 +44,16 @@ Este repositorio es la **fuente común de contexto** de Joseph, Joyce, Armando y
 Requisitos: Windows 11, Docker Desktop (motor Linux/WSL 2) y PowerShell 7 (`winget install Microsoft.PowerShell`).
 
 ```powershell
-pwsh -NoProfile -File ./scripts/Install-JoyceModulos.ps1        # 3 motores, esquemas, datos ficticios, FDW, roles, vistas
-pwsh -NoProfile -File ./scripts/Test-JoyceModulos.ps1           # P01-P11, P13, P15, P16, INT-04
-pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero     # P18 desde volúmenes vacíos + P12 (3 motores) + P17
-pwsh -NoProfile -File ./scripts/Demo-Video.ps1                  # demostración por segmentos para el video
+pwsh -NoProfile -File ./scripts/Install-JoyceModulos.ps1         # estructura/FDW/roles, conserva datos
+pwsh -NoProfile -File ./scripts/Install-JoyceModulos.ps1 -LoadInitialData # solo sobre tablas vacías
+pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero      # P18 efímero + suite + P12/P17
+pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero -RunDemo # demo en proyecto efímero
 ```
 
-`-DesdeCero` borra solo los volúmenes de **este** proyecto Compose. Mapa y configuración:
+`-DesdeCero` crea un proyecto Compose nuevo con red, volúmenes y secretos propios, sin puertos
+host; retira solo esos recursos al terminar. La suite que modifica datos se permite únicamente
+en ese contexto. La instalación normal conserva los registros existentes. La ejecución real de
+este endurecimiento debe verificarse en CI o Docker Desktop antes de atribuirle P18. Mapa y configuración:
 [documentacion/MAPA_CONEXIONES_Y_CONFIGURACION.md](documentacion/MAPA_CONEXIONES_Y_CONFIGURACION.md) ·
 guion: [video/GUION.md](video/GUION.md) · referencias: [documentacion/REFERENCIAS.md](documentacion/REFERENCIAS.md).
 

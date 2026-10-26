@@ -20,6 +20,8 @@ BEGIN
   EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'PASS negativo: clinico.citas denegado'; END;
   BEGIN PERFORM 1 FROM externo.fn_estado_facturacion() LIMIT 1; RAISE EXCEPTION 'FALLA: ejecuta función remota';
   EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'PASS negativo: externo.fn_estado_facturacion denegada'; END;
+  BEGIN PERFORM 1 FROM api.fn_paciente_facturacion() LIMIT 1; RAISE EXCEPTION 'FALLA: ejecuta función web';
+  EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'PASS negativo: api.fn_paciente_facturacion denegada'; END;
   BEGIN UPDATE api.vw_citas_mobile SET estado = 'CANCELADA' WHERE id_cita = 10001; RAISE EXCEPTION 'FALLA: UPDATE';
   EXCEPTION WHEN insufficient_privilege OR read_only_sql_transaction OR object_not_in_prerequisite_state OR feature_not_supported
     THEN RAISE NOTICE 'PASS negativo P11: UPDATE sobre vista móvil rechazado (%)', SQLSTATE; END;

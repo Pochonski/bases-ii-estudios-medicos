@@ -90,3 +90,34 @@ conectar datos reales. D-040 corrige un error de resultados por predicados
 ignorados en `tds_fdw` con `query`; la regresión de filtro/orden es también
 control de integridad y privacidad, pues una consulta que omite WHERE podría
 mostrar pacientes ajenos.
+
+## Revisión de privilegios integrada — 26/10/2026, Joseph (D-047)
+
+La función `SECURITY DEFINER` de facturación fija `search_path`, califica la
+foreign table y pertenece al rol interno sin superusuario. `usr_api_web` puede
+ejecutarla directamente y leer la proyección completa de facturación; Armando
+debe confirmar si ese acceso concuerda con el perfil web. `usr_fdw_pg_mongo`
+puede actualizar estados del outbox y escribir en la foreign table fuera del
+procedimiento si alguien obtiene su credencial; Joyce debe revisar la frontera
+de confianza y el control de revisiones. Las pruebas actuales verifican
+denegaciones de otros objetos, no eliminan esas rutas concedidas por diseño.
+
+## Propuesta D-048 en PR #7 — 26/10/2026, Joseph
+
+El párrafo D-047 anterior registra el hallazgo histórico. La corrección propuesta
+revoca `EXECUTE` de `usr_api_web` sobre `externo.fn_estado_facturacion()` y da
+acceso a `api.fn_paciente_facturacion()`, cuyo dueño `api_propietario` solo puede
+leer las tablas locales necesarias y ejecutar la función remota interna. La
+función web tiene `SECURITY DEFINER`, `search_path` fijo y objetos calificados;
+devuelve la misma proyección de `api.vw_paciente_facturacion`, filtrada por
+paciente clínico local. La CI `dd44973` probó una fila SQL Server sin paciente
+local: el perfil FDW interno la vio; web no, y la fila se retiró. El perfil móvil
+no puede ejecutar ninguna función de facturación. Joyce y Armando todavía deben
+revisar la interfaz y la frontera de confianza antes de integrar PR #7.
+
+El bloqueo por `id_estudio` serializa únicamente el procedimiento de exportación;
+no restringe el DML directo ya permitido a `usr_fdw_pg_mongo` sobre outbox y
+foreign table. Mantener esa credencial bajo control operacional y evaluar una
+reducción de privilegios futura con Joyce. No se afirma seguridad ante una cuenta
+de servicio comprometida ni ACID entre PostgreSQL y MongoDB. TLS/CA continúa
+pendiente para uso con datos reales.

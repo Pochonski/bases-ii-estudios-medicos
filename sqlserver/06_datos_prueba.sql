@@ -1,5 +1,7 @@
 -- Joyce. Datos externos FICTICIOS alineados con postgresql/06_datos_prueba.sql.
--- Repetible: reemplaza por completo el fixture de SQL Server en una transacción.
+-- La carga normal exige tablas vacías. Una reinicialización con datos requiere
+-- SESSION_CONTEXT('joseph_fixture_reset')='EXPLICIT_LAB_RESET' en esta conexión,
+-- fijado por el instalador solo después de validar un proyecto efímero.
 --
 -- Claves del núcleo PostgreSQL: pacientes AL 1001-1010, SJ 2001-2010, CA 3001-3010.
 -- Estudio 30000+n -> orden ((n-1)%25)+1 -> cita/paciente en orden AL, CA, SJ:
@@ -15,6 +17,21 @@ GO
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
 BEGIN TRANSACTION;
+-- Mantener el examen de tablas vacías y los DELETE en la misma transacción.
+-- TABLOCKX/HOLDLOCK impide una inserción concurrente entre ambos pasos.
+DECLARE @filas_existentes bigint =
+  (SELECT COUNT(*) FROM dbo.aseguradoras WITH (TABLOCKX, HOLDLOCK)) +
+  (SELECT COUNT(*) FROM dbo.convenios WITH (TABLOCKX, HOLDLOCK)) +
+  (SELECT COUNT(*) FROM dbo.paciente_integracion WITH (TABLOCKX, HOLDLOCK)) +
+  (SELECT COUNT(*) FROM dbo.paciente_cobertura WITH (TABLOCKX, HOLDLOCK)) +
+  (SELECT COUNT(*) FROM dbo.facturas_externas WITH (TABLOCKX, HOLDLOCK)) +
+  (SELECT COUNT(*) FROM dbo.resumen_facturacion WITH (TABLOCKX, HOLDLOCK));
+IF @filas_existentes > 0 AND
+   COALESCE(CONVERT(nvarchar(128), SESSION_CONTEXT(N'joseph_fixture_reset')), N'') <> N'EXPLICIT_LAB_RESET'
+BEGIN
+    ROLLBACK TRANSACTION;
+    THROW 51021, 'Fixture SQL Server: existen datos; reinicializacion requiere contexto deliberado.', 1;
+END;
 
 DELETE FROM dbo.facturas_externas;
 DELETE FROM dbo.resumen_facturacion;

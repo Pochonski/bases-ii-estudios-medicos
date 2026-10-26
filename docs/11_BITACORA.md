@@ -404,3 +404,147 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   resultados sintéticos (precondición de esa prueba, no defecto).
 - `documentacion/CUMPLIMIENTO_REQUISITOS.md`: todos los requisitos técnicos ✅; pendientes del grupo:
   merges #3→#4→#5, video, confirmar fecha y subir a Moodle.
+
+## 2026-10-26 — Joseph, endurecimiento del PR #5 (D-045)
+
+- **Objetivo:** impedir borrado de volúmenes compartidos y recarga involuntaria de datos;
+  proponer pruebas de BSON/permisos más explícitas sin cambiar contratos.
+- **Base verificada:** `main=0a42732`, PR #3 `f46dd9b`, #4 `5c89c21`, #5 `5c63e2e`, todos
+  abiertos y en borrador. Árbol local limpio antes de crear `feature/joseph-integration-hardening`
+  desde el HEAD de Joyce; ningún cambio directo a su rama ni a main.
+- **Archivos:** scripts de instalación/pruebas/contexto, workflow Joyce, README, guía,
+  decisiones, matriz y esta bitácora. Detalle final y evidencia CI se añadirán tras ejecutar.
+- **Comandos:** `git status/fetch/diff/switch`, `gh pr view`, `docker info`, lectura de contratos,
+  parser PowerShell, `pwsh -File scripts/Test-Entrega.ps1 -StaticOnly`, negativo
+  `pwsh -File scripts/Test-JoyceModulos.ps1`, `git diff --check`.
+- **Resultados actuales:** estático P18 PASA para proyecto/red/volúmenes/secretos separados,
+  sin puertos; suite directa rechazada antes de modificar datos; cinco scripts sin errores
+  sintácticos y diff limpio. Primera validación estática detectó acceso estricto a propiedad
+  `ports` ausente; corregido y repetido con PASS. Docker local NO DISPONIBLE: falta el pipe
+  `dockerDesktopLinuxEngine`. Runtime P18/P01–P17 y CI del cambio aún NO EJECUTADOS.
+- **Riesgos/dependencias:** Joyce debe revisar el cambio de uso del instalador y la suite;
+  Armando debe revisar sus vistas/roles para integración final. TLS/CA y restauración siguen
+  pendientes. No se borraron volúmenes ni datos del proyecto compartido.
+- **Primer CI PR #7:** `40278085052` FALLÓ en `779864d`: el instalador leyó la línea
+  informativa `Changed database context` junto a `0` y rechazó la carga inicial como si
+  existieran filas. Se corrigió para aceptar exactamente una línea de conteo numérico;
+  no se omite la protección frente a datos existentes. La evidencia del run muestra
+  nombre `joyce-p18-a0eb09ce6985`, red y cuatro volúmenes propios creados y retirados;
+  el proyecto compartido no fue objeto del comando. La suite no llegó a ejecutarse.
+- **Regresión adicional D-046:** se agregaron pruebas del modo `table_name` y una carga
+  sintética de 2000 filas al spike TDS, con EXPLAIN ANALYZE para el coste local. Los
+  workflows del núcleo y TDS escuchan la base de Joyce en este PR apilado. Resultados
+  del nuevo SHA aún pendientes, sin atribuirles el CI anterior.
+- **Segundo CI del PR #7 (`285506a`):** infraestructura (base/localhost), núcleo y
+  estático Windows PASARON; módulo integrado y TDS quedaron ROJOS. El módulo pasó
+  P01, P04–P07, BSON/índice único, pero falló al iniciar el nuevo negativo de cuenta
+  MongoDB; el runner solo imprimía marcas, por lo que se añadió salida acotada de
+  diagnóstico de la suite. TDS pasó lectura real y mostró pushdown en `table_name`,
+  pero una aserción combinada de filtro/Unicode/DECIMAL devolvió 0; se separaron
+  los predicados e imprimió la fila para aislar la causa. Ningún fallo se marca PASS.
+  Ambos proyectos de prueba limpiaron sus recursos propios.
+- **Tercer CI (`958ca01`):** TDS sigue ROJO, ahora aisló la causa: `table_name` trae
+  la fila con DECIMAL `12345.67` correcto, pero `WHERE` remoto sobre el monto
+  devuelve cero; el modo `query` permanece correcto. Se mantiene sonda y plan,
+  y la aserción de conversión usa la fila por ID para no llamar éxito a un
+  predicado remoto defectuoso. El módulo integrado avanzó hasta permisos MongoDB:
+  login y `find` positivos; la denegación de `delete` lanzó excepción con código 13,
+  mientras el test esperaba un objeto de respuesta. Se ajustó el test para exigir
+  explícitamente ese código en excepción o respuesta, sin conceder permiso.
+- **Aislamiento ampliado antes del cierre:** `docker compose config` también comprueba
+  los montajes de datos y la etiqueta única de imagen PostgreSQL; P18 verifica ausencia
+  previa de red, volúmenes, contenedores e imagen y retira esa etiqueta tras `down` del
+  proyecto efímero. P12 compara valores sintéticos, además de conteos, tras `restart`.
+  La demo completa puede ejecutarse dentro de P18 con `-RunDemo`, conservando su ruta
+  de uso sin permitir que borre datos del proyecto compartido. Estas adiciones todavía
+  necesitan CI del SHA final.
+- **Protección del fixture SQL Server (Joseph, 26/10):** el archivo de datos ahora exige
+  tablas vacías o marcador de reinicialización explícita; verifica las seis tablas y toma
+  bloqueos dentro de la misma transacción antes de borrar. El instalador solo fija ese
+  marcador después de validar el contexto efímero. Se añadió prueba negativa directa
+  con factura centinela. Pendiente CI del SHA que incluye el bloqueo transaccional.
+- **CI integrada `fad6c94` (Joseph, 26/10):** [40279657529](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40279657529)
+  PASÓ la suite y P18: tres motores sanos, autenticación/FDW/BSON, factura centinela
+  conservada, fixture SQL directo rechazado, P12 con 11 conteos y valores idénticos
+  tras `restart`, limpieza del proyecto `joyce-p18-ce6141867e95`. Artifact
+  `joyce-modulos-evidencia`: HEAD `fad6c94494a9e3b1c9b962d014657fbcf7786591`,
+  checkout `5126643347aeb6ea2013182f38043695db5daac3`, Docker 28.0.4,
+  kernel `6.8.0-1064-azure`; sin patrón de secreto generado. Infraestructura,
+  núcleo y TDS del mismo HEAD también pasaron. La modificación posterior de
+  bloqueo en `sqlserver/06_datos_prueba.sql` aún necesita CI propia.
+- **Revisión de seguridad D-047 (Joseph, 26/10):** no se ampliaron permisos.
+  Quedaron para Joyce la capacidad de DML directo del rol interno Mongo/outbox
+  y la exclusividad de un procesador; para Armando, la ejecución directa de la
+  función de facturación por el perfil web. TLS/CA y restauración siguen abiertos.
+- **CI `0189e58` (Joseph, 26/10):** [módulos 40280158117](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158117)
+  PASÓ con bloqueo transaccional en el fixture SQL. Artifact HEAD
+  `0189e58dd741179143abd857408fa8b690cf15eb`, checkout
+  `eff53241f595ee688c8a14784b3bcab699d0d31e`, proyecto
+  `joyce-p18-0ed71df6a88d`; conserva factura centinela y 11 valores tras
+  reinicio, rechaza fixture directo y limpia recursos efímeros. Sin patrón de
+  secreto generado. Infraestructura, núcleo y TDS del mismo SHA se verifican
+  por sus runs en `docs/07_PRUEBAS.md`. Windows Docker local NO EJECUTADO;
+  no hubo merges ni cambios a `main`. Esta actualización de estado exige CI
+  del commit documental final.
+
+## 2026-10-26 — Joseph, cierre técnico integral propuesto en PR #7 (D-048)
+
+- **Objetivo:** probar concurrencia del outbox, reducir la superficie de facturación
+  web y verificar restauración de los tres motores sin tocar recursos compartidos.
+- **Fuente:** enunciado original de seis páginas compartido localmente por Joseph y leído;
+  permanece no versionado. Confirma cinco operaciones, video narrado de 5–8 minutos y
+  entrega indicada como 28/10/2026 a las 23:59; Moodle aún no verificado.
+- **Archivos:** outbox, vistas API, pruebas web/móvil y TDS, `Test-Entrega.ps1`, nuevos
+  `Test-OutboxConcurrency.ps1` y `Test-Restore.ps1`; guía, matriz y decisiones.
+- **Comandos:** `git status/rev-parse`, `gh pr view/list`, lectura del PDF,
+  `docker version/info`, `pwsh -NoProfile -File scripts/Test-Entrega.ps1 -StaticOnly`,
+  parser PowerShell, `git diff --check`, commit y push.
+- **Resultados Windows:** parser sin errores; `git diff --check` limpio;
+  Compose efectivo efímero y negativo de red compartida PASAN. El pipe
+  `dockerDesktopLinuxEngine` no existe: motores, concurrencia y restauración
+  NO EJECUTADOS localmente. Ningún dato o volumen compartido fue modificado.
+- **CI:** cuatro workflows disparados sobre `cedddb9`; sus resultados se registrarán
+  tras concluir, sin atribuirles todavía PASS.
+- **Primer run `cedddb9`:** infraestructura, núcleo y TDS PASARON; la suite
+  integrada FALLÓ después de concurrencia y restauración PostgreSQL/SQL Server:
+  `EJSON.parse` relajado convirtió tipos BSON y el validador MongoDB rechazó la
+  copia. Se exigió deserialización estricta (`a8492ba`); la CI de ese commit
+  [40285647944](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40285647944)
+  PASÓ: dos exportadores observados, un documento revisión 4, restauración
+  comprobada en los tres motores, P12 y limpieza efímera. Posteriormente se
+  explicitó la opción canónica de `EJSON.stringify` (`777ffab`, CI integrada
+  [40285814584](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40285814584)
+  PASÓ). No se atribuye éxito al run fallido `40285206675`.
+- **Sonda TDS y prueba API adicional:** `0ff1769` comprueba en SQL Server que
+  `CAST AS numeric` sin escala difiere de `DECIMAL(12,2)`; el modo `query` sigue
+  siendo contractual. `dd44973` agrega fila remota huérfana efímera y exige que
+  la API web la excluya mientras el perfil interno la ve. CI del último SHA
+  pendiente al registrar esta entrada.
+- **Riesgos/dependencias:** revisión de Joyce para serialización y privilegios Mongo;
+  de Armando para función web; TLS/CA y DECIMAL `table_name` pendientes;
+  Moodle, video y merges requieren acciones posteriores del grupo.
+- **Commit/PR:** `cedddb9d4e046279cfee6c073a7379d85bca8b32`, PR #7 abierto en
+  borrador hacia `feature/joyce-sqlserver-mongodb`. `main` intacto.
+
+- **CI código + demo `ed2e5b2`:** [suite 40286756682](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756682)
+  y las tres regresiones de Joseph `40286756769`/`40286756752`/`40286756722`
+  PASARON. Artifact HEAD `ed2e5b20695aa472a0e0e73be0ad23e3b5471d83`, checkout
+  `476638f6c633205d1db96761774ef43d3cedf92c`, Docker 28.0.4, kernel
+  `6.8.0-1064-azure`. P18 usó y retiró `joyce-p18-be0edb26a9e6`; API huérfana
+  1 interna/0 web, dos exportadores, un documento revisión 4, respaldo/restauración
+  PostgreSQL/SQL Server/EJSON MongoDB, P12 y nueve segmentos de demo PASAN.
+  Artifact descargado sin patrón de secreto. No se grabó video ni se ejecutó
+  Docker en la PC Windows. Falta CI del commit documental final.
+
+- **CI documental `3302ae1` (Joseph, 26/10):** [integrada 40287276057](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276057),
+  [infra 40287276041](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276041),
+  [núcleo 40287276076](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276076)
+  y [TDS 40287276054](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276054)
+  PASARON. Artifact HEAD `3302ae1fa96d44647342b81d3d18a08e6060dae2`, checkout
+  `411036cafc42c2319e6636c06d9050fb47548a3e`; P18 efímero
+  `joyce-p18-e0cca5e32aa8` se limpió. Se verificaron concurrencia, API,
+  restauración efectiva en tres motores y nueve segmentos de demo.
+  `mongodump/mongorestore` existen, pero la prueba usó EJSON estricto; no se
+  acredita restauración con esas herramientas. Esta entrada y la corrección
+  bibliográfica posterior requieren CI del nuevo HEAD. Windows Docker local
+  sigue NO EJECUTADO, sin cambios a `main` ni merges.

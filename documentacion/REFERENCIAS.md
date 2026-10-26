@@ -13,14 +13,20 @@ issue citado. Formato: APA 7. Fecha de consulta: octubre de 2026.
 - PostgreSQL Global Development Group. (2024). *PostgreSQL 16 documentation: Transaction management in procedures (PL/pgSQL)*. https://www.postgresql.org/docs/16/plpgsql-transactions.html
 - PostgreSQL Global Development Group. (2024). *PostgreSQL 16 documentation: Rules and privileges / views (security_barrier)*. https://www.postgresql.org/docs/16/rules-privileges.html
 - PostgreSQL Global Development Group. (2024). *PostgreSQL 16 documentation: Database roles and privileges*. https://www.postgresql.org/docs/16/user-manag.html
+- PostgreSQL Global Development Group. (s. f.). *PostgreSQL 16 documentation: Advisory lock functions*. https://www.postgresql.org/docs/16/functions-admin.html
+- PostgreSQL Global Development Group. (s. f.). *PostgreSQL 16 documentation: pg_dump and pg_restore*. https://www.postgresql.org/docs/16/app-pgdump.html
 - Microsoft. (2024). *Quickstart: Run SQL Server Linux container images with Docker*. https://learn.microsoft.com/en-us/sql/linux/quickstart-install-connect-docker
 - Microsoft. (2024). *CREATE PROCEDURE, MERGE, CREATE VIEW (Transact-SQL)*. https://learn.microsoft.com/en-us/sql/t-sql/statements/create-procedure-transact-sql
 - Microsoft. (2024). *Ownership chains*. https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/sql/ownership-chains
 - Microsoft. (2024). *sqlcmd utility: scripting variables*. https://learn.microsoft.com/en-us/sql/tools/sqlcmd/sqlcmd-use-scripting-variables
+- Microsoft. (s. f.). *BACKUP (Transact-SQL)*. https://learn.microsoft.com/en-us/sql/t-sql/statements/backup-transact-sql
+- Microsoft. (s. f.). *RESTORE (Transact-SQL)*. https://learn.microsoft.com/en-us/sql/t-sql/statements/restore-statements-transact-sql
 - MongoDB, Inc. (2024). *Schema validation ($jsonSchema)*. https://www.mongodb.com/docs/manual/core/schema-validation/
 - MongoDB, Inc. (2024). *Aggregation pipeline; $group; $merge*. https://www.mongodb.com/docs/manual/core/aggregation-pipeline/
 - MongoDB, Inc. (2024). *User-defined roles*. https://www.mongodb.com/docs/manual/core/security-user-defined-roles/
 - MongoDB, Inc. (2025). *MongoDB 8.0 release notes*. https://www.mongodb.com/docs/v8.0/release-notes/8.0/
+- MongoDB, Inc. (s. f.). *mongosh EJSON.stringify*. https://www.mongodb.com/docs/mongodb-shell/reference/ejson/stringify/
+- MongoDB, Inc. (s. f.). *mongosh EJSON.parse*. https://www.mongodb.com/docs/mongodb-shell/reference/ejson/parse/
 
 ## Foreign Data Wrappers
 
