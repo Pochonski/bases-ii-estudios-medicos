@@ -392,3 +392,17 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
   `evidencias/registros/2026-10-25-joyce-pruebas-local.txt`. Sin CI.
 - **Límite:** las vistas no filtran por paciente/usuario (sin RLS); P11 sobre vistas con JOIN
   falla por vista no actualizable (55000) además de solo lectura.
+
+### D-043 — Verificación de entrega, demo y documentación final (25/10/2026, Joyce)
+
+- **Implementado:** `scripts/Test-Entrega.ps1` (P18 desde volúmenes vacíos con `-DesdeCero`,
+  suite completa, P12 en los tres motores, volcado P17 sin contraseñas), `scripts/Demo-Video.ps1`
+  (9 segmentos para la grabación), `video/GUION.md`, `documentacion/MAPA_CONEXIONES_Y_CONFIGURACION.md`,
+  `documentacion/REFERENCIAS.md` e inicio rápido en el README.
+- **Resultado:** `Test-Entrega.ps1 -DesdeCero` PASA en Windows 11 local: instalación sin intervención
+  manual, suite completa, mismos contenedores y conteos en PostgreSQL/SQL Server/MongoDB tras
+  `restart` y FDW operativo después del reinicio. Evidencia:
+  `evidencias/registros/2026-10-25-joyce-entrega-p12-p17-p18.txt`. La demo se ejecutó completa.
+- **Alcance de P12:** `restart`, no recreación de contenedores ni restauración de respaldo.
+- **Pendiente del grupo:** push/PR (Joyce sin permiso de escritura), revisión de Joseph (D-041) y
+  Armando (D-042), merge de PR #3/#4, grabación del video, confirmar fecha en Moodle y entrega.

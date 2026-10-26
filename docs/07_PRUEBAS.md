@@ -317,3 +317,12 @@ veces con el mismo resultado. Evidencia: `evidencias/registros/2026-10-25-joyce-
 | P10 roles externos | PASA: web lee facturación + agenda; móvil solo `vw_citas_mobile`; cada uno denegado en lo ajeno |
 | P11 escrituras | PASA: UPDATE en vistas (55000), DELETE en tabla base (42501), CREATE (25006) rechazados |
 | Autenticación | PASA: contraseña incorrecta rechazada por SCRAM |
+
+### Verificación de entrega (D-043) — Windows 11 local
+
+| Prueba | Resultado |
+|---|---|
+| P18 desde entorno vacío | PASA: `down --volumes`, instalación automática y suite completa sin intervención |
+| P12 tres motores | PASA: tras `restart`, mismos contenedores y conteos (PG 30 pacientes/32 resultados, SQL Server 24 pacientes/11 facturas, MongoDB 32 resúmenes/12 indicadores); FDW SQL Server responde 24 filas |
+| P17 configuración FDW | PASA: servidores, mappings (sin contraseña), tablas foráneas, perfiles, `pg_hba`, permisos SQL Server y MongoDB volcados desde los catálogos |
+| P14 particiones (EXPLAIN) | Mostrado en la demo (pruning a `pacientes_ca`); la prueba formal es de Joseph |
