@@ -155,6 +155,14 @@ try {
     }
     if ($DesdeCero) { Out-Log 'PASS P18: desde volúmenes vacíos, instalación y suite completa sin intervención manual' }
 
+    Step 'Seguridad API: facturación remota huérfana no aparece en la vista web'
+    $alcanceApi = & $pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-ApiScope.ps1') 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Out-Log (($alcanceApi | Select-Object -Last 40) -join "`n")
+        throw 'FALLA: alcance de facturación web'
+    }
+    Out-Log (($alcanceApi | Where-Object { "$_" -match 'PASS alcance API|PASS limpieza API' }) -join "`n")
+
     Step 'Concurrencia real del outbox: dos exportadores y dos revisiones del mismo estudio'
     $concurrente = & $pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-OutboxConcurrency.ps1') 2>&1
     if ($LASTEXITCODE -ne 0) {
