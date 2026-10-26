@@ -100,4 +100,4 @@ ORDER BY p.id_paciente;
 EXPLAIN (COSTS OFF)
 SELECT id_paciente, codigo_region FROM externo.ft_estado_facturacion WHERE id_paciente = 1001;
 \echo 'PASS PostgreSQL: FDW real, tipos, JOIN, ausencia remota y Foreign Scan'
-\echo 'PASS table_name: vista de prueba, filtro presente/ausente, Unicode y DECIMAL'
+\echo 'PASS table_name: filtro ID/región, Unicode y lectura DECIMAL; igualdad DECIMAL pendiente'

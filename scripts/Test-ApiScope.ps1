@@ -7,6 +7,8 @@ $null = Assert-JoyceEphemeralContext
 Wait-JoyceHealthy
 $created = $false
 try {
+    # Si la preparación llega a escribir y falla luego, el finally retira la fila.
+    $created = $true
     $null = Invoke-JoyceScript -Service sqlserver -Text @'
 :on error exit
 SET NOCOUNT ON;
@@ -24,7 +26,6 @@ EXEC dbo.sp_recalcular_resumen_facturacion
  @id_paciente=999991,@codigo_region='SJ';
 GO
 '@
-    $created = $true
     $interno = (Invoke-JoyceScript -Service postgres -PgUser usr_fdw_pg_mssql `
         -PgLoginSecretVar PG_PW `
         -Env ([ordered]@{ PG_PW = Get-JoyceSecret 'pg_fdw_mssql_login_password' }) -Text @'
