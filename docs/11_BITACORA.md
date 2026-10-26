@@ -486,3 +486,52 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   por sus runs en `docs/07_PRUEBAS.md`. Windows Docker local NO EJECUTADO;
   no hubo merges ni cambios a `main`. Esta actualización de estado exige CI
   del commit documental final.
+
+## 2026-10-26 — Joseph, cierre técnico integral propuesto en PR #7 (D-048)
+
+- **Objetivo:** probar concurrencia del outbox, reducir la superficie de facturación
+  web y verificar restauración de los tres motores sin tocar recursos compartidos.
+- **Fuente:** enunciado original de seis páginas compartido localmente por Joseph y leído;
+  permanece no versionado. Confirma cinco operaciones, video narrado de 5–8 minutos y
+  entrega indicada como 28/10/2026 a las 23:59; Moodle aún no verificado.
+- **Archivos:** outbox, vistas API, pruebas web/móvil y TDS, `Test-Entrega.ps1`, nuevos
+  `Test-OutboxConcurrency.ps1` y `Test-Restore.ps1`; guía, matriz y decisiones.
+- **Comandos:** `git status/rev-parse`, `gh pr view/list`, lectura del PDF,
+  `docker version/info`, `pwsh -NoProfile -File scripts/Test-Entrega.ps1 -StaticOnly`,
+  parser PowerShell, `git diff --check`, commit y push.
+- **Resultados Windows:** parser sin errores; `git diff --check` limpio;
+  Compose efectivo efímero y negativo de red compartida PASAN. El pipe
+  `dockerDesktopLinuxEngine` no existe: motores, concurrencia y restauración
+  NO EJECUTADOS localmente. Ningún dato o volumen compartido fue modificado.
+- **CI:** cuatro workflows disparados sobre `cedddb9`; sus resultados se registrarán
+  tras concluir, sin atribuirles todavía PASS.
+- **Primer run `cedddb9`:** infraestructura, núcleo y TDS PASARON; la suite
+  integrada FALLÓ después de concurrencia y restauración PostgreSQL/SQL Server:
+  `EJSON.parse` relajado convirtió tipos BSON y el validador MongoDB rechazó la
+  copia. Se exigió deserialización estricta (`a8492ba`); la CI de ese commit
+  [40285647944](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40285647944)
+  PASÓ: dos exportadores observados, un documento revisión 4, restauración
+  comprobada en los tres motores, P12 y limpieza efímera. Posteriormente se
+  explicitó la opción canónica de `EJSON.stringify` (`777ffab`, CI integrada
+  [40285814584](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40285814584)
+  PASÓ). No se atribuye éxito al run fallido `40285206675`.
+- **Sonda TDS y prueba API adicional:** `0ff1769` comprueba en SQL Server que
+  `CAST AS numeric` sin escala difiere de `DECIMAL(12,2)`; el modo `query` sigue
+  siendo contractual. `dd44973` agrega fila remota huérfana efímera y exige que
+  la API web la excluya mientras el perfil interno la ve. CI del último SHA
+  pendiente al registrar esta entrada.
+- **Riesgos/dependencias:** revisión de Joyce para serialización y privilegios Mongo;
+  de Armando para función web; TLS/CA y DECIMAL `table_name` pendientes;
+  Moodle, video y merges requieren acciones posteriores del grupo.
+- **Commit/PR:** `cedddb9d4e046279cfee6c073a7379d85bca8b32`, PR #7 abierto en
+  borrador hacia `feature/joyce-sqlserver-mongodb`. `main` intacto.
+
+- **CI código + demo `ed2e5b2`:** [suite 40286756682](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756682)
+  y las tres regresiones de Joseph `40286756769`/`40286756752`/`40286756722`
+  PASARON. Artifact HEAD `ed2e5b20695aa472a0e0e73be0ad23e3b5471d83`, checkout
+  `476638f6c633205d1db96761774ef43d3cedf92c`, Docker 28.0.4, kernel
+  `6.8.0-1064-azure`. P18 usó y retiró `joyce-p18-be0edb26a9e6`; API huérfana
+  1 interna/0 web, dos exportadores, un documento revisión 4, respaldo/restauración
+  PostgreSQL/SQL Server/EJSON MongoDB, P12 y nueve segmentos de demo PASAN.
+  Artifact descargado sin patrón de secreto. No se grabó video ni se ejecutó
+  Docker en la PC Windows. Falta CI del commit documental final.

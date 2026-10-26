@@ -489,3 +489,46 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
   cuentas de servicio SQL Server/MongoDB tienen pruebas positivas y negativas.
   Persisten TLS sin CA validada para TDS y ausencia de TLS en PostgreSQL/MongoDB;
   antes de uso con datos reales se necesita decisión del equipo sobre certificados.
+
+### D-048 — Serialización del outbox, superficie web y restauración efímera (26/10/2026, Joseph; revisión de Joyce y Armando pendiente)
+
+- **Fuente:** autorización de Joseph para corregir técnicamente los tres módulos en PR #7.
+  El enunciado original fue facilitado localmente el 26/10 y leído completo; no se publica.
+  Indica entrega **28/10/2026, 23:59**, aunque llama martes a un miércoles. La fecha
+  efectiva de cierre debe confirmarse en Moodle.
+  `.gitignore` excluye el PDF original recibido en la raíz para impedir su publicación accidental.
+- **Outbox:** `exportar_pendientes` adquiere `pg_advisory_xact_lock(id_estudio)` tras
+  seleccionar el evento y antes de leer/escribir MongoDB. El candado dura hasta el COMMIT
+  de ese evento, incluso si el subbloque captura una excepción. Serializa exportadores
+  que procesen revisiones del mismo estudio, sin cambiar la tabla, eventos ni API.
+  La prueba nueva fuerza dos sesiones a esperar el mismo candado y comprueba un solo
+  documento, mismo ObjectId y revisión final mayor. No hay transacción ACID global;
+  clientes ajenos al procedimiento con DML directo de MongoDB no obedecen el candado.
+- **Perfiles web:** la función remota interna conserva su contrato completo para el FDW;
+  `usr_api_web` pierde `EXECUTE` directo sobre ella. La vista usa la nueva función
+  `api.fn_paciente_facturacion()` con dueño `api_propietario`, que devuelve exactamente
+  la proyección autorizada y exige paciente clínico local. Joyce y Armando deben
+  revisar la ruta de permisos antes de integrar PR #7.
+  `Test-ApiScope.ps1` crea solo en P18 una fila remota sin paciente local: el perfil
+  interno debe verla y web no; la fila se retira al terminar incluso ante error.
+- **Restauración:** P18 agrega `pg_dump/pg_restore` y `BACKUP/RESTORE DATABASE` a bases
+  nuevas, más copia lógica EJSON estricta de MongoDB a una base nueva, con comparación
+  de datos/tipos/índices. EJSON es alternativa de laboratorio, no política operativa
+  de respaldo ni certificación de `mongodump/mongorestore`. Solo en Compose efímero.
+- **Demostración:** el workflow integrado ejecutará `Test-Entrega -RunDemo
+  -DemoSinPausa` tras las pruebas para comprobar los nueve segmentos del guion
+  dentro del mismo proyecto efímero. Esto no equivale a video grabado.
+- **TDS:** se conserva la ruta contractual `query` y el parche actual. `table_name`
+  registra explícitamente el predicado DECIMAL que puede perder una fila; esa igualdad
+  no queda certificada ni se modifica a ciegas la extensión C.
+- **Estado al escribir:** código `cedddb9` publicado; Windows pasó parser,
+  `git diff --check` y Compose estático. Docker Desktop Linux Engine no respondió;
+  concurrencia, restauración y perfiles del nuevo SHA esperan CI. Los PASS previos
+  pertenecen a `5c9a70c` y no validan este cambio.
+- **Evidencia posterior:** la CI de `ed2e5b2` [40286756682](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756682)
+  PASÓ P18, matriz funcional, API huérfana, concurrencia, restauración de
+  los tres motores, P12/P17 y nueve segmentos de demo. Infraestructura,
+  núcleo y TDS del mismo head también pasaron. MongoDB se restauró con EJSON
+  canónico de laboratorio; el predicado DECIMAL de `table_name` y TLS/CA
+  continúan pendientes. Windows local no se probó por ausencia del daemon.
+  Joyce y Armando no han revisado ni aprobado estas modificaciones.

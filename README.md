@@ -4,6 +4,21 @@
 
 > **Actualización (26/10/2026):** [PR #7](https://github.com/Pochonski/bases-ii-estudios-medicos/pull/7) propone endurecer instalación y pruebas del PR #5, sin fusionar ningún PR. La [CI integrada del head `0189e58`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158117) pasó en Ubuntu; la ejecución de Docker en esta PC Windows sigue pendiente. También quedan revisión de Joyce/Armando, concurrencia del outbox, TLS/CA y restauración desde respaldo. El estado del 25/10 anterior es histórico.
 
+> **Cierre técnico propuesto, 26/10:** el commit `cedddb9` de PR #7 agrega serialización
+> por estudio, una función web acotada y pruebas de concurrencia/restauración en P18.
+> La CI del nuevo SHA está en curso; el Docker Linux local sigue sin responder.
+> Guía para validación, revisión y empaquetado: [cierre y entrega](documentacion/GUIA_CIERRE_Y_ENTREGA.md).
+
+> La [CI integrada del código `dd44973`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286173209)
+> confirmó concurrencia, permisos API y restauración de los tres motores en Ubuntu.
+> Cambios posteriores del PR #7 y la demostración automatizada requieren su propio
+> run; Windows Docker Desktop sigue sin motor Linux disponible.
+
+> [CI `ed2e5b2` con demo](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756682):
+> P18, pruebas integradas, restauración y nueve segmentos del guion PASAN en
+> Ubuntu. El video todavía debe grabarse; faltan revisión de Joyce/Armando,
+> CI del commit documental final, validación Windows y las fusiones autorizadas.
+
 Este repositorio es la **fuente común de contexto** de Joseph, Joyce, Armando y sus agentes de desarrollo. Se elaboró a partir del enunciado original y de las fases de planificación acordadas en conversación. Su objetivo es prevenir decisiones contradictorias y facilitar trabajo paralelo y revisable.
 
 ## ¡Leer esto primero!

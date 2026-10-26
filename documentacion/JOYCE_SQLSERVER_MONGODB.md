@@ -154,3 +154,24 @@ Los resultados reales se registran en `docs/07_PRUEBAS.md` y en `evidencias/regi
 
 Por qué la función: `tds_fdw` usa el mapping del **usuario que consulta**. Si la vista leyera la
 tabla foránea directamente, `usr_api_web` necesitaría credenciales de SQL Server.
+
+## Propuesta de endurecimiento D-048 (26/10/2026; revisión Joyce/Armando pendiente)
+
+La instalación normal sigue sin cargar ni reinicializar datos. En PR #7 el
+exportador toma un candado transaccional por `id_estudio` antes de leer el
+resultado y MongoDB; esto serializa exportadores cooperantes del mismo estudio.
+La prueba P18 ejecuta dos sesiones y revisiones 3/4, y comprueba un documento
+con ObjectId estable y revisión final 4. No hay transacción ACID global; el rol
+interno aún tiene DML directo permitido y Joyce debe revisar esa confianza.
+
+La vista web usa `api.fn_paciente_facturacion()` como función de proyección;
+`usr_api_web` no ejecuta la función remota interna. P18 crea temporalmente una
+fila de facturación sin paciente clínico: la cuenta FDW interna la ve y web no.
+Armando debe revisar la nueva función antes de integrar.
+
+`Test-Restore.ps1` en P18 respalda PostgreSQL con `pg_dump -Fc` y restaura a
+otra base; SQL Server usa BACKUP/RESTORE a otra base; MongoDB usa un archivo
+EJSON canónico y restaura documentos/índices/validador a otra base. Compara
+registros, revisión y tipos BSON. Esta copia Mongo es **de laboratorio**:
+no certifica `mongodump/mongorestore` ni una política de respaldo operativo.
+La CI y la PC Windows deben informarse por separado en `docs/07_PRUEBAS.md`.

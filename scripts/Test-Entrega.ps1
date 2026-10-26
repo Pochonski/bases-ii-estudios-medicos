@@ -177,7 +177,7 @@ try {
         Out-Log (($restauracion | Select-Object -Last 40) -join "`n")
         throw 'FALLA: restauración de los tres motores'
     }
-    Out-Log (($restauracion | Where-Object { "$_" -match 'PASS restauración' }) -join "`n")
+    Out-Log (($restauracion | Where-Object { "$_" -match 'INFO MongoDB|PASS restauración' }) -join "`n")
 
     Step 'Instalación ordinaria repetida: conservar factura sintética y rechazar recarga inicial'
     $null = Invoke-JoyceScript -Service sqlserver -Text @'

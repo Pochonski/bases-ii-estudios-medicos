@@ -416,3 +416,90 @@ de secreto generado. [Infraestructura 40280158123](https://github.com/Pochonski/
 [TDS 40280158198](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158198)
 corresponden al mismo HEAD y PASARON sus siete trabajos. La próxima modificación
 es documental y requiere su propia CI antes de autorizar integración.
+
+## 2026-10-26 — D-048: concurrencia, permisos API y restauración (estado inicial)
+
+| Prueba | Ejecución Windows local | Ejecución Ubuntu CI del head `cedddb9` |
+|---|---|---|
+| Aislamiento P18 y rechazo de red compartida | PASA `Test-Entrega.ps1 -StaticOnly`; sin motores | En curso al escribir |
+| Dos exportadores simultáneos, revisiones 3 y 4, ObjectId único | NO EJECUTADA: Docker Engine ausente | En curso: `Test-OutboxConcurrency.ps1` dentro de P18 |
+| Web/móvil: función remota interna denegada, función web igual a vista | NO EJECUTADA | En curso: `pruebas/seguridad/01..02` |
+| Fila remota huérfana: visible al perfil interno, excluida de API web, retirada | NO EJECUTADA | En curso: `Test-ApiScope.ps1` dentro de P18 |
+| Restauración PostgreSQL `pg_dump/pg_restore` a base nueva | NO EJECUTADA | En curso: `Test-Restore.ps1` |
+| Restauración SQL Server `BACKUP/RESTORE` a base nueva | NO EJECUTADA | En curso: `Test-Restore.ps1` |
+| Copia lógica MongoDB EJSON estricta a base nueva, documentos/tipos/índices | NO EJECUTADA | En curso: `Test-Restore.ps1`; no es `mongodump` |
+| Regresión `table_name` DECIMAL | NO EJECUTADA | En curso; predicado defectuoso se registra PENDIENTE, modo `query` debe pasar |
+| Nueve segmentos del guion de video en P18 | NO EJECUTADOS localmente | Pendiente de CI con `-RunDemo -DemoSinPausa`; no es grabación |
+
+Comandos Windows: parser PowerShell de `Test-OutboxConcurrency.ps1`, `Test-Restore.ps1`
+y `Test-Entrega.ps1` (0 errores); `git diff --check` (código 0);
+`pwsh -NoProfile -File scripts/Test-Entrega.ps1 -StaticOnly` (PASS);
+`docker version --format '{{.Server.Version}} kernel {{.Server.KernelVersion}}'`
+y `docker info --format '{{.OSType}} {{.OperatingSystem}}'` (ambos fallan por
+ausencia del pipe `dockerDesktopLinuxEngine`). No se ejecutó ningún Docker
+destructivo. Los cuatro workflows de CI del commit
+`cedddb9d4e046279cfee6c073a7379d85bca8b32` se lanzaron; sus resultados
+se registrarán con URL y SHA exactos al terminar.
+
+Diagnóstico no destructivo adicional: `wsl --status` informó versión
+predeterminada 2; `docker context ls` selecciona `desktop-linux`;
+`Get-Service com.docker.service` muestra `Stopped`/`Manual`, y no se encontró
+proceso `Docker Desktop`/`com.docker.backend`. Esto explica que no exista el
+pipe, pero no demuestra por qué la aplicación no se inició ni estabilidad
+posterior. No se inició el servicio ni se tocaron WSL o los volúmenes.
+
+### Resultados posteriores verificables del código D-048
+
+- [CI integrada `a8492ba` 40285647944](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40285647944):
+  PASA suite P01–P18/INT, dos exportadores simultáneos, restauración de los tres
+  motores, P12 y limpieza efímera. Corrige el fallo EJSON del run `40285206675`.
+- [CI integrada `777ffab` 40285814584](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40285814584):
+  PASA con serialización EJSON canónica explícita.
+- [CI integrada `dd44973` 40286173209](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286173209):
+  PASA también el caso de fila remota huérfana: perfil interno la ve (1), web
+  no (0), paciente legítimo permanece y fila sintética retirada. Se observaron
+  dos exportadores bloqueados y un solo documento revisión 4 con ObjectId
+  conservado. PostgreSQL restaurado: 30 pacientes, revisión 4 y 4 eventos;
+  SQL Server restauró facturas/pacientes/monto; MongoDB restauró documentos,
+  índices y tipos BSON con EJSON estricto. P12 mantuvo conteos y valores tras
+  `restart`, y P18 retiró solo `joyce-p18-2897268ff7a1`.
+- Artifact `joyce-modulos-evidencia` descargado y revisado: HEAD
+  `dd449739f71711c6978041331b677ef16696ed20`, checkout de PR
+  `9bc194c27cc33a8e7acf8bd694f7285cc573b731`, Docker 28.0.4,
+  kernel `6.8.0-1064-azure`. No apareció el patrón de secreto generado ni
+  una asignación de contraseña en los archivos de evidencia.
+- [TDS `dd44973` 40286173022](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286173022):
+  PASA lectura remota `query`, modo `table_name` para ID/región, Unicode y
+  lectura DECIMAL. SQL Server 16.0.4305.5 devolvió `12346` para
+  `CAST(12345.67 AS numeric)` y `12345.67` para `DECIMAL(12,2)`;
+  el `EXPLAIN` mostró exactamente el primer cast en el predicado remoto, que
+  devolvió 0. Ese predicado sigue **PENDIENTE**. Con 2004 filas remotas,
+  estimación 190358 bytes de columnas, `query` filtró 2003 localmente
+  (11.996 ms) frente a `table_name` por clave (7.879 ms), medición de un
+  único runner sin valor de benchmark de producción.
+- [Infraestructura `dd44973` 40286173039](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286173039)
+  y [núcleo `dd44973` 40286173037](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286173037)
+  PASAN. Estos runs preceden a la prueba automatizada del guion y a la última
+  limpieza del centinela; se necesita CI del HEAD final.
+
+### Código y demostración juntos en `ed2e5b2`
+
+- [Suite integrada y demo `40286756682`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756682):
+  **PASA** en Ubuntu 22.04, Docker 28.0.4 y kernel `6.8.0-1064-azure`.
+  Ejecutó P18, P01–P17, INT-01–INT-05 según matriz, fila huérfana API,
+  dos exportadores concurrentes, restauraciones comprobadas de los tres
+  motores, P12 tras `restart`, P17 y los nueve segmentos de demo sin pausa.
+  Retiró solo los recursos de `joyce-p18-be0edb26a9e6`.
+- Artifact `joyce-modulos-evidencia` descargado: HEAD
+  `ed2e5b20695aa472a0e0e73be0ad23e3b5471d83`, checkout
+  `476638f6c633205d1db96761774ef43d3cedf92c`; sin patrón de
+  secreto generado. La demo está ejecutada en CI, **no grabada en video**.
+- [Infraestructura `40286756769`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756769),
+  [núcleo PostgreSQL `40286756752`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756752)
+  y [TDS `40286756722`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756722)
+  también **PASAN** para ese HEAD. TDS conserva PENDIENTE la igualdad
+  DECIMAL de `table_name`, aunque el workflow global sea verde porque la
+  ruta contractual `query` y las regresiones exigidas sí pasan.
+- El commit documental final y la marca de disponibilidad de `mongodump`
+  todavía necesitan un run propio; los resultados de `ed2e5b2` no prueban
+  cambios posteriores. Windows local continúa sin motor Docker disponible.

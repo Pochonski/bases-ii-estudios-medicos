@@ -3,9 +3,14 @@
 **Antes de grabar:**
 
 ```powershell
-pwsh -NoProfile -File ./scripts/Install-JoyceModulos.ps1   # si el entorno no está levantado
-pwsh -NoProfile -File ./scripts/Demo-Video.ps1             # Enter entre segmentos
+pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero -RunDemo
+# La suite valida primero el proyecto efímero; Demo-Video pausa entre segmentos.
 ```
+
+`Demo-Video.ps1` exige el contexto P18 efímero y no se inicia directamente sobre
+el proyecto compartido. Reservar tiempo para instalar y ejecutar la suite antes
+de los 5–8 minutos que se grabarán. La demostración visible debe identificar
+claramente que se usa un entorno de prueba con datos ficticios.
 
 - Terminal con fuente grande y ventana maximizada.
 - No mostrar la carpeta `secrets/` ni el archivo `.env`.
