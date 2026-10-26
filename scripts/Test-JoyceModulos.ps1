@@ -254,18 +254,8 @@ END $$;
     Mongo ([IO.File]::ReadAllText((Join-Path $script:JoyceRoot 'mongodb/04_agregaciones.js')))
     Mongo ([IO.File]::ReadAllText((Join-Path $script:JoyceRoot 'mongodb/05_validaciones.js')))
     # Contraste independiente: el mismo conteo calculado en PostgreSQL (fuente clínica).
-    $pgConteo = Invoke-JoyceScript -Service postgres -Text @'
-\pset tuples_only on
-\pset format unaligned
-SELECT r.id_medico_firmante || '|' || e.id_tipo || '|' || count(*)
-FROM clinico.resultados_estudio AS r JOIN clinico.estudios AS e ON e.id_estudio = r.id_estudio
-GROUP BY r.id_medico_firmante, e.id_tipo ORDER BY r.id_medico_firmante, e.id_tipo;
-'@
-    $mgConteo = Invoke-JoyceScript -Service mongodb -Text @'
-db.getSiblingDB('reportes_medicos').resumenes_estudios.aggregate([
-  { $group: { _id: { m: '$id_medico', t: '$id_tipo' }, n: { $sum: 1 } } },
-  { $sort: { '_id.m': 1, '_id.t': 1 } }]).forEach(d => print(`${d._id.m}|${d._id.t}|${d.n}`));
-'@
+    $pgConteo = Invoke-JoyceScript -Service postgres -Path 'pruebas/reportes/01_conteo_pg_medico_tipo.sql'
+    $mgConteo = Invoke-JoyceScript -Service mongodb -Path 'pruebas/reportes/02_conteo_mongo_medico_tipo.js'
     $pgLineas = @($pgConteo -split "`n" | Where-Object { $_ -match '^\d+\|' })
     $mgLineas = @($mgConteo -split "`n" | Where-Object { $_ -match '^\d+\|' })
     Out-Log "PostgreSQL médico|tipo|n: $($pgLineas -join ', ')"

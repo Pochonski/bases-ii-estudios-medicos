@@ -26,6 +26,11 @@ pwsh -NoProfile -File ./scripts/Demo-Video.ps1             # Enter entre segment
 | 5:40–6:30 | Armando | Segmento **7** | **Operación 3**: vista `api.vw_paciente_facturacion` para la web, que combina datos locales y remotos. Perfiles externos: web lee facturación y agenda; móvil solo su vista reducida. Las pruebas prohibidas fallan con *permission denied*. Ambos perfiles son de solo lectura, con SCRAM y límites de conexión/tiempo distintos. Detalle técnico: `tds_fdw` usa el mapping de quien consulta, por eso la vista pasa por una función del perfil interno. |
 | 6:30–7:00 | Armando | Segmento **9** | **Operación 5**: agregación en MongoDB por médico y tipo de estudio, verificada contra PostgreSQL. Mencionar reportes adicionales (sucursal, mes, indicadores mensuales). Cierre: las cinco operaciones funcionan; las evidencias están en `evidencias/registros/`. |
 
+## Si Armando no participa
+
+Joyce narra los segmentos 7 y 9 (5:40–7:00). El enunciado pide narración de los integrantes:
+el grupo debe decidir cómo tratar la ausencia (D-044) y, si conviene, avisar al docente.
+
 ## Frases clave (para no olvidarlas)
 
 - "Tres servidores lógicos en contenedores aislados, una red interna; no hay alta disponibilidad
