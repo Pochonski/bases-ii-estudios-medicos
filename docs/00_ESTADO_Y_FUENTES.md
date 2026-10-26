@@ -215,3 +215,4 @@ Evidencia: `evidencias/registros/2026-10-25-joyce-pruebas-local.txt`. Guía: `do
 | Componente (D-042) | Estado comprobable |
 |---|---|
 | `usr_api_web` / `usr_api_mobile`, vistas `api`, agregaciones y validaciones MongoDB | IMPLEMENTADO Y PROBADO localmente por Joyce con permiso de Armando; pendiente de su revisión |
+| P12 (3 motores), P17, P18 y demo del video (D-043) | PROBADO localmente; evidencia `2026-10-25-joyce-entrega-p12-p17-p18.txt` |

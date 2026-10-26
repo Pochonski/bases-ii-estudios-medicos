@@ -22,6 +22,21 @@ Este repositorio es la **fuente común de contexto** de Joseph, Joyce, Armando y
 14. [`referencia/README.md`](referencia/README.md): cómo consultar el enunciado original por los canales del curso (no publicado en este repositorio público).
 15. [`docs/12_PUBLICACION_GITHUB.md`](docs/12_PUBLICACION_GITHUB.md): estado del repositorio público y reglas de colaboración.
 
+## Inicio rápido: reconstruir y demostrar todo (P18)
+
+Requisitos: Windows 11, Docker Desktop (motor Linux/WSL 2) y PowerShell 7 (`winget install Microsoft.PowerShell`).
+
+```powershell
+pwsh -NoProfile -File ./scripts/Install-JoyceModulos.ps1        # 3 motores, esquemas, datos ficticios, FDW, roles, vistas
+pwsh -NoProfile -File ./scripts/Test-JoyceModulos.ps1           # P01-P11, P13, P15, P16, INT-04
+pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero     # P18 desde volúmenes vacíos + P12 (3 motores) + P17
+pwsh -NoProfile -File ./scripts/Demo-Video.ps1                  # demostración por segmentos para el video
+```
+
+`-DesdeCero` borra solo los volúmenes de **este** proyecto Compose. Mapa y configuración:
+[documentacion/MAPA_CONEXIONES_Y_CONFIGURACION.md](documentacion/MAPA_CONEXIONES_Y_CONFIGURACION.md) ·
+guion: [video/GUION.md](video/GUION.md) · referencias: [documentacion/REFERENCIAS.md](documentacion/REFERENCIAS.md).
+
 ## Objetivo académico
 
 Simular una plataforma para estudios médicos con **tres motores diferenciados**:

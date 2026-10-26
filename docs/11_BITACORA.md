@@ -379,3 +379,10 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
 - **Resultado:** suite completa PASA (49 marcas PASS, incluye P02, P03, P09, P10, P11).
 - **Impacto:** la base ya no admite CONNECT de roles ajenos a los cuatro perfiles (el superusuario
   no se ve afectado). Armando debe confirmar y revisar.
+
+## 2026-10-25 — Joyce, verificación de entrega y material del video (D-043)
+
+- `Test-Entrega.ps1 -DesdeCero`: borró los volúmenes del proyecto local, reinstaló y PASÓ P18, la suite
+  completa, P12 en tres motores y P17. Demo de 9 segmentos ejecutada completa.
+- Nuevos: mapa de conexiones y configuración, referencias, guion del video, inicio rápido en README.
+- No ejecutado: CI, grabación del video, entrega en Moodle.
