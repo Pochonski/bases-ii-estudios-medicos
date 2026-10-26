@@ -29,17 +29,21 @@
 | D-023 | No presentar outbox como ACID distribuido | **[CRITERIO TÉCNICO]** | Solo COMMIT local + consistencia eventual |
 | D-024 | Repositorio público en `Pochonski/bases-ii-estudios-medicos` | **[GRUPO; 21/10/2026]** | Sustituye D-021. No publicar secretos, datos reales ni enunciado docente original; documentación y guías para agentes sí. |
 
-## Pendientes prioritarios (en orden)
+## Pendientes prioritarios vigentes (26/10/2026, D-049)
 
-1. **[P0]** Confirmar Moodle: ¿cierre 28/10/2026 23:59? El enunciado lo llama martes y la fecha es miércoles.
-2. **[P0]** Aclarar con docente si una PC con tres contenedores satisface «distribuido», si el grupo de 3 es aceptado ante la redacción «grupos de 4 personas» y, especialmente, si una integración intermedia a MongoDB es aceptable cuando `mongo_fdw` falla.
-3. **[P0]** Verificar virtualización, espacio SSD, WSL2 y Docker en PC real.
-4. **[P0]** Validar compilación y consultas reales `tds_fdw` con versiones elegidas.
-5. **[P0]** Validar `mongo_fdw` incluyendo inserción, actualización, `_id`, tipos BSON e índice único; confirmar matriz de versiones con MongoDB.
-6. **[P1]** Fijar DDL exacto de tablas SQL Server, estrategia de evento/idempotencia y tipo final de worker sin sobrepasar requisitos.
-7. **[P1]** Decidir rol técnico específico para procesador outbox y manejo seguro de credenciales.
-8. **[P1]** Confirmar nombres de usuario GitHub de Joyce y Armando, colaboradores y ramas de trabajo.
-9. **[P1]** Conseguir evidencia real P01–P18, preparar manual y video.
+1. **[P0]** Confirmar fecha/hora en Moodle (enunciado 28/10/2026 23:59).
+2. **[P0]** Validar daemon Docker Linux y P18 integrado en Windows local, con
+   evidencia y sin alterar datos/volúmenes del proyecto compartido.
+3. **[P0]** Capturas auténticas, video narrado 5–8 min, ZIP de `main` y entrega Moodle.
+4. **[P1]** Aclarar con el docente si tres integrantes y tres servidores lógicos
+   en una sola PC satisfacen los requisitos, y validar la participación real.
+5. **[P1]** Bibliografía definitiva e IA conforme al reglamento del curso.
+6. **[LÍMITES]** `table_name` con igualdad DECIMAL; TLS/CA; DML directo fuera
+   del candado del exportador; Mongo EJSON de laboratorio, no mongorestore.
+
+**Resueltos y comprobados en CI sobre `main`:** conectores reales `tds_fdw`
+y `mongo_fdw`, P01–P18, cinco INT, permisos, concurrencia controlada,
+restauración de laboratorio; PR #3/#4/#5/#7 integrados. Ver D-049.
 
 ## Riesgos
 
@@ -532,3 +536,19 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
   canónico de laboratorio; el predicado DECIMAL de `table_name` y TLS/CA
   continúan pendientes. Windows local no se probó por ausencia del daemon.
   Joyce y Armando no han revisado ni aprobado estas modificaciones.
+
+### D-049 — Integración final y cierre verificable (26/10/2026, Joseph)
+
+- **Origen:** autorización de integración dada por Joseph; GitHub PR y runs revisados.
+- **Resultado:** PR #3 → `a3dd038`, #4 → `dec7dd1`, #7 → rama de Joyce
+  `7c774bb`, #5 → `main` `3d50894`. No se reescribió historia, no quedan
+  PR de integración abiertos. Se conserva distinción entre autoría técnica
+  y aprobación/revisión de otros miembros.
+- **CI posterior al merge:** cuatro ejecuciones en el SHA completo
+  `3d50894c9e566d44a2190d6d115331983127f5bd`: [Infraestructura (3/3)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328045185) · [Núcleo PostgreSQL (1/1)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328099902) · [TDS FDW (2/2)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328122775) · [Integración de tres motores (1/1)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328144203). Los siete trabajos PASS,
+  integrados en Ubuntu, sin extrapolar a Windows actual.
+- **Riesgos y acciones restantes:** validación Windows P18 todavía no ejecutada;
+  material visual, video, Moodle, aclaraciones docentes, y los límites
+  DECIMAL/TLS/EJSON/outbox documentados. Sin cambios a modelos o datos.
+- **Documentos afectados:** README, matriz de cumplimiento, estado,
+  guía de cierre, decisiones y bitácora.

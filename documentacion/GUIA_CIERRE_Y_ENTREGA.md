@@ -1,7 +1,13 @@
 # Guía de cierre, validación y empaquetado
 
 Responsable: Joseph, 26/10/2026. Esta guía prepara la revisión de los tres módulos.
-No autoriza fusiones ni sustituye la revisión de Joyce o Armando.
+**Estado post-merge:** `main` = `3d50894`, PR #3/#4/#5/#7 ya integrados. No repetir fusiones ni atribuir revisión de Joyce/Armando no verificada.
+
+**Estado verificado el 26/10/2026:** rama `main` en [`3d50894`](https://github.com/Pochonski/bases-ii-estudios-medicos/commit/3d50894c9e566d44a2190d6d115331983127f5bd); PR #3, #4 y #5 fusionados en `main`, PR #7 fusionado en la rama de Joyce e incorporado al merge de #5. No quedan PR de integración abiertos. **Cuatro workflows de `main`: siete trabajos de siete aprobados** en ese mismo SHA: [Infraestructura (3/3)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328045185) · [Núcleo PostgreSQL (1/1)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328099902) · [TDS FDW (2/2)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328122775) · [Integración de tres motores (1/1)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328144203).
+
+**Evidencia Ubuntu CI:** P18 desde volúmenes efímeros, P01–P18, INT-01–INT-05, segmentación, FDW reales, permisos API, dos exportadores concurrentes, restauración PG/SQL Server/MongoDB mediante EJSON estricto, P12 tras reinicio y nueve segmentos automáticos de demo.
+
+**No confundir con entrega concluida:** Docker Desktop abierto en Windows según Joseph, pero el motor Linux y P18 en esa PC aún no están verificados; faltan capturas reales, video narrado de 5–8 min y entrega Moodle. El documento del curso indica 28/10/2026 a las 23:59, pendiente de confirmar en Moodle. Límites: TDS `table_name` con igualdad DECIMAL incorrecta (usar `query` probada); TLS/CA no listo para producción; Mongo EJSON no equivale a `mongorestore`; candado outbox no cubre DML directo fuera del procedimiento.
 
 ## 1. Estado y condiciones previas
 
@@ -65,49 +71,33 @@ La prueba MongoDB de restauración usa EJSON estricto; no equivale a un plan
 operativo de `mongodump/mongorestore`. P12 y restauración son pruebas distintas.
 Si alguna falla, conservar su salida y el run; no transformar fallos en PASS.
 
-## 4. Evidencia y revisión antes de integrar
+## 4. Verificación después de integrar
 
-Para cada PR verificar HEAD, BASE, diff, checks del SHA definitivo y artifacts:
+Los cuatro PR están fusionados; **no volver a ejecutar comandos de merge**.
+La CI de `main` corresponde al SHA `3d50894c9e566d44a2190d6d115331983127f5bd` y finalizó 7/7:
+[Infraestructura (3/3)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328045185) · [Núcleo PostgreSQL (1/1)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328099902) · [TDS FDW (2/2)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328122775) · [Integración de tres motores (1/1)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328144203).
 
-```powershell
-gh pr view 3 --json state,isDraft,headRefOid,baseRefName,mergeable,statusCheckRollup
-gh pr view 4 --json state,isDraft,headRefOid,baseRefName,mergeable,statusCheckRollup
-gh pr view 7 --json state,isDraft,headRefOid,baseRefName,mergeable,statusCheckRollup
-gh pr view 5 --json state,isDraft,headRefOid,baseRefName,mergeable,statusCheckRollup
-```
-
-Secuencia propuesta, **solo después de autorización humana de fusión**:
-
-1. PR #3 → `main`; verificar núcleo y CI.
-2. Cambiar base de #4 a `main`, comprobar diff sin duplicación, ejecutar CI y
-   fusionar #4 → `main`.
-3. Revisar con Joyce y Armando el PR #7, fusionarlo en la rama de Joyce y comprobar
-   que #5 incorpora sus commits. Sin esa revisión, #7 permanece en borrador.
-4. Cambiar base de #5 a `main`, comprobar diff, secretos, contratos, permisos y
-   todos los checks del HEAD; fusionar #5 → `main`.
-5. Repetir P18 y las cuatro regresiones sobre el `main` final, y validar Windows.
-
-El cambio de base debe hacerse solo en el momento indicado; no reescribir
-historial compartido ni usar `push --force`.
-
-Comandos de referencia **para después de recibir autorización explícita**, nunca
-como parte de esta revisión:
+Validación del equipo Windows, con repositorio actualizado a `origin/main`
+sin descartar cambios locales, y Docker Desktop iniciado:
 
 ```powershell
-gh pr merge 3 --merge
-gh pr edit 4 --base main
-# Revisar diff y checks nuevos de #4 antes del siguiente comando.
-gh pr merge 4 --merge
-# Revisar/aceptar #7 con Joyce y Armando; entonces incorporarlo a la rama de Joyce.
-gh pr merge 7 --merge
-gh pr edit 5 --base main
-# Revisar diff y checks nuevos de #5 antes del siguiente comando.
-gh pr merge 5 --merge
+git rev-parse HEAD
+docker version
+docker compose version
+docker info --format '{{.OSType}} {{.OperatingSystem}} {{.KernelVersion}}'
+pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -StaticOnly
 ```
 
-La estrategia de merge commit conserva la ancestralidad de los PR apilados.
-Después de cada base nueva, comprobar que el diff solo muestre su módulo y que
-GitHub ejecute los checks para la combinación actual; detenerse ante conflictos.
+Solo si `docker info` confirma Linux Engine y la validación estática pasa,
+ejecutar en el proyecto efímero (no sobre volúmenes compartidos):
+
+```powershell
+pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero -RunDemo -DemoSinPausa -EvidencePath .tmp/entrega-local.txt
+```
+
+Registrar PASS/FAIL, sistema, versiones, SHA y salida sin secretos. **No se ha
+ejecutado la prueba integral en la PC Windows actual en esta revisión**.
+No ejecutar manualmente `docker compose down --volumes` sobre `estudios-medicos`.
 
 ## 5. Video y entrega
 

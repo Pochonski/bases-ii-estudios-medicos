@@ -548,3 +548,20 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   acredita restauración con esas herramientas. Esta entrada y la corrección
   bibliográfica posterior requieren CI del nuevo HEAD. Windows Docker local
   sigue NO EJECUTADO, sin cambios a `main` ni merges.
+
+## 2026-10-26 — Joseph, verificación post-merge y actualización de entrega (D-049)
+
+- **Objetivo:** reemplazar encabezados obsoletos sobre PR pendientes por el
+  estado real de `main`, sin borrar la cronología original.
+- **Cambios Git anteriores verificados:** #3 `a3dd038`, #4 `dec7dd1`,
+  #7 `7c774bb` en rama Joyce y #5 `3d50894` en `main`.
+- **Evidencia ejecutada:** API GitHub, cuatro runs de `main` en SHA
+  `3d50894c9e566d44a2190d6d115331983127f5bd`: [Infraestructura (3/3)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328045185) · [Núcleo PostgreSQL (1/1)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328099902) · [TDS FDW (2/2)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328122775) · [Integración de tres motores (1/1)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328144203). 7/7 PASS;
+  el log de la suite integrada contiene P18, outbox concurrente, API acotada,
+  restauración de 3 motores, P12 y nueve demos automáticas.
+- **Modificaciones:** README, matriz, estado, guía, decisiones y esta bitácora;
+  cambios solo documentales mediante PR; sin alterar `main` directamente.
+- **Windows local:** no se han ejecutado comandos desde esta sesión sobre
+  la PC. Joseph indica Docker Desktop abierto, pero falta comprobar Engine Linux
+  y ejecutar P18 real. No afirmar que pasó hasta tener el registro.
+- **Pendientes:** capturas auténticas, video, coordinación docente, ZIP y Moodle.
