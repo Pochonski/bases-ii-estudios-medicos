@@ -27,6 +27,8 @@ function Assert-NoExistingResources {
         & docker volume inspect $name *> $null
         if ($LASTEXITCODE -eq 0) { throw "Volumen preexistente $name; se cancela P18." }
     }
+    & docker image inspect "$project/postgres-fdw:ci" *> $null
+    if ($LASTEXITCODE -eq 0) { throw "Imagen preexistente para $project; se cancela P18." }
     $global:LASTEXITCODE = 0
 }
 
@@ -66,7 +68,9 @@ function New-IsolatedContext {
     foreach ($name in 'postgres_password','sqlserver_sa_password','mongo_root_password') {
         $secrets[$name] = @{ file = ((Join-Path $env:JOYCETEST_SECRET_DIR "$name.txt") -replace '\\','/') }
     }
-    $overlay = @{ name = $project; networks = @{ 'medical-network' = @{ name = "$project-medical-network"; internal = $true } }; volumes = $v; secrets = $secrets }
+    $overlay = @{ name = $project; services = @{ postgres = @{ image = "$project/postgres-fdw:ci" } };
+                  networks = @{ 'medical-network' = @{ name = "$project-medical-network"; internal = $true } };
+                  volumes = $v; secrets = $secrets }
     [IO.File]::WriteAllText($env:JOYCETEST_OVERLAY_PATH, ($overlay | ConvertTo-Json -Depth 8))
     Initialize-JoyceSecrets
     $null = Assert-JoyceEphemeralContext
@@ -82,17 +86,22 @@ function Get-Conteos {
 SELECT 'pg.pacientes=' || count(*) FROM clinico.pacientes
 UNION ALL SELECT 'pg.pacientes_sj=' || count(*) FROM clinico.pacientes_sj
 UNION ALL SELECT 'pg.resultados=' || count(*) FROM clinico.resultados_estudio
+UNION ALL SELECT 'pg.revision_prueba=' || revision FROM clinico.resultados_estudio WHERE id_estudio=30031
 UNION ALL SELECT 'pg.eventos_procesados=' || count(*) FROM integracion.eventos_integracion WHERE estado = 'PROCESADO';
 '@
     $sq = Invoke-JoyceScript -Service sqlserver -Text @'
 SET NOCOUNT ON;
 SELECT 'mssql.paciente_integracion=' + CAST(COUNT(*) AS varchar) FROM integracion_externa.dbo.paciente_integracion;
 SELECT 'mssql.facturas=' + CAST(COUNT(*) AS varchar) FROM integracion_externa.dbo.facturas_externas;
+SELECT 'mssql.factura_monto_centimos=' + CAST(CAST(monto * 100 AS bigint) AS varchar)
+  FROM integracion_externa.dbo.facturas_externas WHERE id_factura=90001;
 '@
     $mg = Invoke-JoyceScript -Service mongodb -Text @'
 const r = db.getSiblingDB('reportes_medicos');
 print('mongo.resumenes=' + r.resumenes_estudios.countDocuments({}));
 print('mongo.indicadores=' + r.indicadores_mensuales.countDocuments({}));
+const doc = r.resumenes_estudios.findOne({id_estudio:30031});
+if (doc) print('mongo.revision_prueba=' + doc.revision);
 '@
     return @(($pg, $sq, $mg) -join "`n" -split "`n" | Where-Object { $_ -match '^[a-z_.]+=\d+$' } | Sort-Object)
 }
@@ -162,6 +171,11 @@ GO
             throw 'La carga inicial no rechazó tablas pobladas como se esperaba.'
         }
         $global:LASTEXITCODE = 0
+        $direct = Invoke-JoyceScript -Service sqlserver -Path 'sqlserver/06_datos_prueba.sql' -AllowFailure
+        if ($LASTEXITCODE -eq 0 -or $direct -notmatch '51021') {
+            throw 'El fixture SQL Server aceptó ejecución directa sobre datos existentes.'
+        }
+        $global:LASTEXITCODE = 0
         $invoice = Invoke-JoyceScript -Service sqlserver -Text @'
 SET NOCOUNT ON;
 USE integracion_externa;
@@ -171,7 +185,7 @@ WHERE id_factura=99971 AND monto=6789.12 AND estado='PENDIENTE';
         if (@($invoice -split '\r?\n' | Where-Object { $_.Trim() -eq '1' }).Count -ne 1) {
             throw 'La instalación normal cambió o borró la factura sintética.'
         }
-        Out-Log 'PASS instalación normal repetida conserva factura/importe; carga inicial sobre datos existentes es rechazada'
+        Out-Log 'PASS instalación normal conserva factura/importe; carga inicial y SQL directo sobre datos existentes rechazados'
     } finally {
         $null = Invoke-JoyceScript -Service sqlserver -Text @'
 :on error exit
@@ -191,7 +205,7 @@ GO
     $despues = Get-Conteos
     Out-Log ("después: " + ($despues -join ', '))
     $ids2 = @('postgres', 'sqlserver', 'mongodb' | ForEach-Object { Get-JoyceContainerId $_ })
-    if (($antes -join ',') -ne ($despues -join ',') -or $antes.Count -lt 8) { throw 'FALLA P12: los datos cambiaron tras el reinicio' }
+    if (($antes -join ',') -ne ($despues -join ',') -or $antes.Count -lt 11) { throw 'FALLA P12: los datos cambiaron tras el reinicio' }
     if (($ids -join ',') -ne ($ids2 -join ',')) { throw 'FALLA P12: cambiaron los contenedores' }
     $p01 = Invoke-JoyceScript -Service postgres -PgUser usr_fdw_pg_mssql -PgLoginSecretVar PG_PW `
         -Env ([ordered]@{ PG_PW = (Get-JoyceSecret 'pg_fdw_mssql_login_password') }) -Text @'
@@ -268,6 +282,11 @@ finally {
             $null = Assert-JoyceEphemeralContext
             Assert-OwnedResources
             Invoke-JoyceCompose @('down', '--volumes')
+            & docker image inspect "$project/postgres-fdw:ci" *> $null
+            if ($LASTEXITCODE -eq 0) {
+                & docker image rm "$project/postgres-fdw:ci" *> $null
+                if ($LASTEXITCODE -ne 0) { throw "No se pudo retirar la etiqueta de imagen efímera $project." }
+            }
             Assert-NoExistingResources
             Out-Log "PASS limpieza: solo recursos del proyecto efímero $project; volúmenes compartidos intactos"
         } catch {

@@ -1,5 +1,7 @@
 -- Joyce. Datos externos FICTICIOS alineados con postgresql/06_datos_prueba.sql.
--- Repetible: reemplaza por completo el fixture de SQL Server en una transacción.
+-- La carga normal exige tablas vacías. Una reinicialización con datos requiere
+-- SESSION_CONTEXT('joseph_fixture_reset')='EXPLICIT_LAB_RESET' en esta conexión,
+-- fijado por el instalador solo después de validar un proyecto efímero.
 --
 -- Claves del núcleo PostgreSQL: pacientes AL 1001-1010, SJ 2001-2010, CA 3001-3010.
 -- Estudio 30000+n -> orden ((n-1)%25)+1 -> cita/paciente en orden AL, CA, SJ:
@@ -14,6 +16,13 @@ USE integracion_externa;
 GO
 SET NOCOUNT ON;
 SET XACT_ABORT ON;
+DECLARE @filas_existentes bigint =
+  (SELECT COUNT(*) FROM dbo.aseguradoras) + (SELECT COUNT(*) FROM dbo.convenios) +
+  (SELECT COUNT(*) FROM dbo.paciente_integracion) + (SELECT COUNT(*) FROM dbo.paciente_cobertura) +
+  (SELECT COUNT(*) FROM dbo.facturas_externas) + (SELECT COUNT(*) FROM dbo.resumen_facturacion);
+IF @filas_existentes > 0 AND
+   COALESCE(CONVERT(nvarchar(128), SESSION_CONTEXT(N'joseph_fixture_reset')), N'') <> N'EXPLICIT_LAB_RESET'
+    THROW 51021, 'Fixture SQL Server: existen datos; reinicializacion requiere contexto deliberado.', 1;
 BEGIN TRANSACTION;
 
 DELETE FROM dbo.facturas_externas;

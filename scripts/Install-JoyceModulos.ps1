@@ -68,7 +68,9 @@ if ($LoadInitialData) {
     Invoke-JoyceScript -Service sqlserver -Path 'sqlserver/06_datos_prueba.sql'
     Write-Output 'PASS carga inicial: fixtures ficticios instalados solo en tablas vacías.'
 } elseif ($ResetLabData) {
-    Invoke-JoyceScript -Service sqlserver -Path 'sqlserver/06_datos_prueba.sql'
+    $resetSql = "EXEC sys.sp_set_session_context @key=N'joseph_fixture_reset', @value=N'EXPLICIT_LAB_RESET';`nGO`n" +
+        [IO.File]::ReadAllText((Join-Path $script:JoyceRoot 'sqlserver/06_datos_prueba.sql'))
+    Invoke-JoyceScript -Service sqlserver -Text $resetSql
     Write-Output 'PASS reinicialización deliberada del fixture SQL Server en proyecto efímero.'
 } else {
     Write-Output 'PASS instalación normal: no se ejecutaron scripts de datos.'

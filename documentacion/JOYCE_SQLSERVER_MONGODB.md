@@ -95,6 +95,10 @@ proceso; nunca aparecen como argumentos ni en archivos versionados.
 Reinicia los estudios sintéticos 30031/30032 solo dentro de ese proyecto. No ejecutar
 `docker compose down --volumes` contra `estudios-medicos`. Las pruebas anteriores del
 25/10 documentan el comportamiento histórico; no acreditan el aislamiento nuevo.
+`Test-Entrega.ps1 -DesdeCero -RunDemo` instala, prueba y muestra los nueve segmentos
+en ese mismo proyecto nuevo, con pausas para narrar, y limpia sus recursos al salir.
+P12 verifica conteos y centinelas de los tres motores tras `restart`; no equivale
+a restaurar desde una copia de seguridad.
 
 ## Pruebas
 

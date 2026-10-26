@@ -72,6 +72,9 @@ function Assert-JoyceEphemeralContext {
     if ((@($c.services.PSObject.Properties.Name) | Sort-Object) -join ',' -ne 'mongodb,postgres,sqlserver') {
         throw 'P18 contiene servicios inesperados.'
     }
+    if ($c.services.postgres.image -ne "$($env:JOYCETEST_PROJECT_NAME)/postgres-fdw:ci") {
+        throw 'La imagen PostgreSQL no tiene una etiqueta efímera propia.'
+    }
     $expectedMounts = @{ postgres = @{'/var/lib/postgresql/data'='postgres_data'};
                          sqlserver = @{'/var/opt/mssql'='sqlserver_data'};
                          mongodb = @{'/data/db'='mongodb_data';'/data/configdb'='mongodb_config'} }

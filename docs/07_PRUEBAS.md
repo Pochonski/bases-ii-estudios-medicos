@@ -376,3 +376,8 @@ pasó P01/P04–P07 y BSON/índice; el permiso negativo MongoDB sí fue rechazad
 con código 13, pero la prueba esperaba respuesta en vez de excepción. La prueba
 se corrige para comprobar el código explícitamente. P08–P18 siguen sin PASS en
 esa ejecución.
+
+La próxima CI también debe verificar la instalación normal repetida con una factura
+centinela (`99971`, ₡6789,12) que se conserva, el rechazo de `-LoadInitialData`
+con tablas pobladas, los tres valores centinela de P12 y la retirada de la etiqueta
+de imagen efímera. Esos casos son **NO EJECUTADOS en el SHA documental anterior**.

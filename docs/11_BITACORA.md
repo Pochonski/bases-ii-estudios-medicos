@@ -451,3 +451,10 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   login y `find` positivos; la denegación de `delete` lanzó excepción con código 13,
   mientras el test esperaba un objeto de respuesta. Se ajustó el test para exigir
   explícitamente ese código en excepción o respuesta, sin conceder permiso.
+- **Aislamiento ampliado antes del cierre:** `docker compose config` también comprueba
+  los montajes de datos y la etiqueta única de imagen PostgreSQL; P18 verifica ausencia
+  previa de red, volúmenes, contenedores e imagen y retira esa etiqueta tras `down` del
+  proyecto efímero. P12 compara valores sintéticos, además de conteos, tras `restart`.
+  La demo completa puede ejecutarse dentro de P18 con `-RunDemo`, conservando su ruta
+  de uso sin permitir que borre datos del proyecto compartido. Estas adiciones todavía
+  necesitan CI del SHA final.
