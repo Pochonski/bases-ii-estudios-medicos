@@ -1,0 +1,50 @@
+name: Joyce - SQL Server, MongoDB, FDW y perfiles
+on:
+  pull_request:
+    paths:
+      - 'sqlserver/**'
+      - 'mongodb/**'
+      - 'integracion/**'
+      - 'postgresql/**'
+      - 'pruebas/**'
+      - 'scripts/**'
+      - 'docker/postgres/**'
+      - 'compose.yaml'
+      - '.github/workflows/joyce-modulos.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  modulos:
+    # ubuntu-22.04: MongoDB 8.0 aborta con kernels >= 6.19 (D-029).
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Registrar contexto sin secretos
+        shell: pwsh
+        run: |
+          $null = New-Item -ItemType Directory -Force .tmp/ci
+          "Head PR: ${{ github.event.pull_request.head.sha || github.sha }}; checkout: $(git rev-parse HEAD); kernel: $(uname -r)" |
+            Set-Content .tmp/ci/contexto.txt
+      - name: P18 desde cero, suite completa, restauración, P12/P17 y demo
+        shell: pwsh
+        run: ./scripts/Test-Entrega.ps1 -DesdeCero -RunDemo -DemoSinPausa -EvidencePath .tmp/ci/joyce-entrega.txt
+      - name: La evidencia no contiene secretos
+        if: always()
+        shell: pwsh
+        run: |
+          if (-not (Test-Path .tmp/ci/joyce-entrega.txt)) { return }
+          $evidencia = Get-Content .tmp/ci/joyce-entrega.txt -Raw
+          if ($evidencia -match 'Aa1![A-F0-9]{64}') { throw 'Secreto generado presente en artifact.' }
+          'PASS: evidencia sin valores secretos'
+      - name: Guardar evidencia
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: joyce-modulos-evidencia
+          path: .tmp/ci/
+          retention-days: 14
+          if-no-files-found: error
+      # Test-Entrega crea un proyecto único, valida sus recursos y lo limpia en finally.
+      # Nunca ejecutar `down --volumes` sobre el nombre compartido estudios-medicos.

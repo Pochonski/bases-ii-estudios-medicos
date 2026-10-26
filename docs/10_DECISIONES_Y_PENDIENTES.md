@@ -330,3 +330,205 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
   El filtrado local evita respuestas incorrectas pero lee la consulta fija
   completa: medir costo y cardinalidad de la vista real; un arreglo upstream o
   diseño que preserve pushdown seguro sería preferible si el volumen crece.
+
+### D-041 — Módulos de Joyce: SQL Server, MongoDB, mongo_fdw y outbox (25/10/2026, Joyce)
+
+- **Fuente/estado:** autorización explícita de Joyce para su alcance (`agents/JOYCE.md`).
+  IMPLEMENTADO Y PROBADO en Windows 11 local (Docker 29.9.2, kernel WSL 6.6.87.2), rama
+  `feature/joyce-sqlserver-mongodb` creada desde `feature/joseph-tds-fdw-spike` (núcleo de
+  Joseph + parche D-040). Sin merge. No hay CI propia todavía.
+- **SQL Server:** base `integracion_externa`; fragmentos verticales `paciente_integracion` y
+  `paciente_cobertura` con PK `(id_paciente,codigo_region)`; `facturas_externas`,
+  `resumen_facturacion`, procedimientos `sp_recalcular_resumen_facturacion` y
+  `sp_registrar_factura_externa`; vista contractual `dbo.vw_estado_facturacion` sin cambios
+  de nombre/columnas respecto al contrato; login `svc_pg_mssql_ro` solo con `SELECT` de la vista.
+  Política: `ANULADA` no cuenta; sin facturas → `SIN_FACTURAS`; alguna pendiente → `PENDIENTE`.
+- **MongoDB:** `reportes_medicos.resumenes_estudios` con validador `$jsonSchema` de tipos del
+  contrato, índice único `id_estudio`, usuario `svc_pg_mongo_rw` (find/insert/update en esa
+  colección únicamente).
+- **mongo_fdw (resuelve P0 #5 de este registro):** probado de verdad: lectura, `INSERT`,
+  `UPDATE` por `_id`, mapeo bigint→Int64, integer→Int32, timestamptz→Date, `_id` ObjectId.
+  **No se necesita integración intermedia**; se mantiene `mongo_fdw` como pide el enunciado.
+- **Outbox (opción A de D-038):** `integracion.registrar_resultado()` escribe resultado + evento
+  en una transacción; `CALL integracion.exportar_pendientes()` (solo `usr_fdw_pg_mongo`) lee el
+  estado vigente, inserta/actualiza por revisión, verifica y marca; `ERROR` + reintento (máx. 5);
+  `integracion.encolar_exportacion_masiva()` para INT-04. Consistencia eventual, no ACID global.
+- **Cambios al núcleo de Joseph — REQUIEREN SU REVISIÓN:** índice único
+  `eventos_logico_ux (id_estudio, revision, tipo_evento)` y secuencia
+  `clinico.seq_resultados_estudio` (inicio 41000). No se renombra ni altera ninguna columna.
+  `integracion/01_fdw_sqlserver.sql` de Joseph se usa sin modificar (`mssql_database=integracion_externa`).
+- **Secretos:** cuatro archivos nuevos en `secrets/` (ignorada) con la ACL de `Initialize-Local.ps1`;
+  viajan por stdin y entorno del proceso, no por argumentos.
+- **Hallazgo:** un procedimiento PL/pgSQL con cláusula `SET` no puede hacer `COMMIT`
+  (`invalid transaction termination`); se quitó `SET search_path` del exportador y se calificaron
+  todos los objetos. El documento ya escrito antes del fallo no se duplicó (diseño idempotente).
+- **Archivos:** `sqlserver/01..06`, `mongodb/01..03`, `integracion/02_fdw_mongodb.sql`,
+  `integracion/sincronizacion/01_outbox.sql`, `pruebas/sqlserver/*`,
+  `pruebas/integracion/05_p01_facturacion_real.sql`, `scripts/Joyce-Common.ps1`,
+  `Install-JoyceModulos.ps1`, `Test-JoyceModulos.ps1`, `documentacion/JOYCE_SQLSERVER_MONGODB.md`.
+- **Evidencia:** `evidencias/registros/2026-10-25-joyce-pruebas-local.txt`.
+- **Pendiente:** TLS de FreeTDS sin CA (igual que D-039); MongoDB sin TLS; CI para estos módulos;
+  la vista API y las agregaciones finales siguen siendo de Armando.
+
+### D-042 — Joyce implementa los módulos de Armando con su permiso (25/10/2026, Joyce)
+
+- **Fuente:** Joyce informa que Armando le dio permiso para hacer partes de su alcance.
+  No modifica la regla 10 de AGENTS.md (a Armando no se le traspasan tareas iniciales); aquí
+  ocurre lo contrario. **Armando debe confirmarlo y revisar el PR**, y narra su parte del video.
+- **Implementado:** `postgresql/04_roles_externos.sql` (usr_api_web/usr_api_mobile con SCRAM,
+  `default_transaction_read_only`, límites de conexión y `statement_timeout` distintos;
+  `api_propietario` NOLOGIN dueño de las vistas; `REVOKE CONNECT ... FROM PUBLIC` y CONNECT
+  solo a los cuatro perfiles del curso), `postgresql/05_vistas_api.sql` (`api.vw_paciente_facturacion`,
+  `api.vw_citas_web`, `api.vw_citas_mobile`, todas `security_barrier`), `mongodb/04_agregaciones.js`
+  (médico × tipo, productividad, sucursal/región de atención, fuera de región, indicadores mensuales
+  con `$merge`), `mongodb/05_validaciones.js`, `pruebas/seguridad/01..02`.
+- **Hallazgo técnico:** `tds_fdw` usa el USER MAPPING del usuario que consulta, no el del dueño
+  de la vista (`user mapping not found` reproducido). Decisión: función `SECURITY DEFINER`
+  `externo.fn_estado_facturacion()` con dueño `usr_fdw_pg_mssql`; el acceso remoto siempre sale
+  por el perfil interno y ningún perfil externo tiene credenciales de SQL Server. `usr_api_web`
+  necesita `EXECUTE` sobre ella (las funciones de una vista se autorizan con el invocador).
+- **Pruebas:** P02, P03, P09 (contraste exacto MongoDB = PostgreSQL, 12 grupos), P10, P11 y login
+  con contraseña incorrecta rechazado PASAN en Windows 11 local. Evidencia en
+  `evidencias/registros/2026-10-25-joyce-pruebas-local.txt`. Sin CI.
+- **Límite:** las vistas no filtran por paciente/usuario (sin RLS); P11 sobre vistas con JOIN
+  falla por vista no actualizable (55000) además de solo lectura.
+
+### D-043 — Verificación de entrega, demo y documentación final (25/10/2026, Joyce)
+
+- **Implementado:** `scripts/Test-Entrega.ps1` (P18 desde volúmenes vacíos con `-DesdeCero`,
+  suite completa, P12 en los tres motores, volcado P17 sin contraseñas), `scripts/Demo-Video.ps1`
+  (9 segmentos para la grabación), `video/GUION.md`, `documentacion/MAPA_CONEXIONES_Y_CONFIGURACION.md`,
+  `documentacion/REFERENCIAS.md` e inicio rápido en el README.
+- **Resultado:** `Test-Entrega.ps1 -DesdeCero` PASA en Windows 11 local: instalación sin intervención
+  manual, suite completa, mismos contenedores y conteos en PostgreSQL/SQL Server/MongoDB tras
+  `restart` y FDW operativo después del reinicio. Evidencia:
+  `evidencias/registros/2026-10-25-joyce-entrega-p12-p17-p18.txt`. La demo se ejecutó completa.
+- **Alcance de P12:** `restart`, no recreación de contenedores ni restauración de respaldo.
+- **Pendiente del grupo:** push/PR (Joyce sin permiso de escritura), revisión de Joseph (D-041) y
+  Armando (D-042), merge de PR #3/#4, grabación del video, confirmar fecha en Moodle y entrega.
+
+### D-044 — Joyce asume formalmente el alcance de Armando y agrega CI de módulos (25/10/2026, Joyce)
+
+- **Fuente:** Joyce informa que Armando no se ha unido al repositorio y que el grupo necesita
+  cerrar el trabajo hoy. Amplía D-042: el alcance de Armando (`agents/ARMANDO.md`) queda
+  **implementado por Joyce**: roles externos, vistas `api`, agregaciones, validaciones y
+  `pruebas/seguridad`, `pruebas/reportes`. Si Armando se incorpora, su papel pasa a revisión y narración.
+- **Riesgo académico [PENDIENTE DEL GRUPO]:** el enunciado pide que el video lo narren los
+  integrantes. El guion conserva el bloque de Armando y define un reemplazo; la decisión sobre
+  su participación y la nota es del grupo y del docente, no de este registro.
+- **CI nueva:** `.github/workflows/joyce-modulos.yml` (Ubuntu 22.04) ejecuta
+  `Test-Entrega.ps1 -DesdeCero` (P18, suite completa, P12 en tres motores, P17), comprueba que la
+  evidencia no contenga secretos y la publica como artifact por 14 días.
+- **Archivos:** `pruebas/reportes/01_conteo_pg_medico_tipo.sql`, `02_conteo_mongo_medico_tipo.js`
+  (P09 los usa), workflow, guion, handoff, `agents/ARMANDO.md`.
+
+### D-045 — Endurecimiento P18 y conservación de datos (26/10/2026, Joseph; propuesta para Joyce)
+
+- **Fuente/motivo:** auditoría solicitada por Joseph del PR #5: `Test-Entrega -DesdeCero`
+  borraba volúmenes del proyecto compartido y el instalador recargaba siempre el fixture SQL Server.
+- **Decisión propuesta:** P18 crea un nombre aleatorio `joyce-p18-*`, red y cuatro volúmenes
+  nombrados con ese prefijo, etiqueta de imagen PostgreSQL propia, secretos/.env temporales y cero puertos host. Verifica el modelo
+  efectivo con `docker compose config`, ausencia previa de recursos y etiquetas de propiedad
+  antes de retirar únicamente los recursos de esa ejecución. La suite y los segmentos de demo
+  que modifican datos exigen ese contexto; la instalación ordinaria no carga datos.
+- **P12 reforzada:** además de los conteos compara la revisión de un resultado PostgreSQL,
+  un importe de factura SQL Server y la revisión de un resumen MongoDB antes/después de
+  `restart`. Sigue sin acreditar restauración desde backup ni recreación de contenedores.
+- **Carga de datos:** `-LoadInitialData` carga fixtures solo si no existen filas; `-ResetLabData`
+  reinicializa el fixture SQL Server solo en contexto efímero comprobado. El propio fixture
+  rechaza datos existentes sin marcador deliberado de sesión y comprueba las seis tablas
+  dentro de la transacción con bloqueos, para impedir una inserción entre la comprobación
+  y los `DELETE`. Los scripts históricos
+  y evidencias del 25/10 no se reescriben. No cambian identificadores ni contratos FDW/outbox.
+- **Impacto/archivos:** `scripts/Joyce-Common.ps1`, `Test-Entrega.ps1`, `Install-JoyceModulos.ps1`,
+  `Test-JoyceModulos.ps1`, `Demo-Video.ps1`, workflow y guías; PR apilado sobre rama de Joyce,
+  pendiente de su revisión. Validación estática Windows PASA y la suite integrada
+  de `fad6c94` y `0189e58` PASAN en Ubuntu CI, incluido el bloqueo transaccional.
+  La actualización documental siguiente no cambia la decisión ni los contratos.
+
+### D-046 — Regresión TDS y límite de concurrencia del outbox (26/10/2026, Joseph)
+
+- **Fuente/motivo:** auditoría final solicitada por Joseph; D-040 probó `query`, pero no el
+  modo convencional `table_name` ni el coste de filtrar localmente una vista más grande.
+- **Decisión de prueba:** en el spike aislado de Joseph agregar una vista SQL Server de solo
+  lectura para `table_name` y 2000 filas sintéticas adicionales después de las aserciones
+  originales. Comparar resultado/plan/tiempo de `query` y `table_name`; estimar bytes de
+  columnas desde SQL Server. No cambiar el parche, la vista contractual de Joyce ni la cuenta
+  definitiva. Este volumen es prueba pequeña, no benchmark de producción.
+- **Outbox pendiente de Joyce:** la función clínica bloquea el estudio y el exportador usa
+  `FOR UPDATE SKIP LOCKED`, pero la lectura+UPDATE Mongo por revisión no es compare-and-swap
+  atómico entre dos procesadores. Si dos workers procesan revisiones distintas del mismo
+  estudio, un UPDATE tardío de la revisión antigua podría sobrescribir la nueva. El diseño
+  documenta **procesador único**; esta suite no acredita seguridad con múltiples workers.
+  Joyce debe decidir si se mantiene/exige esa exclusividad operacional o añade coordinación
+  por estudio y escritura condicional en Mongo; requiere revisión de contrato y nueva prueba.
+- **Archivos/impacto:** solo scripts/fixtures del spike, filtros CI y documentación. Estado
+  runtime de la nueva regresión pendiente de ejecución; sin cambio a datos compartidos.
+- **Hallazgo inicial de `table_name`:** en CI `40278766277`, la fila 1001/AL mostró
+  `12345.67` correctamente y `EXPLAIN` confirmó pushdown de `id_paciente`, pero el
+  predicado remoto `total_facturado_crc = 12345.67` devolvió cero. Se conserva el
+  resultado y se mide por separado; **no** usar este modo para filtrar montos hasta
+  diagnosticarlo. El consumidor contractual de Joyce usa `query` con filtro local.
+  No se altera el parche ni se presenta `table_name` como plenamente certificado.
+
+### D-047 — Revisión de rutas de privilegio de integración (26/10/2026, Joseph; pendiente de Joyce/Armando)
+
+- `externo.fn_estado_facturacion()` usa `SECURITY DEFINER`, objetos calificados y
+  `search_path = pg_catalog, pg_temp`; el dueño `usr_fdw_pg_mssql` no es
+  superusuario. `usr_api_web` posee `EXECUTE` directo, por lo que puede consultar
+  toda la proyección remota aunque no use `api.vw_paciente_facturacion`.
+  Armando debe aceptar explícitamente esa superficie o proponer un acceso más
+  estrecho sin romper la vista. No se modifica su módulo en este PR.
+- `usr_fdw_pg_mongo` necesita `UPDATE` sobre el estado del outbox e `INSERT/UPDATE`
+  de la foreign table para el procedimiento actual. Esos permisos también permiten
+  DML directo con esa cuenta; una credencial comprometida podría marcar eventos
+  procesados o alterar resúmenes sin seguir el flujo de revisiones. Joyce debe
+  revisar si se conserva esta cuenta interna confiable o se restringe mediante
+  funciones dedicadas. No se amplían permisos ni se altera el contrato aquí.
+- PostgreSQL revoca `CONNECT` público y usa SCRAM para perfiles externos; las
+  cuentas de servicio SQL Server/MongoDB tienen pruebas positivas y negativas.
+  Persisten TLS sin CA validada para TDS y ausencia de TLS en PostgreSQL/MongoDB;
+  antes de uso con datos reales se necesita decisión del equipo sobre certificados.
+
+### D-048 — Serialización del outbox, superficie web y restauración efímera (26/10/2026, Joseph; revisión de Joyce y Armando pendiente)
+
+- **Fuente:** autorización de Joseph para corregir técnicamente los tres módulos en PR #7.
+  El enunciado original fue facilitado localmente el 26/10 y leído completo; no se publica.
+  Indica entrega **28/10/2026, 23:59**, aunque llama martes a un miércoles. La fecha
+  efectiva de cierre debe confirmarse en Moodle.
+  `.gitignore` excluye el PDF original recibido en la raíz para impedir su publicación accidental.
+- **Outbox:** `exportar_pendientes` adquiere `pg_advisory_xact_lock(id_estudio)` tras
+  seleccionar el evento y antes de leer/escribir MongoDB. El candado dura hasta el COMMIT
+  de ese evento, incluso si el subbloque captura una excepción. Serializa exportadores
+  que procesen revisiones del mismo estudio, sin cambiar la tabla, eventos ni API.
+  La prueba nueva fuerza dos sesiones a esperar el mismo candado y comprueba un solo
+  documento, mismo ObjectId y revisión final mayor. No hay transacción ACID global;
+  clientes ajenos al procedimiento con DML directo de MongoDB no obedecen el candado.
+- **Perfiles web:** la función remota interna conserva su contrato completo para el FDW;
+  `usr_api_web` pierde `EXECUTE` directo sobre ella. La vista usa la nueva función
+  `api.fn_paciente_facturacion()` con dueño `api_propietario`, que devuelve exactamente
+  la proyección autorizada y exige paciente clínico local. Joyce y Armando deben
+  revisar la ruta de permisos antes de integrar PR #7.
+  `Test-ApiScope.ps1` crea solo en P18 una fila remota sin paciente local: el perfil
+  interno debe verla y web no; la fila se retira al terminar incluso ante error.
+- **Restauración:** P18 agrega `pg_dump/pg_restore` y `BACKUP/RESTORE DATABASE` a bases
+  nuevas, más copia lógica EJSON estricta de MongoDB a una base nueva, con comparación
+  de datos/tipos/índices. EJSON es alternativa de laboratorio, no política operativa
+  de respaldo ni certificación de `mongodump/mongorestore`. Solo en Compose efímero.
+- **Demostración:** el workflow integrado ejecutará `Test-Entrega -RunDemo
+  -DemoSinPausa` tras las pruebas para comprobar los nueve segmentos del guion
+  dentro del mismo proyecto efímero. Esto no equivale a video grabado.
+- **TDS:** se conserva la ruta contractual `query` y el parche actual. `table_name`
+  registra explícitamente el predicado DECIMAL que puede perder una fila; esa igualdad
+  no queda certificada ni se modifica a ciegas la extensión C.
+- **Estado al escribir:** código `cedddb9` publicado; Windows pasó parser,
+  `git diff --check` y Compose estático. Docker Desktop Linux Engine no respondió;
+  concurrencia, restauración y perfiles del nuevo SHA esperan CI. Los PASS previos
+  pertenecen a `5c9a70c` y no validan este cambio.
+- **Evidencia posterior:** la CI de `ed2e5b2` [40286756682](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756682)
+  PASÓ P18, matriz funcional, API huérfana, concurrencia, restauración de
+  los tres motores, P12/P17 y nueve segmentos de demo. Infraestructura,
+  núcleo y TDS del mismo head también pasaron. MongoDB se restauró con EJSON
+  canónico de laboratorio; el predicado DECIMAL de `table_name` y TLS/CA
+  continúan pendientes. Windows local no se probó por ausencia del daemon.
+  Joyce y Armando no han revisado ni aprobado estas modificaciones.

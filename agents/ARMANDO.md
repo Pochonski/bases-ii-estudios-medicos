@@ -38,3 +38,9 @@ Debe estar disponible lo del checklist `HANDOFF_25_OCT.md`: entorno, PostgreSQL/
 ## Si el handoff es parcial
 
 Avanzar de forma separable: escribir/probar agregaciones con el dataset previamente acordado (sin simular integración) o preparar validaciones de seguridad; comunicar bloqueos de los demás sin absorberlos.
+
+## Estado al 25/10/2026 (D-042, D-044)
+
+Armando no se incorporó al repositorio. Joyce implementó y probó todo este alcance
+(`postgresql/04..05`, `mongodb/04..05`, `pruebas/seguridad/*`, `pruebas/reportes/*`;
+P02, P03, P09, P10, P11 PASAN). Si Armando se incorpora: revisar el PR #5, confirmar y narrar su bloque.

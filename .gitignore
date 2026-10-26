@@ -41,3 +41,6 @@ temp/
 
 # Salidas locales de inspección (pueden contener configuración)
 *.local.json
+
+# Enunciado original recibido localmente: no publicarlo en el repositorio.
+/segundo proyecto bases II.pdf

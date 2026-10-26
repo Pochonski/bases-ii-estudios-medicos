@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - feature/joseph-infra-postgresql
+      - feature/joyce-sqlserver-mongodb
     paths:
       - 'postgresql/**'
       - 'pruebas/postgresql/**'

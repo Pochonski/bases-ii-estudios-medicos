@@ -82,3 +82,31 @@ Medir cardinalidad/rendimiento con Joyce y revisar una solución upstream.
 No se prueba escritura por TDS, no se prueba MongoDB ni sincronización global.
 Windows local solo puede acreditar el runtime cuando Docker Desktop vuelva a
 exponer el daemon Linux; una CI Ubuntu verde no demuestra eso.
+
+## Regresión adicional de auditoría — 26/10/2026
+
+El mismo proyecto aislado ahora crea una vista **solo de prueba** para el modo
+convencional `schema_name`/`table_name` y comprueba filtros, Unicode y DECIMAL sin
+alterar la vista de Joyce. Tras las pruebas originales agrega 2000 filas ficticias
+en la base temporal; consulta ambas rutas con `EXPLAIN (ANALYZE, VERBOSE, BUFFERS)`
+y registra tiempo y cardinalidad. SQL Server calcula una suma de `DATALENGTH` de
+las columnas como **estimación inferior** de bytes, sin atribuirla al tráfico TDS
+real. El modo `query` conserva filtro local para corrección, con posible coste de
+leer la vista entera. Ejecutar:
+
+```powershell
+pwsh -NoProfile -File ./scripts/Test-TdsFdwSpike.ps1
+```
+
+Este cambio se probará en la CI del PR de endurecimiento; no se declara aprobado
+por los runs anteriores. El volumen de 2004 filas es una muestra académica, no
+una predicción de rendimiento en producción.
+
+**Hallazgo de la primera regresión convencional:** `table_name` devolvió la fila
+1001/AL con monto `12345.67`, pero `WHERE total_facturado_crc = 12345.67`
+devolvió cero. Se imprime `EXPLAIN` y una sonda separada para diagnosticar
+pushdown numérico. No usar ese modo para predicados de monto ni presentarlo como
+certificado; el consumidor real continúa en `query` con filtros locales correctos.
+Esto no acredita que el parche causara el fallo, pues la rama convencional no
+entra en la condición `option_set.query` del parche. Comparación sin parche y
+corrección upstream quedan pendientes si se desea usar `table_name`.

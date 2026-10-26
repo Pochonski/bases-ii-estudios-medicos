@@ -4,6 +4,7 @@ on:
     branches:
       - main
       - feature/joseph-core-main-integration
+      - feature/joyce-sqlserver-mongodb
     paths:
       - 'pruebas/integracion/**'
       - 'scripts/Test-TdsFdwSpike.ps1'

@@ -5,12 +5,20 @@ SELECT current_setting('server_version') AS postgresql_version,
 SELECT current_user AS fdw_login, count(*) AS remote_rows
 FROM externo.ft_estado_facturacion;
 SELECT id_paciente, codigo_region FROM externo.ft_estado_facturacion ORDER BY id_paciente;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT id_paciente FROM externo.ft_estado_tabla_spike WHERE id_paciente = 1001;
+SELECT id_paciente, codigo_region, nombre_aseguradora,
+       total_facturado_crc, fecha_actualizacion AT TIME ZONE 'UTC' AS fecha_utc
+FROM externo.ft_estado_tabla_spike WHERE id_paciente = 1001;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT id_paciente FROM externo.ft_estado_tabla_spike
+WHERE id_paciente = 1001 AND total_facturado_crc = 12345.67;
+SELECT count(*) AS numeric_pushdown_probe FROM externo.ft_estado_tabla_spike
+WHERE id_paciente = 1001 AND total_facturado_crc = 12345.67;
 SELECT count(*) AS missing_remote_probe FROM externo.ft_estado_facturacion
 WHERE id_paciente = 1002 AND codigo_region = 'AL';
 EXPLAIN (VERBOSE, COSTS OFF) SELECT id_paciente FROM externo.ft_estado_facturacion
 WHERE id_paciente = 1002 AND codigo_region = 'AL';
 DO $$
-DECLARE n integer; ordered_ids bigint[];
+DECLARE n integer; ordered_ids bigint[]; conventional_amount numeric(12,2);
 BEGIN
   SELECT count(*) INTO n FROM externo.ft_estado_facturacion;
   IF n <> 4 THEN RAISE EXCEPTION 'Se esperaban 4 filas remotas, llegaron %', n; END IF;
@@ -43,6 +51,34 @@ BEGIN
   SELECT count(*) INTO n FROM externo.ft_estado_facturacion
   WHERE id_paciente = 1001 AND codigo_region = 'AL';
   IF n <> 1 THEN RAISE EXCEPTION 'Filtro exacto 1001/AL devolvió % filas', n; END IF;
+  SELECT count(*) INTO n FROM externo.ft_estado_tabla_spike;
+  IF n <> 4 THEN RAISE EXCEPTION 'Modo table_name: cardinalidad inesperada %', n; END IF;
+  SELECT count(*) INTO n FROM externo.ft_estado_tabla_spike WHERE id_paciente = 1001;
+  IF n <> 1 THEN RAISE EXCEPTION 'Modo table_name: filtro id incorrecto %', n; END IF;
+  SELECT count(*) INTO n FROM externo.ft_estado_tabla_spike WHERE id_paciente = 1001 AND codigo_region = 'AL';
+  IF n <> 1 THEN RAISE EXCEPTION 'Modo table_name: filtro región incorrecto %', n; END IF;
+  SELECT count(*) INTO n FROM externo.ft_estado_tabla_spike
+  WHERE id_paciente = 1001 AND nombre_aseguradora = 'Clínica Ñandú';
+  IF n <> 1 THEN RAISE EXCEPTION 'Modo table_name: Unicode incorrecto %', n; END IF;
+  SELECT total_facturado_crc INTO STRICT conventional_amount FROM externo.ft_estado_tabla_spike
+  WHERE id_paciente = 1001;
+  IF conventional_amount <> 12345.67 THEN
+    RAISE EXCEPTION 'Modo table_name: conversión DECIMAL incorrecta %', conventional_amount;
+  END IF;
+  -- Defecto conocido de la versión table_name: el predicado decimal remoto puede
+  -- emitirse como CAST(... AS numeric) en SQL Server (escala 0). La ruta contractual
+  -- usa query; este diagnóstico queda visible hasta corregir la extensión sin regresión.
+  SELECT count(*) INTO n FROM externo.ft_estado_tabla_spike
+  WHERE id_paciente = 1001 AND total_facturado_crc = 12345.67;
+  IF n = 0 THEN
+    RAISE NOTICE 'PENDIENTE table_name DECIMAL: igualdad remota perdió la fila conocida; evitar este predicado';
+  ELSIF n = 1 THEN
+    RAISE NOTICE 'PASS table_name DECIMAL: igualdad remota devolvió la fila conocida';
+  ELSE
+    RAISE EXCEPTION 'Modo table_name: igualdad DECIMAL devolvió % filas', n;
+  END IF;
+  SELECT count(*) INTO n FROM externo.ft_estado_tabla_spike WHERE id_paciente = 1002;
+  IF n <> 0 THEN RAISE EXCEPTION 'Modo table_name: fila inexistente devuelta'; END IF;
   SELECT array_agg(id_paciente) INTO ordered_ids FROM (
     SELECT id_paciente FROM externo.ft_estado_facturacion ORDER BY id_paciente DESC
   ) sorted;
@@ -64,3 +100,4 @@ ORDER BY p.id_paciente;
 EXPLAIN (COSTS OFF)
 SELECT id_paciente, codigo_region FROM externo.ft_estado_facturacion WHERE id_paciente = 1001;
 \echo 'PASS PostgreSQL: FDW real, tipos, JOIN, ausencia remota y Foreign Scan'
+\echo 'PASS table_name: filtro ID/región, Unicode y lectura DECIMAL; igualdad DECIMAL pendiente'
