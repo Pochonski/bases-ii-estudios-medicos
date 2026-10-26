@@ -211,3 +211,7 @@ Joyce y el gate MongoDB seguirán pendientes.
 | Vistas API, roles externos, agregaciones finales | PENDIENTE, Armando |
 
 Evidencia: `evidencias/registros/2026-10-25-joyce-pruebas-local.txt`. Guía: `documentacion/JOYCE_SQLSERVER_MONGODB.md`.
+
+| Componente (D-042) | Estado comprobable |
+|---|---|
+| `usr_api_web` / `usr_api_mobile`, vistas `api`, agregaciones y validaciones MongoDB | IMPLEMENTADO Y PROBADO localmente por Joyce con permiso de Armando; pendiente de su revisión |

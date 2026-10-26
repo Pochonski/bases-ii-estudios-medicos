@@ -369,3 +369,26 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
 - **Evidencia:** `evidencias/registros/2026-10-25-joyce-pruebas-local.txt`.
 - **Pendiente:** TLS de FreeTDS sin CA (igual que D-039); MongoDB sin TLS; CI para estos módulos;
   la vista API y las agregaciones finales siguen siendo de Armando.
+
+### D-042 — Joyce implementa los módulos de Armando con su permiso (25/10/2026, Joyce)
+
+- **Fuente:** Joyce informa que Armando le dio permiso para hacer partes de su alcance.
+  No modifica la regla 10 de AGENTS.md (a Armando no se le traspasan tareas iniciales); aquí
+  ocurre lo contrario. **Armando debe confirmarlo y revisar el PR**, y narra su parte del video.
+- **Implementado:** `postgresql/04_roles_externos.sql` (usr_api_web/usr_api_mobile con SCRAM,
+  `default_transaction_read_only`, límites de conexión y `statement_timeout` distintos;
+  `api_propietario` NOLOGIN dueño de las vistas; `REVOKE CONNECT ... FROM PUBLIC` y CONNECT
+  solo a los cuatro perfiles del curso), `postgresql/05_vistas_api.sql` (`api.vw_paciente_facturacion`,
+  `api.vw_citas_web`, `api.vw_citas_mobile`, todas `security_barrier`), `mongodb/04_agregaciones.js`
+  (médico × tipo, productividad, sucursal/región de atención, fuera de región, indicadores mensuales
+  con `$merge`), `mongodb/05_validaciones.js`, `pruebas/seguridad/01..02`.
+- **Hallazgo técnico:** `tds_fdw` usa el USER MAPPING del usuario que consulta, no el del dueño
+  de la vista (`user mapping not found` reproducido). Decisión: función `SECURITY DEFINER`
+  `externo.fn_estado_facturacion()` con dueño `usr_fdw_pg_mssql`; el acceso remoto siempre sale
+  por el perfil interno y ningún perfil externo tiene credenciales de SQL Server. `usr_api_web`
+  necesita `EXECUTE` sobre ella (las funciones de una vista se autorizan con el invocador).
+- **Pruebas:** P02, P03, P09 (contraste exacto MongoDB = PostgreSQL, 12 grupos), P10, P11 y login
+  con contraseña incorrecta rechazado PASAN en Windows 11 local. Evidencia en
+  `evidencias/registros/2026-10-25-joyce-pruebas-local.txt`. Sin CI.
+- **Límite:** las vistas no filtran por paciente/usuario (sin RLS); P11 sobre vistas con JOIN
+  falla por vista no actualizable (55000) además de solo lectura.

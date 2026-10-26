@@ -39,6 +39,8 @@
 - Fecha y hora:
 - Interfaces aceptadas:
 - Bloqueos reportados:
-- Plan de P02/P03/P09/P10/P11:
+- Plan de P02/P03/P09/P10/P11: **implementados y probados por Joyce con permiso de Armando (D-042).**
+  Armando: revisar `postgresql/04..05`, `mongodb/04..05`, `pruebas/seguridad/*`, confirmar el
+  permiso y preparar su narración del video.
 
 **Regla:** la falta de un prerequisito NO reasigna a Armando las tareas bloqueantes; Joseph/Joyce lo resuelven y reportan nuevos plazos al grupo.

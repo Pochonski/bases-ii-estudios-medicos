@@ -13,7 +13,9 @@ $script:JoyceSecretNames = @(
     'fdw_mssql_password',          # svc_pg_mssql_ro en SQL Server
     'fdw_mongo_password',          # svc_pg_mongo_rw en MongoDB
     'pg_fdw_mssql_login_password', # login de usr_fdw_pg_mssql en PostgreSQL
-    'pg_fdw_mongo_login_password'  # login de usr_fdw_pg_mongo en PostgreSQL
+    'pg_fdw_mongo_login_password', # login de usr_fdw_pg_mongo en PostgreSQL
+    'pg_api_web_password',         # login de usr_api_web (D-042)
+    'pg_api_mobile_password'       # login de usr_api_mobile (D-042)
 )
 
 function Invoke-JoyceCompose {
