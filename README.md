@@ -1,6 +1,6 @@
 # Bases de Datos II · Sistema de Gestión de Estudios Médicos Distribuido
 
-> **Estado: IMPLEMENTACIÓN PARCIAL AUTORIZADA PARA JOSEPH.** Corte de contexto: 21 de octubre de 2026 (America/Costa_Rica). Proyecto académico del Instituto Tecnológico de Costa Rica, Campus Tecnológico San Carlos. **Entrega indicada en el enunciado: 28/10/2026 a las 23:59; confirmar en Moodle la inconsistencia del día de la semana.**
+> **Estado (25/10/2026): IMPLEMENTACIÓN COMPLETA Y PROBADA en ramas/PR #3-#5, pendiente de integrar en `main`, grabar el video y entregar.** Ver [matriz de cumplimiento](documentacion/CUMPLIMIENTO_REQUISITOS.md). Proyecto académico del Instituto Tecnológico de Costa Rica, Campus Tecnológico San Carlos. **Entrega indicada en el enunciado: 28/10/2026 a las 23:59; confirmar en Moodle la inconsistencia del día de la semana.**
 
 Este repositorio es la **fuente común de contexto** de Joseph, Joyce, Armando y sus agentes de desarrollo. Se elaboró a partir del enunciado original y de las fases de planificación acordadas en conversación. Su objetivo es prevenir decisiones contradictorias y facilitar trabajo paralelo y revisable.
 

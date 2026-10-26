@@ -47,6 +47,12 @@ try {
         $inst = & $pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Install-JoyceModulos.ps1') 2>&1
         if ($LASTEXITCODE -ne 0) { Out-Log ($inst -join "`n"); throw 'FALLA P18: instalación desde cero' }
         Out-Log (($inst | Where-Object { "$_" -match '^(PASS|==)' }) -join "`n")
+
+        # Pruebas del núcleo de Joseph: requieren el fixture intacto, antes de la suite.
+        Step 'Núcleo PostgreSQL de Joseph sobre la instalación integrada (estructura, integridad, P14)'
+        foreach ($f in '01_estructura', '02_integridad', '03_particiones') {
+            Out-Log (Invoke-JoyceScript -Service postgres -Path "pruebas/postgresql/$f.sql")
+        }
     }
 
     Step 'Suite funcional completa (Test-JoyceModulos.ps1)'

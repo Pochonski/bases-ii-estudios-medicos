@@ -393,3 +393,14 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   PASÓ en sus tres jobs con los cambios de Joyce (run 40273876990).
 - `pruebas/reportes/` creada; P09 la usa. Suite local repetida: PASA.
 - Workflow `joyce-modulos.yml` agregado; su resultado se registra al terminar.
+
+## 2026-10-25 — Joyce, verificación de completitud
+
+- CI `joyce-modulos.yml` [40274339076](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40274339076)
+  PASÓ en `2ab0832` (Ubuntu 22.04, kernel 6.8.0-1064-azure, Docker 28.0.4): P18, suite completa, P12, P17;
+  artifact descargado y revisado. CI de infraestructura de Joseph también PASÓ (3 jobs).
+- Pruebas de Joseph (estructura, integridad, P14) agregadas a `Test-Entrega.ps1` justo tras la instalación
+  desde cero: PASAN. Ejecutadas después de la suite fallaba solo el conteo del fixture porque la suite agrega
+  resultados sintéticos (precondición de esa prueba, no defecto).
+- `documentacion/CUMPLIMIENTO_REQUISITOS.md`: todos los requisitos técnicos ✅; pendientes del grupo:
+  merges #3→#4→#5, video, confirmar fecha y subir a Moodle.
