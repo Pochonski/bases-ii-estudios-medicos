@@ -8,6 +8,13 @@
 > La instalación normal nueva no carga el fixture; usar `-LoadInitialData` solo sobre
 > tablas vacías. La suite destructiva requiere `Test-Entrega.ps1 -DesdeCero` aislado.
 
+> **Actualización 26/10/2026:** la [CI del PR #7, HEAD `0189e58`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158117)
+> pasó la instalación aislada, los tres motores y la suite integrada en Ubuntu;
+> artifact `joyce-modulos-evidencia`. El Docker Desktop de Windows de Joseph no
+> estuvo disponible para repetirla localmente. P12 prueba `restart`, no restauración;
+> el outbox concurrente, TLS/CA y `table_name` con predicado DECIMAL siguen
+> abiertos. Los PR #3–#5 y #7 continúan sin fusionar.
+
 **Evidencias:**
 - **Local:** Windows 11, archivos `evidencias/registros/2026-10-25-joyce-pruebas-local.txt` y
   `2026-10-25-joyce-entrega-p12-p17-p18.txt`.

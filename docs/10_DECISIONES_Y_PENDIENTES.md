@@ -443,7 +443,8 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
 - **Impacto/archivos:** `scripts/Joyce-Common.ps1`, `Test-Entrega.ps1`, `Install-JoyceModulos.ps1`,
   `Test-JoyceModulos.ps1`, `Demo-Video.ps1`, workflow y guías; PR apilado sobre rama de Joyce,
   pendiente de su revisión. Validación estática Windows PASA y la suite integrada
-  de `fad6c94` PASA en Ubuntu CI; falta repetir el bloqueo transaccional añadido después.
+  de `fad6c94` y `0189e58` PASAN en Ubuntu CI, incluido el bloqueo transaccional.
+  La actualización documental siguiente no cambia la decisión ni los contratos.
 
 ### D-046 — Regresión TDS y límite de concurrencia del outbox (26/10/2026, Joseph)
 

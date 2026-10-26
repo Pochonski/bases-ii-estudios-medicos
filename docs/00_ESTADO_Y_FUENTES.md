@@ -216,3 +216,19 @@ Evidencia: `evidencias/registros/2026-10-25-joyce-pruebas-local.txt`. Guía: `do
 |---|---|
 | `usr_api_web` / `usr_api_mobile`, vistas `api`, agregaciones y validaciones MongoDB | IMPLEMENTADO Y PROBADO localmente por Joyce con permiso de Armando; pendiente de su revisión |
 | P12 (3 motores), P17, P18 y demo del video (D-043) | PROBADO localmente; evidencia `2026-10-25-joyce-entrega-p12-p17-p18.txt` |
+
+## Actualización vigente — 26/10/2026, Joseph (D-045 a D-047)
+
+Los PR #3, #4 y #5 permanecen abiertos y en borrador, apilados; `main` continúa
+en `0a42732`. [PR #7](https://github.com/Pochonski/bases-ii-estudios-medicos/pull/7),
+también en borrador, propone cambios a la rama de Joyce sin alterar su HEAD.
+La [CI integrada](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158117)
+del HEAD `0189e58` pasó P18 sobre proyecto/volúmenes/secretos/imagen efímeros,
+P01–P17 e INT-04 y P12 con valores de los tres motores tras `restart` en
+Ubuntu 22.04, Docker 28.0.4, kernel `6.8.0-1064-azure`. El fixture SQL rechaza
+tablas pobladas y la instalación normal conservó una factura centinela.
+Las regresiones de infraestructura, núcleo y TDS también pasaron en ese HEAD;
+`table_name` con predicado DECIMAL sigue fallando en el spike, por lo que no se
+certifica ese camino. En la PC Windows de Joseph, el daemon Linux de Docker
+Desktop sigue ausente: P18 runtime local NO EJECUTADO. Restan revisión de Joyce
+y Armando, exclusividad/concurrencia del outbox, TLS/CA y restauración real.

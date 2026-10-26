@@ -2,6 +2,8 @@
 
 > **Estado (25/10/2026): IMPLEMENTACIÓN COMPLETA Y PROBADA en ramas/PR #3-#5, pendiente de integrar en `main`, grabar el video y entregar.** Ver [matriz de cumplimiento](documentacion/CUMPLIMIENTO_REQUISITOS.md). Proyecto académico del Instituto Tecnológico de Costa Rica, Campus Tecnológico San Carlos. **Entrega indicada en el enunciado: 28/10/2026 a las 23:59; confirmar en Moodle la inconsistencia del día de la semana.**
 
+> **Actualización (26/10/2026):** [PR #7](https://github.com/Pochonski/bases-ii-estudios-medicos/pull/7) propone endurecer instalación y pruebas del PR #5, sin fusionar ningún PR. La [CI integrada del head `0189e58`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158117) pasó en Ubuntu; la ejecución de Docker en esta PC Windows sigue pendiente. También quedan revisión de Joyce/Armando, concurrencia del outbox, TLS/CA y restauración desde respaldo. El estado del 25/10 anterior es histórico.
+
 Este repositorio es la **fuente común de contexto** de Joseph, Joyce, Armando y sus agentes de desarrollo. Se elaboró a partir del enunciado original y de las fases de planificación acordadas en conversación. Su objetivo es prevenir decisiones contradictorias y facilitar trabajo paralelo y revisable.
 
 ## ¡Leer esto primero!

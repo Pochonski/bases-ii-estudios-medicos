@@ -476,3 +476,13 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   Quedaron para Joyce la capacidad de DML directo del rol interno Mongo/outbox
   y la exclusividad de un procesador; para Armando, la ejecución directa de la
   función de facturación por el perfil web. TLS/CA y restauración siguen abiertos.
+- **CI `0189e58` (Joseph, 26/10):** [módulos 40280158117](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158117)
+  PASÓ con bloqueo transaccional en el fixture SQL. Artifact HEAD
+  `0189e58dd741179143abd857408fa8b690cf15eb`, checkout
+  `eff53241f595ee688c8a14784b3bcab699d0d31e`, proyecto
+  `joyce-p18-0ed71df6a88d`; conserva factura centinela y 11 valores tras
+  reinicio, rechaza fixture directo y limpia recursos efímeros. Sin patrón de
+  secreto generado. Infraestructura, núcleo y TDS del mismo SHA se verifican
+  por sus runs en `docs/07_PRUEBAS.md`. Windows Docker local NO EJECUTADO;
+  no hubo merges ni cambios a `main`. Esta actualización de estado exige CI
+  del commit documental final.

@@ -402,3 +402,17 @@ también PASAN en ese HEAD. La comprobación Windows de permisos fue en runner;
 Docker Desktop de la PC de Joseph sigue sin daemon. La protección adicional
 de bloqueo transaccional en el fixture SQL Server se incorpora en un commit
 posterior y requiere su propio run de CI.
+
+**CI final de código `0189e58`:** [módulos 40280158117](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158117)
+PASÓ con el bloqueo SQL incluido. Artifact: HEAD
+`0189e58dd741179143abd857408fa8b690cf15eb`, checkout merge
+`eff53241f595ee688c8a14784b3bcab699d0d31e`; proyecto
+`joyce-p18-0ed71df6a88d`, Docker 28.0.4, kernel `6.8.0-1064-azure`.
+P18, P01–P17 e INT-04 imprimieron PASS; tras `restart`, los 11 valores fueron
+idénticos y la limpieza retiró recursos efímeros. La instalación normal conservó
+la factura centinela y el fixture directo fue rechazado. Artifact sin patrón
+de secreto generado. [Infraestructura 40280158123](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158123),
+[núcleo 40280158116](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158116) y
+[TDS 40280158198](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158198)
+corresponden al mismo HEAD y PASARON sus siete trabajos. La próxima modificación
+es documental y requiere su propia CI antes de autorizar integración.
