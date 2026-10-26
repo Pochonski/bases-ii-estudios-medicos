@@ -126,3 +126,21 @@ Los resultados reales se registran en `docs/07_PRUEBAS.md` y en `evidencias/regi
   `tipo_estudio`, `id_sucursal` int, `codigo_region_atencion` (sucursal), `fecha_resultado`
   date, `resultado_resumen`, `revision` int, `fecha_sincronizacion` date.
 - Índice `ix_medico_tipo` disponible para la agregación médico × tipo.
+
+## Módulos de Armando hechos por Joyce (D-042)
+
+| Archivo | Contenido |
+|---|---|
+| `postgresql/04_roles_externos.sql` | `usr_api_web` (20 conexiones, timeout 15 s) y `usr_api_mobile` (50 conexiones, 5 s), ambos SCRAM y solo lectura; `api_propietario`; CONNECT solo para los cuatro perfiles |
+| `postgresql/05_vistas_api.sql` | `externo.fn_estado_facturacion()` (SECURITY DEFINER, dueño `usr_fdw_pg_mssql`) y las vistas `api.vw_paciente_facturacion`, `api.vw_citas_web`, `api.vw_citas_mobile` |
+| `mongodb/04_agregaciones.js` | Médico × tipo (INT-05), productividad, sucursal/región de atención, fuera de región, indicadores mensuales (`$merge` a `indicadores_mensuales`) |
+| `mongodb/05_validaciones.js` | Unicidad, tipos BSON, suma de la agregación, sin datos personales, región registro ≠ atención, validador activo |
+| `pruebas/seguridad/01..02` | P02, P03, P10, P11 por perfil, con login real |
+
+| Perfil | Puede leer | Se le niega |
+|---|---|---|
+| `usr_api_web` | `api.vw_paciente_facturacion`, `api.vw_citas_web` | tablas `clinico`, tabla foránea, `vw_citas_mobile`, cualquier escritura |
+| `usr_api_mobile` | `api.vw_citas_mobile` | facturación, agenda web, tablas, función remota, escrituras |
+
+Por qué la función: `tds_fdw` usa el mapping del **usuario que consulta**. Si la vista leyera la
+tabla foránea directamente, `usr_api_web` necesitaría credenciales de SQL Server.

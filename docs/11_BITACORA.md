@@ -369,3 +369,13 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
 - **Impacto:** contrato `dbo.vw_estado_facturacion` cumplido sin cambios; dos objetos añadidos al
   núcleo de Joseph pendientes de su revisión (D-041). No se tocaron módulos de Armando.
 - **No ejecutado:** CI, P17 formal de Joseph sobre estos objetos, TLS.
+
+## 2026-10-25 — Joyce, módulos de Armando (con su permiso)
+
+- **Responsable:** Joyce (con agente). Decisión D-042. Misma rama `feature/joyce-sqlserver-mongodb`.
+- **Archivos:** `postgresql/04_roles_externos.sql`, `postgresql/05_vistas_api.sql`,
+  `mongodb/04_agregaciones.js`, `mongodb/05_validaciones.js`, `pruebas/seguridad/*`;
+  instalador y pruebas ampliados; dos secretos nuevos en `secrets/` (ignorada).
+- **Resultado:** suite completa PASA (49 marcas PASS, incluye P02, P03, P09, P10, P11).
+- **Impacto:** la base ya no admite CONNECT de roles ajenos a los cuatro perfiles (el superusuario
+  no se ve afectado). Armando debe confirmar y revisar.

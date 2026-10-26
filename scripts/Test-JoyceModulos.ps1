@@ -238,13 +238,42 @@ BEGIN
 END $$;
 \echo 'PASS INT-04: cada resultado de PostgreSQL tiene exactamente un resumen en MongoDB'
 '@)
-    Mongo @'
-const c = db.getSiblingDB('reportes_medicos').resumenes_estudios;
-print('total documentos = ' + c.countDocuments({}));
-print('Vista previa (agregación médico x tipo, la versión final es de Armando):');
-printjson(c.aggregate([{ $group: { _id: { id_medico: '$id_medico', tipo: '$tipo_estudio' }, estudios: { $sum: 1 } } },
-                       { $sort: { '_id.id_medico': 1, '_id.tipo': 1 } }, { $limit: 6 }]).toArray());
+    Step 'P02/P03/P10/P11 perfil externo usr_api_web (login SCRAM)'
+    Out-Log (Invoke-JoyceScript -Service postgres -Path 'pruebas/seguridad/01_usr_api_web.sql' `
+        -PgUser usr_api_web -PgLoginSecretVar PG_PW -Env ([ordered]@{ PG_PW = $s.pg_api_web_password }))
+    Step 'P10/P11 perfil externo usr_api_mobile (login SCRAM)'
+    Out-Log (Invoke-JoyceScript -Service postgres -Path 'pruebas/seguridad/02_usr_api_mobile.sql' `
+        -PgUser usr_api_mobile -PgLoginSecretVar PG_PW -Env ([ordered]@{ PG_PW = $s.pg_api_mobile_password }))
+    Step 'Autenticación: contraseña incorrecta rechazada'
+    $null = Invoke-JoyceScript -Service postgres -PgUser usr_api_mobile -PgLoginSecretVar PG_PW `
+        -Env ([ordered]@{ PG_PW = 'contrasena-incorrecta' }) -Text 'SELECT 1;' -AllowFailure
+    if ($LASTEXITCODE -eq 0) { throw 'FALLA: login con contraseña incorrecta aceptado' }
+    Out-Log 'PASS negativo: usr_api_mobile con contraseña incorrecta no inicia sesión (SCRAM)'
+
+    Step 'P09/INT-05 agregaciones MongoDB por médico y tipo'
+    Mongo ([IO.File]::ReadAllText((Join-Path $script:JoyceRoot 'mongodb/04_agregaciones.js')))
+    Mongo ([IO.File]::ReadAllText((Join-Path $script:JoyceRoot 'mongodb/05_validaciones.js')))
+    # Contraste independiente: el mismo conteo calculado en PostgreSQL (fuente clínica).
+    $pgConteo = Invoke-JoyceScript -Service postgres -Text @'
+\pset tuples_only on
+\pset format unaligned
+SELECT r.id_medico_firmante || '|' || e.id_tipo || '|' || count(*)
+FROM clinico.resultados_estudio AS r JOIN clinico.estudios AS e ON e.id_estudio = r.id_estudio
+GROUP BY r.id_medico_firmante, e.id_tipo ORDER BY r.id_medico_firmante, e.id_tipo;
 '@
+    $mgConteo = Invoke-JoyceScript -Service mongodb -Text @'
+db.getSiblingDB('reportes_medicos').resumenes_estudios.aggregate([
+  { $group: { _id: { m: '$id_medico', t: '$id_tipo' }, n: { $sum: 1 } } },
+  { $sort: { '_id.m': 1, '_id.t': 1 } }]).forEach(d => print(`${d._id.m}|${d._id.t}|${d.n}`));
+'@
+    $pgLineas = @($pgConteo -split "`n" | Where-Object { $_ -match '^\d+\|' })
+    $mgLineas = @($mgConteo -split "`n" | Where-Object { $_ -match '^\d+\|' })
+    Out-Log "PostgreSQL médico|tipo|n: $($pgLineas -join ', ')"
+    Out-Log "MongoDB    médico|tipo|n: $($mgLineas -join ', ')"
+    if ($pgLineas.Count -eq 0 -or ($pgLineas -join ',') -ne ($mgLineas -join ',')) {
+        throw 'FALLA P09: la agregación MongoDB no coincide con PostgreSQL'
+    }
+    Out-Log "PASS P09: $($mgLineas.Count) grupos médico x tipo idénticos en MongoDB y PostgreSQL"
     $ok = $true
     Out-Log "`nRESULTADO: PASA - todas las pruebas de Joyce ejecutadas sin fallas."
 }

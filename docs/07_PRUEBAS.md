@@ -306,3 +306,14 @@ veces con el mismo resultado. Evidencia: `evidencias/registros/2026-10-25-joyce-
 | INT-04 exportación masiva | PASA: 32 resultados PG = 32 documentos MongoDB, 0 eventos sin procesar |
 | P09 agregación médico × tipo | Solo vista previa; la prueba formal es de Armando |
 | CI de estos módulos | NO EJECUTADA |
+
+### Módulos de Armando implementados por Joyce (D-042) — misma ejecución
+
+| Prueba | Resultado |
+|---|---|
+| P02 vista federada | PASA: `usr_api_web` lee `api.vw_paciente_facturacion`; 30 pacientes, 30 claves, 1001/AL PENDIENTE 23500.00 |
+| P03 sin cobertura | PASA: 6 pacientes `SIN_REGISTRO` (incluye 1009/AL), sin duplicados |
+| P09 médico × tipo | PASA: 12 grupos idénticos entre MongoDB y `GROUP BY` en PostgreSQL; validaciones de unicidad, tipos y región de atención |
+| P10 roles externos | PASA: web lee facturación + agenda; móvil solo `vw_citas_mobile`; cada uno denegado en lo ajeno |
+| P11 escrituras | PASA: UPDATE en vistas (55000), DELETE en tabla base (42501), CREATE (25006) rechazados |
+| Autenticación | PASA: contraseña incorrecta rechazada por SCRAM |

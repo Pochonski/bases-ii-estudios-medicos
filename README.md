@@ -149,3 +149,5 @@ SQL Server (fragmentación vertical, procedimientos, `dbo.vw_estado_facturacion`
 Todas las pruebas de Joyce PASAN en Windows 11 local; sin CI todavía. Ver
 [guía](documentacion/JOYCE_SQLSERVER_MONGODB.md), D-041 y
 [evidencia](evidencias/registros/2026-10-25-joyce-pruebas-local.txt).
+Con permiso de Armando (D-042) también quedaron implementados y probados los roles externos,
+las vistas `api` y las agregaciones MongoDB (P02, P03, P09, P10, P11).

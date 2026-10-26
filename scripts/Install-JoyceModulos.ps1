@@ -59,4 +59,11 @@ Invoke-JoyceScript -Service postgres -Path 'integracion/02_fdw_mongodb.sql' -Env
 })
 Invoke-JoyceScript -Service postgres -Path 'integracion/sincronizacion/01_outbox.sql'
 
+Step 'PostgreSQL: perfiles externos y vistas api (módulo de Armando, D-042)'
+Invoke-JoyceScript -Service postgres -Path 'postgresql/04_roles_externos.sql' -Env ([ordered]@{
+    PG_API_WEB_PASSWORD = $s.pg_api_web_password
+    PG_API_MOBILE_PASSWORD = $s.pg_api_mobile_password
+})
+Invoke-JoyceScript -Service postgres -Path 'postgresql/05_vistas_api.sql'
+
 Write-Output "`nPASS instalación de módulos de Joyce. Siguiente: pwsh -NoProfile -File ./scripts/Test-JoyceModulos.ps1"
