@@ -330,3 +330,42 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
   El filtrado local evita respuestas incorrectas pero lee la consulta fija
   completa: medir costo y cardinalidad de la vista real; un arreglo upstream o
   diseño que preserve pushdown seguro sería preferible si el volumen crece.
+
+### D-041 — Módulos de Joyce: SQL Server, MongoDB, mongo_fdw y outbox (25/10/2026, Joyce)
+
+- **Fuente/estado:** autorización explícita de Joyce para su alcance (`agents/JOYCE.md`).
+  IMPLEMENTADO Y PROBADO en Windows 11 local (Docker 29.9.2, kernel WSL 6.6.87.2), rama
+  `feature/joyce-sqlserver-mongodb` creada desde `feature/joseph-tds-fdw-spike` (núcleo de
+  Joseph + parche D-040). Sin merge. No hay CI propia todavía.
+- **SQL Server:** base `integracion_externa`; fragmentos verticales `paciente_integracion` y
+  `paciente_cobertura` con PK `(id_paciente,codigo_region)`; `facturas_externas`,
+  `resumen_facturacion`, procedimientos `sp_recalcular_resumen_facturacion` y
+  `sp_registrar_factura_externa`; vista contractual `dbo.vw_estado_facturacion` sin cambios
+  de nombre/columnas respecto al contrato; login `svc_pg_mssql_ro` solo con `SELECT` de la vista.
+  Política: `ANULADA` no cuenta; sin facturas → `SIN_FACTURAS`; alguna pendiente → `PENDIENTE`.
+- **MongoDB:** `reportes_medicos.resumenes_estudios` con validador `$jsonSchema` de tipos del
+  contrato, índice único `id_estudio`, usuario `svc_pg_mongo_rw` (find/insert/update en esa
+  colección únicamente).
+- **mongo_fdw (resuelve P0 #5 de este registro):** probado de verdad: lectura, `INSERT`,
+  `UPDATE` por `_id`, mapeo bigint→Int64, integer→Int32, timestamptz→Date, `_id` ObjectId.
+  **No se necesita integración intermedia**; se mantiene `mongo_fdw` como pide el enunciado.
+- **Outbox (opción A de D-038):** `integracion.registrar_resultado()` escribe resultado + evento
+  en una transacción; `CALL integracion.exportar_pendientes()` (solo `usr_fdw_pg_mongo`) lee el
+  estado vigente, inserta/actualiza por revisión, verifica y marca; `ERROR` + reintento (máx. 5);
+  `integracion.encolar_exportacion_masiva()` para INT-04. Consistencia eventual, no ACID global.
+- **Cambios al núcleo de Joseph — REQUIEREN SU REVISIÓN:** índice único
+  `eventos_logico_ux (id_estudio, revision, tipo_evento)` y secuencia
+  `clinico.seq_resultados_estudio` (inicio 41000). No se renombra ni altera ninguna columna.
+  `integracion/01_fdw_sqlserver.sql` de Joseph se usa sin modificar (`mssql_database=integracion_externa`).
+- **Secretos:** cuatro archivos nuevos en `secrets/` (ignorada) con la ACL de `Initialize-Local.ps1`;
+  viajan por stdin y entorno del proceso, no por argumentos.
+- **Hallazgo:** un procedimiento PL/pgSQL con cláusula `SET` no puede hacer `COMMIT`
+  (`invalid transaction termination`); se quitó `SET search_path` del exportador y se calificaron
+  todos los objetos. El documento ya escrito antes del fallo no se duplicó (diseño idempotente).
+- **Archivos:** `sqlserver/01..06`, `mongodb/01..03`, `integracion/02_fdw_mongodb.sql`,
+  `integracion/sincronizacion/01_outbox.sql`, `pruebas/sqlserver/*`,
+  `pruebas/integracion/05_p01_facturacion_real.sql`, `scripts/Joyce-Common.ps1`,
+  `Install-JoyceModulos.ps1`, `Test-JoyceModulos.ps1`, `documentacion/JOYCE_SQLSERVER_MONGODB.md`.
+- **Evidencia:** `evidencias/registros/2026-10-25-joyce-pruebas-local.txt`.
+- **Pendiente:** TLS de FreeTDS sin CA (igual que D-039); MongoDB sin TLS; CI para estos módulos;
+  la vista API y las agregaciones finales siguen siendo de Armando.

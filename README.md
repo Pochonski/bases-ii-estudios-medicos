@@ -141,3 +141,11 @@ se fusionó únicamente en la rama de infraestructura (`84cb072`). El
 dirigido a `main`, traslada solo el delta clínico por cherry-pick. El gate FDW/MongoDB
 sigue abierto. El [informe de fase 3](documentacion/INFORME_CHATGPT_JOSEPH_FASE3.md)
 registra el estado actual, la revisión del outbox y las pruebas.
+
+## Módulos de Joyce — 25/10/2026
+
+SQL Server (fragmentación vertical, procedimientos, `dbo.vw_estado_facturacion`), MongoDB
+(`resumenes_estudios`) y exportación PostgreSQL → MongoDB por `mongo_fdw` con outbox.
+Todas las pruebas de Joyce PASAN en Windows 11 local; sin CI todavía. Ver
+[guía](documentacion/JOYCE_SQLSERVER_MONGODB.md), D-041 y
+[evidencia](evidencias/registros/2026-10-25-joyce-pruebas-local.txt).

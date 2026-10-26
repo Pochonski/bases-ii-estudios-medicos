@@ -197,3 +197,17 @@ Desktop no estaba disponible (pipe ausente, servicio detenido), por lo que las
 consultas remotas locales quedaron NO EJECUTADAS; la CI se revisa por separado.
 Incluso si el spike pasa, P01/P17 con vista, cuenta y fixture **definitivos** de
 Joyce y el gate MongoDB seguirán pendientes.
+
+## Actualización — 25/10/2026, Joyce (D-041)
+
+| Componente | Estado comprobable |
+|---|---|
+| SQL Server: tablas, fragmentación vertical, procedimientos, vista contractual, login de lectura | IMPLEMENTADO Y PROBADO en Windows 11 local (P15, P16, permisos) |
+| PostgreSQL → SQL Server con objetos reales de Joyce | PROBADO localmente (P01, P16b) con login propio `usr_fdw_pg_mssql` |
+| MongoDB: colección, validador, índice único, usuario de servicio | IMPLEMENTADO Y PROBADO |
+| `mongo_fdw` lectura/INSERT/UPDATE y tipos BSON | PROBADO: el gate BSON queda cerrado para esta versión |
+| Outbox y exportación tras COMMIT | IMPLEMENTADO Y PROBADO (P04–P08, P13, INT-04) |
+| CI de estos módulos | NO EJECUTADA |
+| Vistas API, roles externos, agregaciones finales | PENDIENTE, Armando |
+
+Evidencia: `evidencias/registros/2026-10-25-joyce-pruebas-local.txt`. Guía: `documentacion/JOYCE_SQLSERVER_MONGODB.md`.

@@ -1,0 +1,350 @@
+Pruebas Joyce - 2026-10-25 21:55:45 -06:00 - commit 5c89c21
+Docker: 29.9.2 kernel 6.6.87.2-microsoft-standard-WSL2
+
+===== Reinicio de filas sintéticas de prueba (estudios 30031/30032)
+
+{
+  acknowledged: true,
+  deletedCount: 2
+}
+
+===== P15 fragmentación vertical (sa)
+Changed database context to 'integracion_externa'.
+filas_fragmento_1 filas_fragmento_2 filas_reconstruidas claves_distintas sin_fragmento_2 sin_fragmento_1
+----------------- ----------------- ------------------- ---------------- --------------- ---------------
+24 24 24 24 0 0
+fragmento columna
+--------- -------
+paciente_cobertura id_paciente
+paciente_cobertura codigo_region
+paciente_cobertura estado_cobertura
+paciente_cobertura estado_facturacion
+paciente_cobertura fecha_validacion
+paciente_integracion id_paciente
+paciente_integracion codigo_region
+paciente_integracion id_aseguradora
+paciente_integracion codigo_externo
+id_paciente codigo_region id_aseguradora codigo_externo estado_cobertura estado_facturacion fecha_validacion
+----------- ------------- -------------- -------------- ---------------- ------------------ ----------------
+1001 AL 1 EXT-AL-1001 VIGENTE PENDIENTE 2026-10-01 08:00:00 -06:00
+1002 AL 2 EXT-AL-1002 VIGENTE PAGADA 2026-10-01 08:00:00 -06:00
+1003 AL 3 EXT-AL-1003 VIGENTE PAGADA 2026-10-01 08:00:00 -06:00
+1004 AL 1 EXT-AL-1004 VIGENTE PENDIENTE 2026-10-01 08:00:00 -06:00
+1005 AL 2 EXT-AL-1005 INACTIVA SIN_FACTURAS 2026-10-01 08:00:00 -06:00
+PASS P15: fragmentos 1:1, reconstrucción sin pérdida ni duplicados
+
+===== P16 procedimiento almacenado (sa)
+Changed database context to 'integracion_externa'.
+id_paciente codigo_region nombre_aseguradora estado_cobertura estado_facturacion total_facturado_crc fecha_actualizacion
+----------- ------------- ------------------ ---------------- ------------------ ------------------- -------------------
+1001 AL Aseguradora Ficticia Ñandú VIGENTE PENDIENTE 23500.00 2026-10-26 03:53:31 +00:00
+3003 CA Cooperativa de Salud de Prueba PENDIENTE SIN_FACTURAS .00 2026-10-26 03:53:31 +00:00
+momento id_paciente codigo_region nombre_aseguradora estado_cobertura estado_facturacion total_facturado_crc fecha_actualizacion
+------- ----------- ------------- ------------------ ---------------- ------------------ ------------------- -------------------
+antes 2003 SJ Cooperativa de Salud de Prueba VIGENTE SIN_FACTURAS .00 2026-10-26 03:54:51 +00:00
+id_paciente codigo_region cantidad_facturas total_facturado_crc estado_facturacion fecha_actualizacion
+----------- ------------- ----------------- ------------------- ------------------ -------------------
+2003 SJ 1 7250.50 PENDIENTE 2026-10-26 03:55:56 +00:00
+momento id_paciente codigo_region nombre_aseguradora estado_cobertura estado_facturacion total_facturado_crc fecha_actualizacion
+------- ----------- ------------- ------------------ ---------------- ------------------ ------------------- -------------------
+despues 2003 SJ Cooperativa de Salud de Prueba VIGENTE PENDIENTE 7250.50 2026-10-26 03:55:56 +00:00
+PASS negativo: parámetros incompletos rechazados (51010)
+PASS P16: procedimiento coherente, vista 1 fila por paciente-región, cambio revertido
+
+===== Permisos svc_pg_mssql_ro (login propio)
+Changed database context to 'integracion_externa'.
+login_actual
+------------
+svc_pg_mssql_ro
+filas_vista
+-----------
+24
+PASS positivo: SELECT sobre dbo.vw_estado_facturacion
+PASS negativo: SELECT dbo.facturas_externas denegado (229)
+PASS negativo: INSERT dbo.paciente_cobertura denegado (229)
+PASS negativo: EXECUTE de procedimiento denegado (229)
+
+===== P01 PostgreSQL -> SQL Server por tds_fdw (login usr_fdw_pg_mssql)
+ usuario_conectado 
+-------------------
+ usr_fdw_pg_mssql
+(1 row)
+
+--- Filas remotas (SQL Server dbo.vw_estado_facturacion vía tds_fdw)
+ id_paciente | codigo_region |       nombre_aseguradora       | estado_cobertura | estado_facturacion | total_facturado_crc |  fecha_actualizacion   
+-------------+---------------+--------------------------------+------------------+--------------------+---------------------+------------------------
+        1001 | AL            | Aseguradora Ficticia Ñandú     | VIGENTE          | PENDIENTE          |            23500.00 | 2026-10-26 03:53:31+00
+        1002 | AL            | Seguro Social Simulado         | VIGENTE          | PAGADA             |            22000.00 | 2026-10-26 03:53:31+00
+        1003 | AL            | Cooperativa de Salud de Prueba | VIGENTE          | PAGADA             |            18000.00 | 2026-10-26 03:53:31+00
+        1004 | AL            | Aseguradora Ficticia Ñandú     | VIGENTE          | PENDIENTE          |            11000.00 | 2026-10-26 03:53:31+00
+        1005 | AL            | Seguro Social Simulado         | INACTIVA         | SIN_FACTURAS       |                0.00 | 2026-10-26 03:53:31+00
+        1006 | AL            | Cooperativa de Salud de Prueba | VIGENTE          | SIN_FACTURAS       |                0.00 | 2026-10-26 03:53:31+00
+        1007 | AL            | Aseguradora Ficticia Ñandú     | VIGENTE          | SIN_FACTURAS       |                0.00 | 2026-10-26 03:53:31+00
+        1008 | AL            | Seguro Social Simulado         | VIGENTE          | SIN_FACTURAS       |                0.00 | 2026-10-26 03:53:31+00
+        3001 | CA            | Aseguradora Ficticia Ñandú     | VIGENTE          | PENDIENTE          |            35000.00 | 2026-10-26 03:53:31+00
+        3002 | CA            | Seguro Social Simulado         | VIGENTE          | PAGADA             |            12500.00 | 2026-10-26 03:53:31+00
+        3003 | CA            | Cooperativa de Salud de Prueba | PENDIENTE        | SIN_FACTURAS       |                0.00 | 2026-10-26 03:53:31+00
+        3004 | CA            | Aseguradora Ficticia Ñandú     | VIGENTE          | SIN_FACTURAS       |                0.00 | 2026-10-26 03:53:31+00
+        3005 | CA            | Seguro Social Simulado         | VIGENTE          | SIN_FACTURAS       |                0.00 | 2026-10-26 03:53:31+00
+        3006 | CA            | Cooperativa de Salud de Prueba | INACTIVA         | SIN_FACTURAS       |                0.00 | 2026-10-26 03:53:31+00
+        3007 | CA            | Aseguradora Ficticia Ñandú     | VIGENTE          | SIN_FACTURAS       |                0.00 | 2026-10-26 03:53:31+00
+        3008 | CA            | Seguro Social Simulado         | VIGENTE          | SIN_FACTURAS       |                0.00 | 2026-10-26 03:53:31+00
+        2001 | SJ            | Aseguradora Ficticia Ñandú     | VIGENTE          | PAGADA             |            45000.00 | 2026-10-26 03:53:31+00
+        2002 | SJ            | Seguro Social Simulado         | INACTIVA         | PENDIENTE          |            27500.00 | 2026-10-26 03:53:31+00
+        2003 | SJ            | Cooperativa de Salud de Prueba | VIGENTE          | SIN_FACTURAS       |                0.00 | 2026-10-26 03:54:51+00
+        2004 | SJ            | Aseguradora Ficticia Ñandú     | VIGENTE          | SIN_FACTURAS       |                0.00 | 2026-10-26 03:53:31+00
+        2005 | SJ            | Seguro Social Simulado         | VIGENTE          | SIN_FACTURAS       |                0.00 | 2026-10-26 03:53:31+00
+        2006 | SJ            | Cooperativa de Salud de Prueba | VIGENTE          | SIN_FACTURAS       |                0.00 | 2026-10-26 03:53:31+00
+        2007 | SJ            | Aseguradora Ficticia Ñandú     | PENDIENTE        | SIN_FACTURAS       |                0.00 | 2026-10-26 03:53:31+00
+        2008 | SJ            | Seguro Social Simulado         | VIGENTE          | SIN_FACTURAS       |                0.00 | 2026-10-26 03:53:31+00
+(24 rows)
+
+--- Paciente PostgreSQL + estado de facturación SQL Server (LEFT JOIN)
+ id_paciente | codigo_region |        nombre        | estado_cobertura | estado_facturacion |       nombre_aseguradora       | total_facturado_crc |  fecha_actualizacion   
+-------------+---------------+----------------------+------------------+--------------------+--------------------------------+---------------------+------------------------
+        1001 | AL            | PacienteFicticio1001 | VIGENTE          | PENDIENTE          | Aseguradora Ficticia Ñandú     |            23500.00 | 2026-10-26 03:53:31+00
+        1009 | AL            | PacienteFicticio1009 | SIN_REGISTRO     | SIN_REGISTRO       |                                |                     | 
+        3003 | CA            | PacienteFicticio3003 | PENDIENTE        | SIN_FACTURAS       | Cooperativa de Salud de Prueba |                0.00 | 2026-10-26 03:53:31+00
+        2002 | SJ            | PacienteFicticio2002 | INACTIVA         | PENDIENTE          | Seguro Social Simulado         |            27500.00 | 2026-10-26 03:53:31+00
+(4 rows)
+
+psql:/tmp/joyce-281c0884d7a04e8dbada171ae104d75a:58: NOTICE:  remotas=24 duplicadas=0 pacientes=30 con_registro=24 sin_registro=6 1001/AL=PENDIENTE 23500.00 Aseguradora Ficticia Ñandú
+PASS P01: lectura real PostgreSQL -> SQL Server, 1 fila por paciente-región, LEFT JOIN 30/24/6
+
+===== P16b procedimiento SQL Server confirmado -> visible en PostgreSQL
+Changed database context to 'integracion_externa'.
+id_paciente codigo_region cantidad_facturas total_facturado_crc estado_facturacion fecha_actualizacion
+----------- ------------- ----------------- ------------------- ------------------ -------------------
+2003 SJ 1 4100.00 PENDIENTE 2026-10-26 03:55:59 +00:00
+ id_paciente | codigo_region |       nombre_aseguradora       | estado_cobertura | estado_facturacion | total_facturado_crc |  fecha_actualizacion   
+-------------+---------------+--------------------------------+------------------+--------------------+---------------------+------------------------
+        2003 | SJ            | Cooperativa de Salud de Prueba | VIGENTE          | PENDIENTE          |             4100.00 | 2026-10-26 03:55:59+00
+(1 row)
+
+PASS P16b: PostgreSQL lee el resumen recalculado por el procedimiento
+Changed database context to 'integracion_externa'.
+
+(1 rows affected)
+Warning: Null value is eliminated by an aggregate or other SET operation.
+id_paciente codigo_region cantidad_facturas total_facturado_crc estado_facturacion fecha_actualizacion
+----------- ------------- ----------------- ------------------- ------------------ -------------------
+2003 SJ 0 .00 SIN_FACTURAS 2026-10-26 03:56:01 +00:00
+PASS P16b: factura de prueba retirada y resumen restaurado (SIN_FACTURAS)
+
+===== P13 ROLLBACK local: no se exporta un resultado revertido
+ id_resultado | revision |              id_evento               
+--------------+----------+--------------------------------------
+        41008 |        1 | 5c5b8d83-99fd-4dd9-809b-5373cd6e76e6
+(1 row)
+
+PASS P13 (PostgreSQL): sin resultado ni evento tras ROLLBACK
+     ejecuta      
+------------------
+ usr_fdw_pg_mongo
+(1 row)
+
+psql:/tmp/joyce-3a113f2db23a40fb88d1bd98270799c2:2: NOTICE:  exportar_pendientes: 0 procesados, 0 con error
+documentos 30031 = 0
+PASS P13 (MongoDB): nada exportado del ROLLBACK
+
+===== P04 resultado + evento en una transacción local (COMMIT)
+ id_resultado | revision |              id_evento               
+--------------+----------+--------------------------------------
+        41009 |        1 | 4c4376d4-94ef-4511-bc6a-76aa8472ad25
+(1 row)
+
+ id_estudio | revision |     tipo_evento      |  estado   | intentos 
+------------+----------+----------------------+-----------+----------
+      30031 |        1 | RESULTADO_CONFIRMADO | PENDIENTE |        0
+(1 row)
+
+PASS P04: resultado y evento PENDIENTE confirmados juntos
+
+===== P05 exportación tras COMMIT por mongo_fdw (login usr_fdw_pg_mongo)
+     ejecuta      
+------------------
+ usr_fdw_pg_mongo
+(1 row)
+
+psql:/tmp/joyce-a3a7c993d4bb4bacb11d58addd872148:2: NOTICE:  evento 4c4376d4-94ef-4511-bc6a-76aa8472ad25 estudio 30031 rev 1 -> INSERTADO
+psql:/tmp/joyce-a3a7c993d4bb4bacb11d58addd872148:2: NOTICE:  exportar_pendientes: 1 procesados, 0 con error
+[
+  {
+    id_estudio: Long('30031'),
+    codigo_region: 'AL',
+    codigo_region_atencion: 'AL',
+    resultado_resumen: 'Ecografía ficticia: hallazgos normales de prueba',
+    revision: 1,
+    t_id_estudio: 'long',
+    t_id_paciente: 'long',
+    t_id_medico: 'long',
+    t_id_tipo: 'int',
+    t_id_sucursal: 'int',
+    t_revision: 'int',
+    t_fecha_resultado: 'date',
+    t_fecha_sinc: 'date',
+    t_oid: 'objectId'
+  }
+]
+PASS P05: documento creado por mongo_fdw con Int64/Int32/Date según contrato
+ id_estudio | revision |  estado   | intentos 
+------------+----------+-----------+----------
+      30031 |        1 | PROCESADO |        1
+(1 row)
+
+
+===== P06 corrección del resultado: revisión 2 actualiza el mismo documento
+ id_resultado | revision |              id_evento               
+--------------+----------+--------------------------------------
+        41009 |        2 | 67106b5e-e4b1-4b70-a3f5-6f98d76cfa35
+(1 row)
+
+     ejecuta      
+------------------
+ usr_fdw_pg_mongo
+(1 row)
+
+psql:/tmp/joyce-5aa4276778ac4f729b27131b98ba2718:2: NOTICE:  evento 67106b5e-e4b1-4b70-a3f5-6f98d76cfa35 estudio 30031 rev 2 -> ACTUALIZADO
+psql:/tmp/joyce-5aa4276778ac4f729b27131b98ba2718:2: NOTICE:  exportar_pendientes: 1 procesados, 0 con error
+[
+  {
+    _id: ObjectId('6adecf56f74bb0f41b037c92'),
+    resultado_resumen: 'Ecografía ficticia: corrección de prueba, revisión 2',
+    revision: 2
+  }
+]
+PASS P06: mismo documento (_id conservado), revisión 2
+
+===== P07 reprocesar el evento viejo (revisión 1): sin duplicado ni regresión
+
+     ejecuta      
+------------------
+ usr_fdw_pg_mongo
+(1 row)
+
+psql:/tmp/joyce-2175bfdb64f543849e7af3e7f455244b:2: NOTICE:  evento 4c4376d4-94ef-4511-bc6a-76aa8472ad25 estudio 30031 rev 1 -> SIN_CAMBIOS (MongoDB ya tiene revisión 2)
+psql:/tmp/joyce-2175bfdb64f543849e7af3e7f455244b:2: NOTICE:  exportar_pendientes: 1 procesados, 0 con error
+[
+  {
+    revision: 2
+  }
+]
+PASS P07: un solo documento y sigue en revisión 2
+
+===== Permisos negativos de usr_fdw_pg_mongo
+ usuario_conectado 
+-------------------
+ usr_fdw_pg_mongo
+(1 row)
+
+psql:/tmp/joyce-0a6410fec95c46f3bbd8a26892a07128:12: NOTICE:  PASS negativo: SELECT clinico.pacientes denegado
+psql:/tmp/joyce-0a6410fec95c46f3bbd8a26892a07128:12: NOTICE:  PASS negativo: DELETE en tabla foránea denegado
+psql:/tmp/joyce-0a6410fec95c46f3bbd8a26892a07128:12: NOTICE:  PASS negativo: UPDATE clinico.resultados_estudio denegado
+
+===== P08 MongoDB detenido: PostgreSQL confirma, evento queda en ERROR y se recupera
+ id_resultado | revision |              id_evento               
+--------------+----------+--------------------------------------
+        41010 |        1 | 3b01f4b7-86c0-4599-9df1-adb79912d583
+(1 row)
+
+     ejecuta      
+------------------
+ usr_fdw_pg_mongo
+(1 row)
+
+psql:/tmp/joyce-0b4b9e2e009f4196a96c8e7cf03d0b29:2: WARNING:  evento 3b01f4b7-86c0-4599-9df1-adb79912d583 estudio 30032 rev 1 -> ERROR: could not connect to server mongo_reportes
+psql:/tmp/joyce-0b4b9e2e009f4196a96c8e7cf03d0b29:2: NOTICE:  exportar_pendientes: 0 procesados, 1 con error
+ id_estudio | revision | estado | intentos 
+------------+----------+--------+----------
+      30032 |        1 | ERROR  |        1
+(1 row)
+
+PASS P08 (caída): resultado confirmado en PostgreSQL, evento en ERROR para reintento
+     ejecuta      
+------------------
+ usr_fdw_pg_mongo
+(1 row)
+
+psql:/tmp/joyce-f1ca59a0033b4daba32d3cb08ba66ef5:2: NOTICE:  evento 3b01f4b7-86c0-4599-9df1-adb79912d583 estudio 30032 rev 1 -> INSERTADO
+psql:/tmp/joyce-f1ca59a0033b4daba32d3cb08ba66ef5:2: NOTICE:  exportar_pendientes: 1 procesados, 0 con error
+ id_estudio | revision |  estado   | intentos 
+------------+----------+-----------+----------
+      30032 |        1 | PROCESADO |        2
+(1 row)
+
+PASS P08: evento recuperado tras reconexión, un documento 30032
+
+===== INT-04 exportación masiva de resultados hacia MongoDB
+ eventos_encolados 
+-------------------
+                 0
+(1 row)
+
+     ejecuta      
+------------------
+ usr_fdw_pg_mongo
+(1 row)
+
+psql:/tmp/joyce-74f5a7ff0bb74b578e1b99c2c2f1afe7:2: NOTICE:  exportar_pendientes: 0 procesados, 0 con error
+ documentos_mongo_vistos_por_fdw 
+---------------------------------
+                              32
+(1 row)
+
+ id_estudio | id_medico | id_tipo |     tipo_estudio      | codigo_region | codigo_region_atencion | revision 
+------------+-----------+---------+-----------------------+---------------+------------------------+----------
+      30001 |       501 |       1 | Ecografía de prueba   | AL            | SJ                     |        1
+      30031 |       503 |       3 | Laboratorio de prueba | AL            | AL                     |        2
+      30032 |       504 |       4 | Tomografía de prueba  | AL            | AL                     |        1
+(3 rows)
+
+psql:/tmp/joyce-1b6945c8fbb34d1b988ab1e38cc09e86:12: NOTICE:  resultados PG=32 documentos Mongo=32 eventos no procesados=0
+PASS INT-04: cada resultado de PostgreSQL tiene exactamente un resumen en MongoDB
+total documentos = 32
+Vista previa (agregación médico x tipo, la versión final es de Armando):
+[
+  {
+    _id: {
+      id_medico: Long('501'),
+      tipo: 'Ecografía de prueba'
+    },
+    estudios: 3
+  },
+  {
+    _id: {
+      id_medico: Long('501'),
+      tipo: 'Laboratorio de prueba'
+    },
+    estudios: 2
+  },
+  {
+    _id: {
+      id_medico: Long('502'),
+      tipo: 'Radiografía de prueba'
+    },
+    estudios: 3
+  },
+  {
+    _id: {
+      id_medico: Long('502'),
+      tipo: 'Tomografía de prueba'
+    },
+    estudios: 2
+  },
+  {
+    _id: {
+      id_medico: Long('503'),
+      tipo: 'Ecografía de prueba'
+    },
+    estudios: 2
+  },
+  {
+    _id: {
+      id_medico: Long('503'),
+      tipo: 'Laboratorio de prueba'
+    },
+    estudios: 4
+  }
+]
+
+RESULTADO: PASA - todas las pruebas de Joyce ejecutadas sin fallas.
