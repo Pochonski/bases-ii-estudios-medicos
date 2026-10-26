@@ -53,6 +53,5 @@ jobs:
           path: .tmp/ci/
           retention-days: 14
           if-no-files-found: error
-      - name: Limpieza del proyecto efímero
-        if: always()
-        run: docker compose -f compose.yaml down --volumes --remove-orphans
+      # Test-Entrega crea un proyecto único, valida sus recursos y lo limpia en finally.
+      # Nunca ejecutar `down --volumes` sobre el nombre compartido estudios-medicos.

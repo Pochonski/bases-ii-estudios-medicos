@@ -2,16 +2,70 @@
 # Verificación de entrega: P18 (instalación desde cero, opcional), suite completa, P12 en los
 # TRES motores (restart) y P17 (configuración FDW, roles y autenticación sin secretos).
 #   pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 [-DesdeCero] [-EvidencePath ...]
-# -DesdeCero ejecuta `docker compose down --volumes` de ESTE proyecto: borra los datos locales
-# de los tres motores (se reconstruyen completos con los scripts). No toca otros proyectos.
+# -DesdeCero crea y retira un proyecto Compose efímero, sin puertos host.
 [CmdletBinding()]
-param([switch]$DesdeCero, [string]$EvidencePath)
+param([switch]$DesdeCero, [switch]$StaticOnly, [string]$EvidencePath)
 . (Join-Path $PSScriptRoot 'Joyce-Common.ps1')
 
 $log = [System.Collections.Generic.List[string]]::new()
 function Out-Log([string]$m) { $log.Add($m); Write-Output $m }
 function Step([string]$m) { Out-Log "`n===== $m" }
 $pwsh = (Get-Process -Id $PID).Path
+$started = $false
+$tempRoot = $null
+$project = $null
+
+function Assert-NoExistingResources {
+    if ((& docker ps -aq --filter "label=com.docker.compose.project=$project") -or
+        (& docker network ls -q --filter "name=^$project-medical-network$") -or
+        (& docker volume ls -q --filter "name=^$project-")) {
+        throw "Ya existen recursos para $project; se cancela P18 sin tocarlos."
+    }
+}
+
+function Assert-OwnedResources {
+    $ids = @(& docker ps -aq --filter "label=com.docker.compose.project=$project")
+    foreach ($id in $ids) {
+        $owner = (& docker inspect -f '{{index .Config.Labels "com.docker.compose.project"}}' $id).Trim()
+        if ($owner -ne $project) { throw "Contenedor ajeno detectado: $id" }
+    }
+    foreach ($name in @("$project-postgres_data", "$project-sqlserver_data", "$project-mongodb_data", "$project-mongodb_config")) {
+        $v = & docker volume inspect $name --format '{{index .Labels "com.docker.compose.project"}}' 2>$null
+        if ($LASTEXITCODE -eq 0 -and "$v".Trim() -ne $project) { throw "Volumen ajeno detectado: $name" }
+    }
+    $n = & docker network inspect "$project-medical-network" --format '{{index .Labels "com.docker.compose.project"}}' 2>$null
+    if ($LASTEXITCODE -eq 0 -and "$n".Trim() -ne $project) { throw 'Red ajena detectada.' }
+    $global:LASTEXITCODE = 0
+}
+
+function New-IsolatedContext {
+    param([switch]$NoDocker)
+    $suffix = [guid]::NewGuid().ToString('N').Substring(0, 12)
+    $script:project = "joyce-p18-$suffix"
+    $script:tempRoot = Join-Path $script:JoyceRoot ".tmp/p18/$project"
+    $null = New-Item -ItemType Directory -Force -Path $tempRoot
+    $env:JOYCETEST_PROJECT_NAME = $project
+    $env:JOYCETEST_MARKER_PATH = Join-Path $tempRoot 'owner.txt'
+    $env:JOYCETEST_SECRET_DIR = Join-Path $tempRoot 'secrets'
+    $env:JOYCETEST_OVERLAY_PATH = Join-Path $tempRoot 'isolation.json'
+    $env:JOYCETEST_ENV_PATH = Join-Path $tempRoot '.env'
+    [IO.File]::WriteAllText($env:JOYCETEST_MARKER_PATH, $project)
+    Copy-Item -LiteralPath (Join-Path $script:JoyceRoot '.env.example') -Destination $env:JOYCETEST_ENV_PATH
+    $v = @{}
+    foreach ($name in 'postgres_data','sqlserver_data','mongodb_data','mongodb_config') {
+        $v[$name] = @{ name = "$project-$name" }
+    }
+    $secrets = @{}
+    foreach ($name in 'postgres_password','sqlserver_sa_password','mongo_root_password') {
+        $secrets[$name] = @{ file = ((Join-Path $env:JOYCETEST_SECRET_DIR "$name.txt") -replace '\\','/') }
+    }
+    $overlay = @{ name = $project; networks = @{ 'medical-network' = @{ name = "$project-medical-network"; internal = $true } }; volumes = $v; secrets = $secrets }
+    [IO.File]::WriteAllText($env:JOYCETEST_OVERLAY_PATH, ($overlay | ConvertTo-Json -Depth 8))
+    Initialize-JoyceSecrets
+    $null = Assert-JoyceEphemeralContext
+    if (-not $NoDocker) { Assert-NoExistingResources }
+    Out-Log "PASS aislamiento P18: $project; red/volúmenes/secretos propios, cero puertos publicados; recursos preexistentes ausentes"
+}
 
 function Get-Conteos {
     $pg = Invoke-JoyceScript -Service postgres -Text @'
@@ -37,15 +91,21 @@ print('mongo.indicadores=' + r.indicadores_mensuales.countDocuments({}));
 
 try {
     Out-Log "Verificación de entrega - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss zzz') - commit $((git -C $script:JoyceRoot rev-parse --short HEAD).Trim())"
+    if ($StaticOnly) {
+        New-IsolatedContext -NoDocker
+        Out-Log 'PASS estático: Compose efectivo validado; motores, pruebas y limpieza Docker NO EJECUTADOS.'
+        return
+    }
     Out-Log ("Docker: " + (& docker version --format '{{.Server.Version}} kernel {{.Server.KernelVersion}}'))
-
+    if ($LASTEXITCODE -ne 0) { throw 'Docker Engine no está disponible.' }
+    if (-not $DesdeCero) { throw 'Test-Entrega exige -DesdeCero: la suite modifica datos sintéticos y reinicia motores.' }
+    New-IsolatedContext
     if ($DesdeCero) {
-        Step 'P18 instalación desde cero: down --volumes de este proyecto'
-        Invoke-JoyceCompose @('down', '--volumes', '--remove-orphans')
-        Out-Log (((& docker volume ls --format '{{.Name}}') | Where-Object { $_ -like 'estudios-medicos_*' }) -join ', ')
-        Out-Log 'Volúmenes del proyecto eliminados (lista anterior vacía = PASS).'
-        $inst = & $pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Install-JoyceModulos.ps1') 2>&1
+        Step 'P18 instalación desde proyecto y volúmenes efímeros vacíos'
+        $started = $true
+        $inst = & $pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Install-JoyceModulos.ps1') -LoadInitialData 2>&1
         if ($LASTEXITCODE -ne 0) { Out-Log ($inst -join "`n"); throw 'FALLA P18: instalación desde cero' }
+        Assert-OwnedResources
         Out-Log (($inst | Where-Object { "$_" -match '^(PASS|==)' }) -join "`n")
 
         # Pruebas del núcleo de Joseph: requieren el fixture intacto, antes de la suite.
@@ -137,10 +197,33 @@ catch {
     throw
 }
 finally {
+    if ($started) {
+        try {
+            $null = Assert-JoyceEphemeralContext
+            Assert-OwnedResources
+            Invoke-JoyceCompose @('down', '--volumes')
+            Assert-NoExistingResources
+            Out-Log "PASS limpieza: solo recursos del proyecto efímero $project; volúmenes compartidos intactos"
+        } catch {
+            Out-Log "FALLA limpieza segura de $project`: $($_.Exception.Message). Recursos conservados para diagnóstico; no ejecutar down sobre estudios-medicos."
+            throw
+        }
+    }
     if ($EvidencePath) {
         $full = Join-Path $script:JoyceRoot $EvidencePath
         $null = New-Item -ItemType Directory -Force -Path (Split-Path -Parent $full)
         [IO.File]::WriteAllLines($full, $log, [Text.UTF8Encoding]::new($false))
         Write-Output "Evidencia escrita en $EvidencePath"
+    }
+    if ($tempRoot -and (Test-Path -LiteralPath $tempRoot)) {
+        $allowed = [IO.Path]::GetFullPath((Join-Path $script:JoyceRoot '.tmp/p18')) + [IO.Path]::DirectorySeparatorChar
+        $resolved = [IO.Path]::GetFullPath($tempRoot)
+        if (-not $resolved.StartsWith($allowed, [StringComparison]::OrdinalIgnoreCase)) { throw 'Ruta temporal fuera del workspace.' }
+        if (-not $started -or -not (& docker ps -aq --filter "label=com.docker.compose.project=$project")) {
+            Remove-Item -LiteralPath $resolved -Recurse -Force
+        }
+    }
+    foreach ($name in 'JOYCETEST_PROJECT_NAME','JOYCETEST_MARKER_PATH','JOYCETEST_SECRET_DIR','JOYCETEST_OVERLAY_PATH','JOYCETEST_ENV_PATH') {
+        [Environment]::SetEnvironmentVariable($name, $null, 'Process')
     }
 }

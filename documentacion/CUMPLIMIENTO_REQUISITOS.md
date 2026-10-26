@@ -2,6 +2,12 @@
 
 **Leyenda:** ✅ implementado y con evidencia ejecutada · ⚠️ depende de una acción del grupo · ❌ falta.
 
+> Corte histórico del 25/10. La corrección D-045 del 26/10 cambia la instalación y P18:
+> su validación estática Windows pasó, pero las afirmaciones ✅ de ejecución integrada
+> corresponden al SHA anterior de Joyce hasta que la CI del PR de endurecimiento pase.
+> La instalación normal nueva no carga el fixture; usar `-LoadInitialData` solo sobre
+> tablas vacías. La suite destructiva requiere `Test-Entrega.ps1 -DesdeCero` aislado.
+
 **Evidencias:**
 - **Local:** Windows 11, archivos `evidencias/registros/2026-10-25-joyce-pruebas-local.txt` y
   `2026-10-25-joyce-entrega-p12-p17-p18.txt`.

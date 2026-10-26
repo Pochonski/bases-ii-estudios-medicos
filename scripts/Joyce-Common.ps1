@@ -18,21 +18,78 @@ $script:JoyceSecretNames = @(
     'pg_api_mobile_password'       # login de usr_api_mobile (D-042)
 )
 
+function Get-JoyceComposeArgs {
+    $args = @('--project-directory', $script:JoyceRoot, '-f', (Join-Path $script:JoyceRoot 'compose.yaml'))
+    $flags = @($env:JOYCETEST_PROJECT_NAME, $env:JOYCETEST_OVERLAY_PATH, $env:JOYCETEST_ENV_PATH)
+    if (@($flags | Where-Object { $_ }).Count -gt 0) {
+        if (@($flags | Where-Object { -not $_ }).Count -gt 0 -or
+            $env:JOYCETEST_PROJECT_NAME -notmatch '^joyce-p18-[a-f0-9]{12}$') {
+            throw 'Contexto Compose efímero incompleto o inválido.'
+        }
+        $args += @('--project-name', $env:JOYCETEST_PROJECT_NAME,
+                   '-f', $env:JOYCETEST_OVERLAY_PATH, '--env-file', $env:JOYCETEST_ENV_PATH)
+    }
+    return $args
+}
+
+function Assert-JoyceEphemeralContext {
+    if ($env:JOYCETEST_PROJECT_NAME -notmatch '^joyce-p18-[a-f0-9]{12}$' -or
+        -not $env:JOYCETEST_OVERLAY_PATH -or -not $env:JOYCETEST_ENV_PATH -or
+        -not $env:JOYCETEST_SECRET_DIR -or -not $env:JOYCETEST_MARKER_PATH -or
+        -not (Test-Path -LiteralPath $env:JOYCETEST_MARKER_PATH -PathType Leaf)) {
+        throw 'Operación con datos de prueba denegada: requiere contexto efímero verificado de P18.'
+    }
+    $marker = Get-Content -LiteralPath $env:JOYCETEST_MARKER_PATH -Raw
+    if ($marker.Trim() -ne $env:JOYCETEST_PROJECT_NAME) { throw 'Marcador efímero inválido.' }
+    $config = (& docker compose @(Get-JoyceComposeArgs) config --format json) | Out-String
+    if ($LASTEXITCODE -ne 0) { throw 'No se pudo validar Compose efímero.' }
+    $c = $config | ConvertFrom-Json
+    if ($c.name -ne $env:JOYCETEST_PROJECT_NAME -or
+        $c.networks.'medical-network'.name -ne "$($env:JOYCETEST_PROJECT_NAME)-medical-network") {
+        throw 'Compose no usa el proyecto o la red efímera esperados.'
+    }
+    foreach ($v in 'postgres_data','sqlserver_data','mongodb_data','mongodb_config') {
+        if ($c.volumes.$v.name -ne "$($env:JOYCETEST_PROJECT_NAME)-$v") {
+            throw "Volumen $v fuera del proyecto efímero."
+        }
+    }
+    foreach ($s in 'postgres_password','sqlserver_sa_password','mongo_root_password') {
+        $expected = Join-Path $env:JOYCETEST_SECRET_DIR "$s.txt"
+        if ([IO.Path]::GetFullPath($c.secrets.$s.file) -ne [IO.Path]::GetFullPath($expected)) {
+            throw "Ruta del secreto $s fuera del contexto efímero."
+        }
+    }
+    foreach ($svc in $c.services.PSObject.Properties) {
+        $portProperty = $svc.Value.PSObject.Properties['ports']
+        if ($portProperty -and @($portProperty.Value).Count -gt 0) {
+            throw "El servicio $($svc.Name) publica puertos host."
+        }
+    }
+    if ($c.services.PSObject.Properties.Name -contains 'port-gateway') {
+        throw 'La pasarela de puertos no pertenece a P18.'
+    }
+    return $c
+}
+
 function Invoke-JoyceCompose {
     param([Parameter(Mandatory)][string[]]$Arguments)
-    & docker compose --project-directory $script:JoyceRoot -f (Join-Path $script:JoyceRoot 'compose.yaml') @Arguments
+    & docker compose @(Get-JoyceComposeArgs) @Arguments
     if ($LASTEXITCODE -ne 0) { throw "docker compose $($Arguments -join ' ') terminó con $LASTEXITCODE" }
 }
 
 function Get-JoyceContainerId {
     param([Parameter(Mandatory)][string]$Service)
-    $id = (& docker compose --project-directory $script:JoyceRoot -f (Join-Path $script:JoyceRoot 'compose.yaml') ps -q $Service)
+    $id = (& docker compose @(Get-JoyceComposeArgs) ps -q $Service)
     if (-not $id) { throw "El servicio $Service no está en ejecución." }
     return $id.Trim()
 }
 
 function Initialize-JoyceSecrets {
-    $dir = Join-Path $script:JoyceRoot 'secrets'
+    $secretRoot = if ($env:JOYCETEST_SECRET_DIR) {
+        Assert-JoyceEphemeralMarker
+        Split-Path -Parent $env:JOYCETEST_SECRET_DIR
+    } else { $script:JoyceRoot }
+    $dir = Join-Path $secretRoot 'secrets'
     $null = New-Item -ItemType Directory -Force -Path $dir
     foreach ($name in $script:JoyceSecretNames) {
         $path = Join-Path $dir "$name.txt"
@@ -44,13 +101,23 @@ function Initialize-JoyceSecrets {
         }
     }
     # Reaplica la DACL privada de Joseph a todos los archivos de secrets/ (también los nuevos).
-    & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Initialize-Local.ps1') -ProjectDirectory $script:JoyceRoot
+    & pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Initialize-Local.ps1') -ProjectDirectory $secretRoot
     if ($LASTEXITCODE -ne 0) { throw 'Initialize-Local.ps1 falló.' }
 }
 
 function Get-JoyceSecret {
     param([Parameter(Mandatory)][string]$Name)
-    return ([IO.File]::ReadAllText((Join-Path $script:JoyceRoot "secrets/$Name.txt"))).Trim()
+    $dir = if ($env:JOYCETEST_SECRET_DIR) { $env:JOYCETEST_SECRET_DIR } else { Join-Path $script:JoyceRoot 'secrets' }
+    return ([IO.File]::ReadAllText((Join-Path $dir "$Name.txt"))).Trim()
+}
+
+function Assert-JoyceEphemeralMarker {
+    if ($env:JOYCETEST_PROJECT_NAME -notmatch '^joyce-p18-[a-f0-9]{12}$' -or
+        -not $env:JOYCETEST_MARKER_PATH -or
+        -not (Test-Path -LiteralPath $env:JOYCETEST_MARKER_PATH -PathType Leaf) -or
+        (Get-Content -LiteralPath $env:JOYCETEST_MARKER_PATH -Raw).Trim() -ne $env:JOYCETEST_PROJECT_NAME) {
+        throw 'Marcador de contexto efímero ausente o inválido.'
+    }
 }
 
 # Ejecuta un script (archivo o texto) dentro del contenedor. $Env es un hashtable ordenado

@@ -326,3 +326,23 @@ veces con el mismo resultado. Evidencia: `evidencias/registros/2026-10-25-joyce-
 | P12 tres motores | PASA: tras `restart`, mismos contenedores y conteos (PG 30 pacientes/32 resultados, SQL Server 24 pacientes/11 facturas, MongoDB 32 resúmenes/12 indicadores); FDW SQL Server responde 24 filas |
 | P17 configuración FDW | PASA: servidores, mappings (sin contraseña), tablas foráneas, perfiles, `pg_hba`, permisos SQL Server y MongoDB volcados desde los catálogos |
 | P14 particiones (EXPLAIN) | Mostrado en la demo (pruning a `pacientes_ca`); la prueba formal es de Joseph |
+
+## Endurecimiento propuesto del PR #5 — 26/10/2026, Joseph (D-045)
+
+La tabla del 25/10 registra la ejecución histórica de Joyce; aquella P18 **sí** usó
+`down --volumes` sobre `estudios-medicos`. No se atribuye a esa evidencia la seguridad
+del nuevo procedimiento.
+
+| Caso del nuevo código | Estado Windows local | Evidencia / límite |
+|---|---|---|
+| P18 aislamiento de nombre, red, 4 volúmenes, 3 secretos, cero puertos | PROBADO estático | `Test-Entrega.ps1 -StaticOnly` pasa `docker compose config`; no crea motores |
+| Suite directa fuera de P18 | PROBADO negativo | `Test-JoyceModulos.ps1` termina con código 1 antes de borrar filas |
+| Sintaxis de scripts editados y whitespace | PROBADO | parser PowerShell: 0 errores; `git diff --check`: código 0 |
+| P18 real en Docker y limpieza de recursos | NO EJECUTADO local | Docker Engine no disponible: falta `dockerDesktopLinuxEngine`; CI pendiente |
+| P05 BSON ObjectId/Int64/Int32/Date, UNIQUE, P06 `_id`, cuenta Mongo | IMPLEMENTADO, NO PROBADO en nuevo SHA | Nuevas aserciones agregadas; CI pendiente |
+| P12 tres motores, P01–P17, INT-04 en proyecto aislado | NO EJECUTADO en nuevo SHA | Conservar los PASS históricos por separado; esperar CI |
+
+Comandos exactos iniciales: `docker info --format '{{.ServerVersion}} {{.KernelVersion}}'`,
+`pwsh -NoProfile -File scripts/Test-Entrega.ps1 -StaticOnly`,
+`pwsh -NoProfile -File scripts/Test-JoyceModulos.ps1`, parser de cinco scripts y
+`git diff --check`. El runtime de Windows no se infiere de Ubuntu CI.

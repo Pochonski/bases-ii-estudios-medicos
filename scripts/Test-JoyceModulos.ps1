@@ -7,6 +7,7 @@
 [CmdletBinding()]
 param([string]$EvidencePath, [switch]$SkipMongoOutage)
 . (Join-Path $PSScriptRoot 'Joyce-Common.ps1')
+$null = Assert-JoyceEphemeralContext
 
 $log = [System.Collections.Generic.List[string]]::new()
 function Out-Log([string]$m) { $log.Add($m); Write-Output $m }
@@ -135,12 +136,22 @@ printjson(docs);
     Mongo ($tipos + @'
 if (docs.length !== 1 || docs[0].revision !== 1) { print('FALLA P05: se esperaba 1 documento revisión 1'); quit(1); }
 const d = docs[0];
-if (d.t_id_estudio !== 'long' || d.t_id_paciente !== 'long' || d.t_id_medico !== 'long' || d.t_id_tipo !== 'int' ||
+if (d.t_oid !== 'objectId' || d.t_id_estudio !== 'long' || d.t_id_paciente !== 'long' || d.t_id_medico !== 'long' || d.t_id_tipo !== 'int' ||
     d.t_id_sucursal !== 'int' || d.t_revision !== 'int' || d.t_fecha_resultado !== 'date' || d.t_fecha_sinc !== 'date') {
   print('FALLA P05: tipos BSON fuera de contrato'); quit(1);
 }
-print('PASS P05: documento creado por mongo_fdw con Int64/Int32/Date según contrato');
+print('PASS P05: documento creado por mongo_fdw con ObjectId/Int64/Int32/Date según contrato');
 '@)
+    Mongo @'
+const c = db.getSiblingDB('reportes_medicos').resumenes_estudios;
+const i = c.getIndexes().find(x => x.key.id_estudio === 1 && x.unique === true);
+if (!i) { print('FALLA P05: falta índice UNIQUE id_estudio'); quit(1); }
+const copy = c.findOne({ id_estudio: 30031 });
+copy._id = ObjectId();
+try { c.insertOne(copy); print('FALLA P05: UNIQUE permitió duplicado'); quit(1); }
+catch (e) { if (e.code !== 11000) { print('FALLA P05: error inesperado ' + e.code); quit(1); } }
+print('PASS P05: índice UNIQUE id_estudio rechaza duplicado');
+'@
     Pg @'
 SELECT id_estudio, revision, estado, intentos FROM integracion.eventos_integracion WHERE id_estudio = 30031;
 DO $$ BEGIN
@@ -150,8 +161,11 @@ DO $$ BEGIN
 '@
 
     Step 'P06 corrección del resultado: revisión 2 actualiza el mismo documento'
+    $oidAntes = (Invoke-JoyceScript -Service mongodb -Text "print(db.getSiblingDB('reportes_medicos').resumenes_estudios.findOne({id_estudio:30031})._id.toString());").Trim()
     Pg "SELECT * FROM integracion.registrar_resultado(30031, 503, 'Ecografía ficticia: corrección de prueba, revisión 2');"
     Export-Pendientes
+    $oidDespues = (Invoke-JoyceScript -Service mongodb -Text "print(db.getSiblingDB('reportes_medicos').resumenes_estudios.findOne({id_estudio:30031})._id.toString());").Trim()
+    if ($oidAntes -ne $oidDespues) { throw 'FALLA P06: cambió _id tras UPDATE por mongo_fdw' }
     Mongo @'
 const c = db.getSiblingDB('reportes_medicos').resumenes_estudios;
 const docs = c.find({ id_estudio: 30031 }, { _id: 1, revision: 1, resultado_resumen: 1 }).toArray();
@@ -187,6 +201,19 @@ DO $$ BEGIN
         RAISE EXCEPTION 'FALLA: usr_fdw_pg_mongo modifica resultados';
   EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'PASS negativo: UPDATE clinico.resultados_estudio denegado'; END;
 END $$;
+'@)
+
+    Step 'MongoDB: autenticación propia y permisos mínimos de svc_pg_mongo_rw'
+    Out-Log (Invoke-JoyceScript -Service mongodb -Env ([ordered]@{ FDW_MONGO_PASSWORD = $s.fdw_mongo_password }) -Text @'
+const a = db.getSiblingDB('admin'); a.logout();
+const r = db.getSiblingDB('reportes_medicos');
+if (!r.auth('svc_pg_mongo_rw', process.env.FDW_MONGO_PASSWORD)) { print('FALLA: login svc'); quit(1); }
+if (!r.resumenes_estudios.findOne({id_estudio:30031})) { print('FALLA: find svc'); quit(1); }
+const denied = r.runCommand({ delete: 'resumenes_estudios', deletes: [{q:{id_estudio:30031},limit:1}] });
+if (denied.ok !== 0 || denied.code !== 13) { print('FALLA: delete svc no fue denegado'); quit(1); }
+const other = r.runCommand({ find: 'indicadores_mensuales', filter: {}, limit: 1 });
+if (other.ok !== 0 || other.code !== 13) { print('FALLA: lectura ajena permitida'); quit(1); }
+print('PASS svc_pg_mongo_rw: login/find permitidos; delete y colección ajena denegados');
 '@)
 
     if (-not $SkipMongoOutage) {

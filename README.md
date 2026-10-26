@@ -27,13 +27,15 @@ Este repositorio es la **fuente común de contexto** de Joseph, Joyce, Armando y
 Requisitos: Windows 11, Docker Desktop (motor Linux/WSL 2) y PowerShell 7 (`winget install Microsoft.PowerShell`).
 
 ```powershell
-pwsh -NoProfile -File ./scripts/Install-JoyceModulos.ps1        # 3 motores, esquemas, datos ficticios, FDW, roles, vistas
-pwsh -NoProfile -File ./scripts/Test-JoyceModulos.ps1           # P01-P11, P13, P15, P16, INT-04
-pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero     # P18 desde volúmenes vacíos + P12 (3 motores) + P17
-pwsh -NoProfile -File ./scripts/Demo-Video.ps1                  # demostración por segmentos para el video
+pwsh -NoProfile -File ./scripts/Install-JoyceModulos.ps1         # estructura/FDW/roles, conserva datos
+pwsh -NoProfile -File ./scripts/Install-JoyceModulos.ps1 -LoadInitialData # solo sobre tablas vacías
+pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero      # P18 efímero + suite + P12/P17
 ```
 
-`-DesdeCero` borra solo los volúmenes de **este** proyecto Compose. Mapa y configuración:
+`-DesdeCero` crea un proyecto Compose nuevo con red, volúmenes y secretos propios, sin puertos
+host; retira solo esos recursos al terminar. La suite que modifica datos se permite únicamente
+en ese contexto. La instalación normal conserva los registros existentes. La ejecución real de
+este endurecimiento debe verificarse en CI o Docker Desktop antes de atribuirle P18. Mapa y configuración:
 [documentacion/MAPA_CONEXIONES_Y_CONFIGURACION.md](documentacion/MAPA_CONEXIONES_Y_CONFIGURACION.md) ·
 guion: [video/GUION.md](video/GUION.md) · referencias: [documentacion/REFERENCIAS.md](documentacion/REFERENCIAS.md).
 

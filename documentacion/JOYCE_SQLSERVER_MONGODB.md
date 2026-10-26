@@ -71,13 +71,16 @@ tiene acceso a `clinico.pacientes`.
 
 ```powershell
 pwsh -NoProfile -File ./scripts/Install-JoyceModulos.ps1
-pwsh -NoProfile -File ./scripts/Test-JoyceModulos.ps1 -EvidencePath evidencias/registros/<fecha>-joyce-pruebas.txt
+pwsh -NoProfile -File ./scripts/Install-JoyceModulos.ps1 -LoadInitialData # únicamente tablas vacías
+pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -StaticOnly      # valida aislamiento sin daemon
+pwsh -NoProfile -File ./scripts/Test-Entrega.ps1 -DesdeCero      # suite en proyecto efímero
 ```
 
 El instalador:
 - crea cuatro secretos nuevos en `secrets/` (ignorada por Git) y reaplica las ACL de Joseph;
 - levanta `compose.yaml`;
-- aplica SQL Server 01–06 y MongoDB 01–03;
+- aplica SQL Server 01–05 y MongoDB 01–03; el script 06 de SQL Server solo se ejecuta
+  con `-LoadInitialData` si las tablas están vacías, o con `-ResetLabData` en P18 efímero;
 - aplica el núcleo de Joseph y su `integracion/01_fdw_sqlserver.sql` **solo si faltan**
   (con `mssql_database=integracion_externa`);
 - habilita el login de `usr_fdw_pg_mssql` con `pruebas/integracion/03_postgresql_role.sql`;
@@ -86,9 +89,11 @@ El instalador:
 Los secretos viajan por stdin al contenedor y se exportan como variables de entorno del
 proceso; nunca aparecen como argumentos ni en archivos versionados.
 
-`Test-JoyceModulos.ps1` **detiene y reinicia el servicio `mongodb`** del proyecto para P08
-(se puede omitir con `-SkipMongoOutage`). Usa los estudios 30031/30032 y los reinicia al
-comenzar, para que se pueda repetir.
+`Test-JoyceModulos.ps1` exige el proyecto efímero que prepara `Test-Entrega.ps1`; allí
+**detiene y reinicia `mongodb`** para P08 (se puede omitir con `-SkipMongoOutage`).
+Reinicia los estudios sintéticos 30031/30032 solo dentro de ese proyecto. No ejecutar
+`docker compose down --volumes` contra `estudios-medicos`. Las pruebas anteriores del
+25/10 documentan el comportamiento histórico; no acreditan el aislamiento nuevo.
 
 ## Pruebas
 

@@ -404,3 +404,24 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   resultados sintéticos (precondición de esa prueba, no defecto).
 - `documentacion/CUMPLIMIENTO_REQUISITOS.md`: todos los requisitos técnicos ✅; pendientes del grupo:
   merges #3→#4→#5, video, confirmar fecha y subir a Moodle.
+
+## 2026-10-26 — Joseph, endurecimiento del PR #5 (D-045)
+
+- **Objetivo:** impedir borrado de volúmenes compartidos y recarga involuntaria de datos;
+  proponer pruebas de BSON/permisos más explícitas sin cambiar contratos.
+- **Base verificada:** `main=0a42732`, PR #3 `f46dd9b`, #4 `5c89c21`, #5 `5c63e2e`, todos
+  abiertos y en borrador. Árbol local limpio antes de crear `feature/joseph-integration-hardening`
+  desde el HEAD de Joyce; ningún cambio directo a su rama ni a main.
+- **Archivos:** scripts de instalación/pruebas/contexto, workflow Joyce, README, guía,
+  decisiones, matriz y esta bitácora. Detalle final y evidencia CI se añadirán tras ejecutar.
+- **Comandos:** `git status/fetch/diff/switch`, `gh pr view`, `docker info`, lectura de contratos,
+  parser PowerShell, `pwsh -File scripts/Test-Entrega.ps1 -StaticOnly`, negativo
+  `pwsh -File scripts/Test-JoyceModulos.ps1`, `git diff --check`.
+- **Resultados actuales:** estático P18 PASA para proyecto/red/volúmenes/secretos separados,
+  sin puertos; suite directa rechazada antes de modificar datos; cinco scripts sin errores
+  sintácticos y diff limpio. Primera validación estática detectó acceso estricto a propiedad
+  `ports` ausente; corregido y repetido con PASS. Docker local NO DISPONIBLE: falta el pipe
+  `dockerDesktopLinuxEngine`. Runtime P18/P01–P17 y CI del cambio aún NO EJECUTADOS.
+- **Riesgos/dependencias:** Joyce debe revisar el cambio de uso del instalador y la suite;
+  Armando debe revisar sus vistas/roles para integración final. TLS/CA y restauración siguen
+  pendientes. No se borraron volúmenes ni datos del proyecto compartido.

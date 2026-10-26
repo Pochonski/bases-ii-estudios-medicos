@@ -421,3 +421,19 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
   evidencia no contenga secretos y la publica como artifact por 14 días.
 - **Archivos:** `pruebas/reportes/01_conteo_pg_medico_tipo.sql`, `02_conteo_mongo_medico_tipo.js`
   (P09 los usa), workflow, guion, handoff, `agents/ARMANDO.md`.
+
+### D-045 — Endurecimiento P18 y conservación de datos (26/10/2026, Joseph; propuesta para Joyce)
+
+- **Fuente/motivo:** auditoría solicitada por Joseph del PR #5: `Test-Entrega -DesdeCero`
+  borraba volúmenes del proyecto compartido y el instalador recargaba siempre el fixture SQL Server.
+- **Decisión propuesta:** P18 crea un nombre aleatorio `joyce-p18-*`, red y cuatro volúmenes
+  nombrados con ese prefijo, secretos/.env temporales y cero puertos host. Verifica el modelo
+  efectivo con `docker compose config`, ausencia previa de recursos y etiquetas de propiedad
+  antes de retirar únicamente los recursos de esa ejecución. La suite y los segmentos de demo
+  que modifican datos exigen ese contexto; la instalación ordinaria no carga datos.
+- **Carga de datos:** `-LoadInitialData` carga fixtures solo si no existen filas; `-ResetLabData`
+  reinicializa el fixture SQL Server solo en contexto efímero comprobado. Los scripts históricos
+  y evidencias del 25/10 no se reescriben. No cambian identificadores ni contratos FDW/outbox.
+- **Impacto/archivos:** `scripts/Joyce-Common.ps1`, `Test-Entrega.ps1`, `Install-JoyceModulos.ps1`,
+  `Test-JoyceModulos.ps1`, `Demo-Video.ps1`, workflow y guías; PR apilado sobre rama de Joyce,
+  pendiente de su revisión. Validación estática Windows PASA; runtime/CI del nuevo SHA pendiente.

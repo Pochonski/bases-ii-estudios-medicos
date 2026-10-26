@@ -6,6 +6,9 @@
 [CmdletBinding()]
 param([int[]]$Segmento = @(1..9), [switch]$SinPausa)
 . (Join-Path $PSScriptRoot 'Joyce-Common.ps1')
+if (@($Segmento | Where-Object { $_ -in 3,5,6,8 }).Count -gt 0) {
+    $null = Assert-JoyceEphemeralContext
+}
 
 $sec = @{}
 foreach ($n in $script:JoyceSecretNames) { $sec[$n] = Get-JoyceSecret $n }
@@ -25,8 +28,9 @@ function Pausa { if (-not $SinPausa) { Read-Host "`n[Enter] para continuar" | Ou
 # Hashtable (no [ordered]): con [ordered], $demos[1] indexaría por posición, no por clave.
 $demos = @{
   1 = { Titulo '1. Arquitectura: tres motores en contenedores, red interna'
-        & docker compose --project-directory $script:JoyceRoot -f (Join-Path $script:JoyceRoot 'compose.yaml') ps --format 'table {{.Service}}\t{{.Image}}\t{{.Status}}'
-        & docker network inspect medical-network --format 'Red {{.Name}}: internal={{.Internal}}' }
+        & docker compose @(Get-JoyceComposeArgs) ps --format 'table {{.Service}}\t{{.Image}}\t{{.Status}}'
+        $net = if ($env:JOYCETEST_PROJECT_NAME) { "$($env:JOYCETEST_PROJECT_NAME)-medical-network" } else { 'medical-network' }
+        & docker network inspect $net --format 'Red {{.Name}}: internal={{.Internal}}' }
   2 = { Titulo '2. PostgreSQL: segmentación HORIZONTAL de pacientes por región'
         Pg @'
 SELECT tableoid::regclass AS particion, count(*) AS pacientes FROM clinico.pacientes GROUP BY 1 ORDER BY 1;
