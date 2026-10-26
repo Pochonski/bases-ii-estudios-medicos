@@ -155,6 +155,22 @@ try {
     }
     if ($DesdeCero) { Out-Log 'PASS P18: desde volúmenes vacíos, instalación y suite completa sin intervención manual' }
 
+    Step 'Concurrencia real del outbox: dos exportadores y dos revisiones del mismo estudio'
+    $concurrente = & $pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-OutboxConcurrency.ps1') 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Out-Log (($concurrente | Select-Object -Last 40) -join "`n")
+        throw 'FALLA: concurrencia del outbox'
+    }
+    Out-Log (($concurrente | Where-Object { "$_" -match 'PASS concurrencia|evento .* rev' }) -join "`n")
+
+    Step 'Restauración comprobada en bases nuevas de los tres motores efímeros'
+    $restauracion = & $pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Test-Restore.ps1') 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        Out-Log (($restauracion | Select-Object -Last 40) -join "`n")
+        throw 'FALLA: restauración de los tres motores'
+    }
+    Out-Log (($restauracion | Where-Object { "$_" -match 'PASS restauración' }) -join "`n")
+
     Step 'Instalación ordinaria repetida: conservar factura sintética y rechazar recarga inicial'
     $null = Invoke-JoyceScript -Service sqlserver -Text @'
 :on error exit

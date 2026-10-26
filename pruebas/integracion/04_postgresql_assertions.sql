@@ -65,6 +65,18 @@ BEGIN
   IF conventional_amount <> 12345.67 THEN
     RAISE EXCEPTION 'Modo table_name: conversión DECIMAL incorrecta %', conventional_amount;
   END IF;
+  -- Defecto conocido de la versión table_name: el predicado decimal remoto puede
+  -- emitirse como CAST(... AS numeric) en SQL Server (escala 0). La ruta contractual
+  -- usa query; este diagnóstico queda visible hasta corregir la extensión sin regresión.
+  SELECT count(*) INTO n FROM externo.ft_estado_tabla_spike
+  WHERE id_paciente = 1001 AND total_facturado_crc = 12345.67;
+  IF n = 0 THEN
+    RAISE NOTICE 'PENDIENTE table_name DECIMAL: igualdad remota perdió la fila conocida; evitar este predicado';
+  ELSIF n = 1 THEN
+    RAISE NOTICE 'PASS table_name DECIMAL: igualdad remota devolvió la fila conocida';
+  ELSE
+    RAISE EXCEPTION 'Modo table_name: igualdad DECIMAL devolvió % filas', n;
+  END IF;
   SELECT count(*) INTO n FROM externo.ft_estado_tabla_spike WHERE id_paciente = 1002;
   IF n <> 0 THEN RAISE EXCEPTION 'Modo table_name: fila inexistente devuelta'; END IF;
   SELECT array_agg(id_paciente) INTO ordered_ids FROM (

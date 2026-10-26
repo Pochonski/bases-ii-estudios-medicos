@@ -32,7 +32,20 @@ BEGIN
   IF (SELECT count(*) FROM api.vw_citas_web) <> 30 THEN RAISE EXCEPTION 'FALLA P10: vw_citas_web'; END IF;
   RAISE NOTICE 'PASS P10 positivo: usr_api_web lee vw_paciente_facturacion y vw_citas_web';
 
+  -- La invocación directa permitida solo devuelve exactamente las filas/columnas de la vista.
+  IF EXISTS (SELECT * FROM api.fn_paciente_facturacion()
+             EXCEPT SELECT * FROM api.vw_paciente_facturacion)
+     OR EXISTS (SELECT * FROM api.vw_paciente_facturacion
+                EXCEPT SELECT * FROM api.fn_paciente_facturacion()) THEN
+    RAISE EXCEPTION 'FALLA P10: función web expone datos fuera de la vista';
+  END IF;
+  RAISE NOTICE 'PASS P10: función web directa limitada a la proyección de la vista';
+
   -- P10/P11 negativos.
+  BEGIN PERFORM 1 FROM externo.fn_estado_facturacion() LIMIT 1;
+        RAISE EXCEPTION 'FALLA: ejecuta función remota sin filtro clínico';
+  EXCEPTION WHEN insufficient_privilege THEN
+    RAISE NOTICE 'PASS negativo: función remota interna denegada a web'; END;
   BEGIN PERFORM 1 FROM clinico.pacientes LIMIT 1; RAISE EXCEPTION 'FALLA: lee tabla base';
   EXCEPTION WHEN insufficient_privilege THEN RAISE NOTICE 'PASS negativo: clinico.pacientes denegado'; END;
   BEGIN PERFORM 1 FROM externo.ft_estado_facturacion LIMIT 1; RAISE EXCEPTION 'FALLA: lee tabla foránea';
