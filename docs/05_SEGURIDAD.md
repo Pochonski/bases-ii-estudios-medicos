@@ -70,3 +70,23 @@ El endpoint de salud del gateway se enlaza únicamente al loopback **interno** d
 contenedor (`127.0.0.1:8404`) y no figura en `ports` del overlay. Los únicos bindings
 host permitidos por la comprobación estática y runtime siguen siendo los tres puertos
 de motores, todos en 127.0.0.1. El endpoint no contiene secretos.
+
+## Spike TDS aislado — 24/10/2026, Joseph (D-039/D-040)
+
+El proyecto efímero de PR #4 no publica puertos host. Contraseñas aleatorias en
+`.tmp/tds-spike-root/secrets/` (ignorado) se montan por archivo y se retiran
+al finalizar; el runner no las imprime. SQL Server crea solo en su base de
+prueba `svc_pg_mssql_ro`, con `SELECT` sobre `dbo.vw_estado_facturacion`.
+La CI de prueba confirmó login positivo a la vista y rechazo de lectura directa
+de tabla e `INSERT`. PostgreSQL usó un login propio `usr_fdw_pg_mssql` habilitado
+solo en su contenedor temporal; no se usó `SET ROLE` del administrador como
+evidencia de autenticación. Estos resultados no acreditan los permisos de la
+cuenta definitiva que Joyce entregue.
+
+La configuración FreeTDS mantiene `encryption=require`, sin CA ni validación
+de identidad del certificado del servidor: cifrado del canal no equivale a
+autenticación del servidor. Resolver TLS antes de confiar en producción o
+conectar datos reales. D-040 corrige un error de resultados por predicados
+ignorados en `tds_fdw` con `query`; la regresión de filtro/orden es también
+control de integridad y privacidad, pues una consulta que omite WHERE podría
+mostrar pacientes ajenos.

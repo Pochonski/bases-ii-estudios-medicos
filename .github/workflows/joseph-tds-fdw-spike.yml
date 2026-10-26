@@ -1,0 +1,77 @@
+name: Joseph - tds_fdw spike aislado
+on:
+  pull_request:
+    branches:
+      - main
+      - feature/joseph-core-main-integration
+    paths:
+      - 'pruebas/integracion/**'
+      - 'scripts/Test-TdsFdwSpike.ps1'
+      - 'scripts/Initialize-Local.ps1'
+      - 'scripts/Compose-Context.ps1'
+      - 'integracion/01_fdw_sqlserver.sql'
+      - 'postgresql/**'
+      - 'docker/postgres/**'
+      - 'compose.yaml'
+      - 'docs/00_ESTADO_Y_FUENTES.md'
+      - 'docs/04_CONTRATOS_INTEGRACION.md'
+      - 'docs/05_SEGURIDAD.md'
+      - 'docs/06_PLAN_IMPLEMENTACION.md'
+      - 'docs/07_PRUEBAS.md'
+      - 'docs/10_DECISIONES_Y_PENDIENTES.md'
+      - 'docs/11_BITACORA.md'
+      - 'documentacion/JOSEPH_FASE4_TDS_FDW.md'
+      - 'documentacion/INFORME_CHATGPT_JOSEPH_FASE4.md'
+      - 'evidencias/registros/*joseph-tds-fdw*'
+      - '.github/workflows/joseph-tds-fdw-spike.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  estatico-windows:
+    runs-on: windows-2022
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Validar Compose y secretos temporales sin daemon
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force .tmp/ci | Out-Null
+          @("Head: ${{ github.event.pull_request.head.sha || github.sha }}", "Checkout: $(git rev-parse HEAD)", "Windows: $([Environment]::OSVersion.VersionString)") | Set-Content .tmp/ci/windows.txt
+          ./scripts/Test-TdsFdwSpike.ps1 -StaticOnly | Tee-Object -FilePath .tmp/ci/windows.txt -Append
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: joseph-tds-spike-windows-static
+          path: .tmp/ci/windows.txt
+          retention-days: 14
+          if-no-files-found: error
+  fdw-real:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Registrar versiones y SHA
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force .tmp/ci | Out-Null
+          @(
+            "Head PR: ${{ github.event.pull_request.head.sha || github.sha }}"
+            "Checkout: $(git rev-parse HEAD)"
+            "Kernel: $(uname -r)"
+            "PowerShell: $($PSVersionTable.PSVersion)"
+            "Compose: $(docker compose version --short)"
+            "Docker: $(docker version --format '{{.Server.Version}}')"
+            'Alcance: base SQL Server y cuenta temporales; no objetos definitivos de Joyce.'
+          ) | Set-Content .tmp/ci/entorno.txt
+      - name: Consulta real, tipos, permisos, caída y recuperación
+        shell: pwsh
+        run: ./scripts/Test-TdsFdwSpike.ps1 | Tee-Object -FilePath .tmp/ci/consultas.txt
+      - name: Guardar evidencia sin secretos
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: joseph-tds-spike-real
+          path: .tmp/ci/*.txt
+          retention-days: 14
+          if-no-files-found: error

@@ -1,6 +1,9 @@
 # Contratos de integración y comportamiento distribuido V1
 
-**Estado:** diseño de comunicación aún SIN ejecutar. Consultar `docs/03_MODELO_DATOS.md` para el esquema y `docs/10_DECISIONES_Y_PENDIENTES.md` para pendientes de compatibilidad.
+**Estado:** contrato definitivo aún SIN ejecutar. Joseph prueba `tds_fdw` con
+una vista temporal aislada en PR #4; eso no certifica la vista de Joyce.
+Consultar `docs/03_MODELO_DATOS.md` para el esquema y
+`docs/10_DECISIONES_Y_PENDIENTES.md` para pendientes de compatibilidad.
 
 ## Identificadores y convenciones comunes
 
@@ -83,3 +86,16 @@ No se cambia el objeto remoto. Tipos concretos, offset/precisión, estados, card
 requieren revisión con Joyce y prueba real antes de integrar.
 La preparación NO certifica compatibilidad: P01 está bloqueada; P17 solo tiene archivos.
 El perfil usr_fdw_pg_mssql es NOLOGIN y el mapping no se otorga a PUBLIC.
+
+## Riesgo de filtrado de `tds_fdw` detectado en spike — 24/10/2026
+
+La CI del spike encontró que la extensión 2.0.5 fijada, con la opción de tabla
+foránea `query`, devolvía cuatro filas al pedir `WHERE id_paciente=1002` aunque
+ninguna correspondía. El [issue upstream #444](https://github.com/tds-fdw/tds_fdw/issues/444)
+describe ese comportamiento y el orden incorrecto: la consulta fija no recibe
+los predicados que el planner consideró remotos. D-040 documenta un parche
+local en la imagen PostgreSQL para evaluar restricciones y orden en PostgreSQL
+cuando se usa `query`. No se cambia el nombre ni el tipo de la vista SQL Server
+acordada. La validación definitiva debe repetir filtros, `LEFT JOIN`, orden y
+cardinalidad con los objetos reales de Joyce; no asumir que una CI de prueba
+temporal aprueba P01/P17 finales.
