@@ -469,3 +469,22 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
   resultado y se mide por separado; **no** usar este modo para filtrar montos hasta
   diagnosticarlo. El consumidor contractual de Joyce usa `query` con filtro local.
   No se altera el parche ni se presenta `table_name` como plenamente certificado.
+
+### D-047 — Revisión de rutas de privilegio de integración (26/10/2026, Joseph; pendiente de Joyce/Armando)
+
+- `externo.fn_estado_facturacion()` usa `SECURITY DEFINER`, objetos calificados y
+  `search_path = pg_catalog, pg_temp`; el dueño `usr_fdw_pg_mssql` no es
+  superusuario. `usr_api_web` posee `EXECUTE` directo, por lo que puede consultar
+  toda la proyección remota aunque no use `api.vw_paciente_facturacion`.
+  Armando debe aceptar explícitamente esa superficie o proponer un acceso más
+  estrecho sin romper la vista. No se modifica su módulo en este PR.
+- `usr_fdw_pg_mongo` necesita `UPDATE` sobre el estado del outbox e `INSERT/UPDATE`
+  de la foreign table para el procedimiento actual. Esos permisos también permiten
+  DML directo con esa cuenta; una credencial comprometida podría marcar eventos
+  procesados o alterar resúmenes sin seguir el flujo de revisiones. Joyce debe
+  revisar si se conserva esta cuenta interna confiable o se restringe mediante
+  funciones dedicadas. No se amplían permisos ni se altera el contrato aquí.
+- PostgreSQL revoca `CONNECT` público y usa SCRAM para perfiles externos; las
+  cuentas de servicio SQL Server/MongoDB tienen pruebas positivas y negativas.
+  Persisten TLS sin CA validada para TDS y ausencia de TLS en PostgreSQL/MongoDB;
+  antes de uso con datos reales se necesita decisión del equipo sobre certificados.

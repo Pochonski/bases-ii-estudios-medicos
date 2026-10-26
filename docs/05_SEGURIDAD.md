@@ -90,3 +90,14 @@ conectar datos reales. D-040 corrige un error de resultados por predicados
 ignorados en `tds_fdw` con `query`; la regresión de filtro/orden es también
 control de integridad y privacidad, pues una consulta que omite WHERE podría
 mostrar pacientes ajenos.
+
+## Revisión de privilegios integrada — 26/10/2026, Joseph (D-047)
+
+La función `SECURITY DEFINER` de facturación fija `search_path`, califica la
+foreign table y pertenece al rol interno sin superusuario. `usr_api_web` puede
+ejecutarla directamente y leer la proyección completa de facturación; Armando
+debe confirmar si ese acceso concuerda con el perfil web. `usr_fdw_pg_mongo`
+puede actualizar estados del outbox y escribir en la foreign table fuera del
+procedimiento si alguien obtiene su credencial; Joyce debe revisar la frontera
+de confianza y el control de revisiones. Las pruebas actuales verifican
+denegaciones de otros objetos, no eliminan esas rutas concedidas por diseño.

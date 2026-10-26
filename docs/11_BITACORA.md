@@ -472,3 +472,7 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   kernel `6.8.0-1064-azure`; sin patrón de secreto generado. Infraestructura,
   núcleo y TDS del mismo HEAD también pasaron. La modificación posterior de
   bloqueo en `sqlserver/06_datos_prueba.sql` aún necesita CI propia.
+- **Revisión de seguridad D-047 (Joseph, 26/10):** no se ampliaron permisos.
+  Quedaron para Joyce la capacidad de DML directo del rol interno Mongo/outbox
+  y la exclusividad de un procesador; para Armando, la ejecución directa de la
+  función de facturación por el perfil web. TLS/CA y restauración siguen abiertos.
