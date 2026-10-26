@@ -67,7 +67,9 @@ try {
   }));
   filesystem.writeFileSync(ruta, EJSON.stringify(paquete, {relaxed:false}), {mode:0o600});
   destino.dropDatabase();
-  const copia = EJSON.parse(filesystem.readFileSync(ruta, 'utf8'));
+  // El modo relaxed predeterminado convierte Int32/Int64 a Number y el validador
+  // rechaza la copia. Deserializar en modo estricto conserva los tipos BSON.
+  const copia = EJSON.parse(filesystem.readFileSync(ruta, 'utf8'), {relaxed:false});
   for (const item of copia) {
     destino.createCollection(item.nombre, item.opciones);
     for (const indice of item.indices) {
