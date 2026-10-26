@@ -35,6 +35,13 @@ SELECT id_paciente, codigo_region, nombre_aseguradora, estado_cobertura,
        estado_facturacion, total_facturado_crc, fecha_actualizacion
 FROM dbo.facturacion_spike;
 GO
+-- Vista adicional exclusivamente para probar table_name sin conversión implícita DATETIMEOFFSET.
+CREATE VIEW dbo.vw_estado_tabla_spike AS
+SELECT id_paciente, codigo_region, nombre_aseguradora, estado_cobertura,
+       estado_facturacion, total_facturado_crc,
+       CONVERT(varchar(40), fecha_actualizacion, 127) AS fecha_actualizacion
+FROM dbo.facturacion_spike;
+GO
 USE master;
 GO
 CREATE LOGIN svc_pg_mssql_ro WITH PASSWORD = N'__FDW_PASSWORD__', CHECK_POLICY = ON;
@@ -43,6 +50,7 @@ USE joseph_fdw_spike;
 GO
 CREATE USER svc_pg_mssql_ro FOR LOGIN svc_pg_mssql_ro;
 GRANT SELECT ON OBJECT::dbo.vw_estado_facturacion TO svc_pg_mssql_ro;
+GRANT SELECT ON OBJECT::dbo.vw_estado_tabla_spike TO svc_pg_mssql_ro;
 -- La cadena de propiedad dbo permite SELECT de la vista sin SELECT de la tabla.
 GO
 SELECT 'PASS SQL Server: base, vista, cuatro filas y login limitado creados' AS resultado;

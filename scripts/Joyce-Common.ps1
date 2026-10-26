@@ -64,9 +64,25 @@ function Assert-JoyceEphemeralContext {
         if ($portProperty -and @($portProperty.Value).Count -gt 0) {
             throw "El servicio $($svc.Name) publica puertos host."
         }
+        $networkNames = @($svc.Value.networks.PSObject.Properties.Name)
+        if ($networkNames.Count -ne 1 -or $networkNames[0] -ne 'medical-network') {
+            throw "El servicio $($svc.Name) usa una red no autorizada."
+        }
     }
-    if ($c.services.PSObject.Properties.Name -contains 'port-gateway') {
-        throw 'La pasarela de puertos no pertenece a P18.'
+    if ((@($c.services.PSObject.Properties.Name) | Sort-Object) -join ',' -ne 'mongodb,postgres,sqlserver') {
+        throw 'P18 contiene servicios inesperados.'
+    }
+    $expectedMounts = @{ postgres = @{'/var/lib/postgresql/data'='postgres_data'};
+                         sqlserver = @{'/var/opt/mssql'='sqlserver_data'};
+                         mongodb = @{'/data/db'='mongodb_data';'/data/configdb'='mongodb_config'} }
+    foreach ($service in $expectedMounts.Keys) {
+        foreach ($target in $expectedMounts[$service].Keys) {
+            $mount = @($c.services.$service.volumes | Where-Object { $_.target -eq $target })
+            if ($mount.Count -ne 1 -or $mount[0].type -ne 'volume' -or
+                $mount[0].source -ne $expectedMounts[$service][$target]) {
+                throw "Montaje de datos $service $target fuera de volumen efímero."
+            }
+        }
     }
     return $c
 }

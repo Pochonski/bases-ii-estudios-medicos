@@ -425,3 +425,13 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
 - **Riesgos/dependencias:** Joyce debe revisar el cambio de uso del instalador y la suite;
   Armando debe revisar sus vistas/roles para integración final. TLS/CA y restauración siguen
   pendientes. No se borraron volúmenes ni datos del proyecto compartido.
+- **Primer CI PR #7:** `40278085052` FALLÓ en `779864d`: el instalador leyó la línea
+  informativa `Changed database context` junto a `0` y rechazó la carga inicial como si
+  existieran filas. Se corrigió para aceptar exactamente una línea de conteo numérico;
+  no se omite la protección frente a datos existentes. La evidencia del run muestra
+  nombre `joyce-p18-a0eb09ce6985`, red y cuatro volúmenes propios creados y retirados;
+  el proyecto compartido no fue objeto del comando. La suite no llegó a ejecutarse.
+- **Regresión adicional D-046:** se agregaron pruebas del modo `table_name` y una carga
+  sintética de 2000 filas al spike TDS, con EXPLAIN ANALYZE para el coste local. Los
+  workflows del núcleo y TDS escuchan la base de Joyce en este PR apilado. Resultados
+  del nuevo SHA aún pendientes, sin atribuirles el CI anterior.

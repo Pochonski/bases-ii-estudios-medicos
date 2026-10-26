@@ -64,7 +64,8 @@ function New-IsolatedContext {
     Initialize-JoyceSecrets
     $null = Assert-JoyceEphemeralContext
     if (-not $NoDocker) { Assert-NoExistingResources }
-    Out-Log "PASS aislamiento P18: $project; red/volúmenes/secretos propios, cero puertos publicados; recursos preexistentes ausentes"
+    $suffixMessage = if ($NoDocker) { 'recursos Docker NO COMPROBADOS' } else { 'recursos preexistentes ausentes' }
+    Out-Log "PASS aislamiento P18: $project; red/volúmenes/secretos propios, cero puertos publicados; $suffixMessage"
 }
 
 function Get-Conteos {
@@ -104,7 +105,7 @@ try {
         Step 'P18 instalación desde proyecto y volúmenes efímeros vacíos'
         $started = $true
         $inst = & $pwsh -NoProfile -File (Join-Path $PSScriptRoot 'Install-JoyceModulos.ps1') -LoadInitialData 2>&1
-        if ($LASTEXITCODE -ne 0) { Out-Log ($inst -join "`n"); throw 'FALLA P18: instalación desde cero' }
+        if ($LASTEXITCODE -ne 0) { Out-Log (($inst | Select-Object -Last 80) -join "`n"); throw 'FALLA P18: instalación desde cero' }
         Assert-OwnedResources
         Out-Log (($inst | Where-Object { "$_" -match '^(PASS|==)' }) -join "`n")
 

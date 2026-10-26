@@ -346,3 +346,13 @@ Comandos exactos iniciales: `docker info --format '{{.ServerVersion}} {{.KernelV
 `pwsh -NoProfile -File scripts/Test-Entrega.ps1 -StaticOnly`,
 `pwsh -NoProfile -File scripts/Test-JoyceModulos.ps1`, parser de cinco scripts y
 `git diff --check`. El runtime de Windows no se infiere de Ubuntu CI.
+
+**Primera CI del PR #7:** [40278085052](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40278085052)
+FALLÓ en `779864d` antes de cargar el fixture: el conteo SQL Server incluyó una línea
+informativa y el parseo la trató como datos. El proyecto `joyce-p18-a0eb09ce6985`
+creó y retiró exclusivamente sus contenedores, red y cuatro volúmenes; la suite
+P01–P17 NO SE EJECUTÓ en ese run. El parseo corregido requiere CI nueva.
+
+La regresión TDS nueva usa `table_name` en una vista temporal separada y luego
+agrega 2000 filas ficticias al spike para medir EXPLAIN ANALYZE y estimar bytes de
+columnas remotas. **Estado: IMPLEMENTADA, NO PROBADA** hasta su CI del SHA nuevo.

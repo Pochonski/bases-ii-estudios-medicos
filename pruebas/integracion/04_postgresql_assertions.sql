@@ -5,6 +5,7 @@ SELECT current_setting('server_version') AS postgresql_version,
 SELECT current_user AS fdw_login, count(*) AS remote_rows
 FROM externo.ft_estado_facturacion;
 SELECT id_paciente, codigo_region FROM externo.ft_estado_facturacion ORDER BY id_paciente;
+EXPLAIN (VERBOSE, COSTS OFF) SELECT id_paciente FROM externo.ft_estado_tabla_spike WHERE id_paciente = 1001;
 SELECT count(*) AS missing_remote_probe FROM externo.ft_estado_facturacion
 WHERE id_paciente = 1002 AND codigo_region = 'AL';
 EXPLAIN (VERBOSE, COSTS OFF) SELECT id_paciente FROM externo.ft_estado_facturacion
@@ -43,6 +44,14 @@ BEGIN
   SELECT count(*) INTO n FROM externo.ft_estado_facturacion
   WHERE id_paciente = 1001 AND codigo_region = 'AL';
   IF n <> 1 THEN RAISE EXCEPTION 'Filtro exacto 1001/AL devolvió % filas', n; END IF;
+  SELECT count(*) INTO n FROM externo.ft_estado_tabla_spike;
+  IF n <> 4 THEN RAISE EXCEPTION 'Modo table_name: cardinalidad inesperada %', n; END IF;
+  SELECT count(*) INTO n FROM externo.ft_estado_tabla_spike
+  WHERE id_paciente = 1001 AND codigo_region = 'AL'
+    AND nombre_aseguradora = 'Clínica Ñandú' AND total_facturado_crc = 12345.67;
+  IF n <> 1 THEN RAISE EXCEPTION 'Modo table_name: filtro/tipos incorrectos %', n; END IF;
+  SELECT count(*) INTO n FROM externo.ft_estado_tabla_spike WHERE id_paciente = 1002;
+  IF n <> 0 THEN RAISE EXCEPTION 'Modo table_name: fila inexistente devuelta'; END IF;
   SELECT array_agg(id_paciente) INTO ordered_ids FROM (
     SELECT id_paciente FROM externo.ft_estado_facturacion ORDER BY id_paciente DESC
   ) sorted;
@@ -64,3 +73,4 @@ ORDER BY p.id_paciente;
 EXPLAIN (COSTS OFF)
 SELECT id_paciente, codigo_region FROM externo.ft_estado_facturacion WHERE id_paciente = 1001;
 \echo 'PASS PostgreSQL: FDW real, tipos, JOIN, ausencia remota y Foreign Scan'
+\echo 'PASS table_name: vista de prueba, filtro presente/ausente, Unicode y DECIMAL'

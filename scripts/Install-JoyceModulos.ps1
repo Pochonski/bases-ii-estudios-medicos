@@ -41,7 +41,9 @@ SELECT CAST(
  (SELECT COUNT(*) FROM dbo.facturas_externas) +
  (SELECT COUNT(*) FROM dbo.resumen_facturacion) AS varchar(20));
 '@
-if ($LoadInitialData -and $sqlRows.Trim() -ne '0') {
+$sqlCounts = @($sqlRows -split '\r?\n' | Where-Object { $_.Trim() -match '^\d+$' } | ForEach-Object { $_.Trim() })
+if ($sqlCounts.Count -ne 1) { throw 'No se pudo obtener el conteo de tablas SQL Server; se cancela carga de datos.' }
+if ($LoadInitialData -and $sqlCounts[0] -ne '0') {
     throw 'Carga inicial SQL Server denegada: existen filas. Instalación normal no las reemplaza.'
 }
 
@@ -60,7 +62,8 @@ if ($hayNucleo.Trim() -ne 't') {
 } else { Write-Output 'clinico.pacientes ya existe; no se reaplica el núcleo.' }
 if ($LoadInitialData) {
     $pgRows = Invoke-JoyceScript -Service postgres -Text "\pset tuples_only on`nSELECT count(*) FROM clinico.pacientes;"
-    if ($pgRows.Trim() -ne '0') { throw 'Carga inicial PostgreSQL denegada: existen pacientes.' }
+    $pgCounts = @($pgRows -split '\r?\n' | Where-Object { $_.Trim() -match '^\d+$' } | ForEach-Object { $_.Trim() })
+    if ($pgCounts.Count -ne 1 -or $pgCounts[0] -ne '0') { throw 'Carga inicial PostgreSQL denegada: hay pacientes o conteo no verificable.' }
     Invoke-JoyceScript -Service postgres -Path 'postgresql/06_datos_prueba.sql'
     Invoke-JoyceScript -Service sqlserver -Path 'sqlserver/06_datos_prueba.sql'
     Write-Output 'PASS carga inicial: fixtures ficticios instalados solo en tablas vacías.'

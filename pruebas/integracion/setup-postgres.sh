@@ -13,4 +13,5 @@ done
 "${psql_admin[@]}" -d joseph_tds_spike_pg -c "INSERT INTO clinico.pacientes (id_paciente,codigo_region,nombre,apellidos,fecha_nacimiento,telefono,correo,fecha_registro) SELECT 5000000000,codigo_region,'PacienteSpike5000000000',apellidos,fecha_nacimiento,telefono,'spike5000000000@example.invalid',fecha_registro FROM clinico.pacientes WHERE id_paciente=1001 AND codigo_region='AL';" >/dev/null
 "${psql_admin[@]}" -d joseph_tds_spike_pg -v mssql_database=joseph_fdw_spike -f /opt/proyecto/integracion/01_fdw_sqlserver.sql >/dev/null
 "${psql_admin[@]}" -d joseph_tds_spike_pg -f /opt/proyecto/tds-spike/03_postgresql_role.sql >/dev/null
+"${psql_admin[@]}" -d joseph_tds_spike_pg -f /opt/proyecto/tds-spike/06_table_mode.sql >/dev/null
 echo 'PASS PostgreSQL: núcleo ficticio y FDW configurados en base aislada'

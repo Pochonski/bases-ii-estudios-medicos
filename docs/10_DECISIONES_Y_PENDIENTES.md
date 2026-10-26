@@ -437,3 +437,22 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
 - **Impacto/archivos:** `scripts/Joyce-Common.ps1`, `Test-Entrega.ps1`, `Install-JoyceModulos.ps1`,
   `Test-JoyceModulos.ps1`, `Demo-Video.ps1`, workflow y guías; PR apilado sobre rama de Joyce,
   pendiente de su revisión. Validación estática Windows PASA; runtime/CI del nuevo SHA pendiente.
+
+### D-046 — Regresión TDS y límite de concurrencia del outbox (26/10/2026, Joseph)
+
+- **Fuente/motivo:** auditoría final solicitada por Joseph; D-040 probó `query`, pero no el
+  modo convencional `table_name` ni el coste de filtrar localmente una vista más grande.
+- **Decisión de prueba:** en el spike aislado de Joseph agregar una vista SQL Server de solo
+  lectura para `table_name` y 2000 filas sintéticas adicionales después de las aserciones
+  originales. Comparar resultado/plan/tiempo de `query` y `table_name`; estimar bytes de
+  columnas desde SQL Server. No cambiar el parche, la vista contractual de Joyce ni la cuenta
+  definitiva. Este volumen es prueba pequeña, no benchmark de producción.
+- **Outbox pendiente de Joyce:** la función clínica bloquea el estudio y el exportador usa
+  `FOR UPDATE SKIP LOCKED`, pero la lectura+UPDATE Mongo por revisión no es compare-and-swap
+  atómico entre dos procesadores. Si dos workers procesan revisiones distintas del mismo
+  estudio, un UPDATE tardío de la revisión antigua podría sobrescribir la nueva. El diseño
+  documenta **procesador único**; esta suite no acredita seguridad con múltiples workers.
+  Joyce debe decidir si se mantiene/exige esa exclusividad operacional o añade coordinación
+  por estudio y escritura condicional en Mongo; requiere revisión de contrato y nueva prueba.
+- **Archivos/impacto:** solo scripts/fixtures del spike, filtros CI y documentación. Estado
+  runtime de la nueva regresión pendiente de ejecución; sin cambio a datos compartidos.
