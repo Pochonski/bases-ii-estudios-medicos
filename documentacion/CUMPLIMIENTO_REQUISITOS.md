@@ -1,37 +1,15 @@
-# Matriz de cumplimiento del enunciado — verificación del 25/10/2026
+# Matriz de cumplimiento del enunciado — actualización 26/10/2026
 
-**Leyenda:** ✅ implementado y con evidencia ejecutada · ⚠️ depende de una acción del grupo · ❌ falta.
+**Leyenda:** ✅ implementado y probado · ⚠️ pendiente de acción/validación · ❌ falta.
 
-> Corte histórico del 25/10. La corrección D-045 del 26/10 cambia la instalación y P18:
-> su validación estática Windows pasó, pero las afirmaciones ✅ de ejecución integrada
-> corresponden al SHA anterior de Joyce hasta que la CI del PR de endurecimiento pase.
-> La instalación normal nueva no carga el fixture; usar `-LoadInitialData` solo sobre
-> tablas vacías. La suite destructiva requiere `Test-Entrega.ps1 -DesdeCero` aislado.
+**Estado verificado el 26/10/2026:** rama `main` en [`3d50894`](https://github.com/Pochonski/bases-ii-estudios-medicos/commit/3d50894c9e566d44a2190d6d115331983127f5bd); PR #3, #4 y #5 fusionados en `main`, PR #7 fusionado en la rama de Joyce e incorporado al merge de #5. No quedan PR de integración abiertos. **Cuatro workflows de `main`: siete trabajos de siete aprobados** en ese mismo SHA: [Infraestructura (3/3)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328045185) · [Núcleo PostgreSQL (1/1)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328099902) · [TDS FDW (2/2)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328122775) · [Integración de tres motores (1/1)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328144203).
 
-> **Actualización 26/10/2026:** la [CI del PR #7, HEAD `0189e58`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158117)
-> pasó la instalación aislada, los tres motores y la suite integrada en Ubuntu;
-> artifact `joyce-modulos-evidencia`. El Docker Desktop de Windows de Joseph no
-> estuvo disponible para repetirla localmente. P12 prueba `restart`, no restauración;
-> el outbox concurrente, TLS/CA y `table_name` con predicado DECIMAL siguen
-> abiertos. Los PR #3–#5 y #7 continúan sin fusionar.
+**Evidencia Ubuntu CI:** P18 desde volúmenes efímeros, P01–P18, INT-01–INT-05, segmentación, FDW reales, permisos API, dos exportadores concurrentes, restauración PG/SQL Server/MongoDB mediante EJSON estricto, P12 tras reinicio y nueve segmentos automáticos de demo.
 
-> **Propuesta D-048, 26/10/2026:** el código del PR #7 en `cedddb9` añade
-> serialización de exportadores por estudio, limita la función de facturación
-> invocable por web y prueba restauración en bases efímeras. Su CI está en curso;
-> estas pruebas nuevas todavía no reciben ✅. La restauración MongoDB usa EJSON
-> estricto de laboratorio. El PDF original fue leído localmente y confirma la
-> entrega indicada para 28/10/2026 a las 23:59, pendiente de verificar Moodle.
+**No confundir con entrega concluida:** Docker Desktop abierto en Windows según Joseph, pero el motor Linux y P18 en esa PC aún no están verificados; faltan capturas reales, video narrado de 5–8 min y entrega Moodle. El documento del curso indica 28/10/2026 a las 23:59, pendiente de confirmar en Moodle. Límites: TDS `table_name` con igualdad DECIMAL incorrecta (usar `query` probada); TLS/CA no listo para producción; Mongo EJSON no equivale a `mongorestore`; candado outbox no cubre DML directo fuera del procedimiento.
 
-> **Evidencia posterior:** [run integrado `dd44973`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286173209)
-> PASÓ en Ubuntu 22.04 con fila remota huérfana filtrada para web, dos exportadores
-> concurrentes, restauración comprobada en los tres motores y P12. La copia Mongo
-> usa EJSON estricto, no `mongodump`. El mismo head pasó las tres regresiones de
-> Joseph; la ejecución Windows local y el video permanecen pendientes. No se
-> atribuye el run de `dd44973` a cambios posteriores del PR.
-
-> [CI `ed2e5b2` 40286756682](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756682)
-> también ejecutó los nueve segmentos del guion en P18 y terminó con limpieza
-> segura. Es demostración automatizada, no video narrado ni entrega en Moodle.
+Los estados por módulo de la tabla siguiente conservan su matriz de aceptación; los
+comentarios fechados de octubre anteriores se sustituyen arriba por el cierre verificado.
 
 **Evidencias:**
 - **Local:** Windows 11, archivos `evidencias/registros/2026-10-25-joyce-pruebas-local.txt` y
@@ -96,16 +74,19 @@
 
 ## Lo que todavía no está terminado (acciones del grupo)
 
-1. **Integrar en `main`:** los PR #3 y #4 (Joseph, en borrador) y el #5 (Joyce, apilado sobre #4).
-   Hasta entonces `main` solo tiene la infraestructura. El orden es #3 → #4 → #5, y después se
-   cambia la base del #5 a `main`.
-2. **Grabar el video** (5–8 min). El enunciado pide narración de los integrantes; Armando no
-   participó (D-044).
-3. **Confirmar en Moodle** la fecha y hora de cierre: el enunciado dice "martes 28", pero el 28/10/2026 es miércoles.
-4. **Subir a Moodle** el zip generado desde `main` y el video.
-5. **Revisiones pendientes:**
-   - Joseph debe aceptar los objetos que se agregaron a su núcleo (D-041).
-   - El grupo debe decidir cómo tratar el alcance de Armando (D-042, D-044).
+1. **Windows:** comprobar Docker Linux Engine y ejecutar `Test-Entrega.ps1 -StaticOnly`
+   y después `Test-Entrega.ps1 -DesdeCero -RunDemo -DemoSinPausa` en el
+   proyecto P18 efímero. Conservar SHA, versiones y resultados reales;
+   **no ejecutado todavía en esta PC**.
+2. **Capturas y video:** obtener evidencia visual auténtica de las
+   conexiones, tres motores, cinco operaciones y permisos; grabar video
+   narrado de 5–8 minutos con participación realmente acreditada.
+3. **Coordinación docente:** confirmar plazo/hora efectiva en Moodle;
+   aclarar aceptación del grupo de 3 y del despliegue lógico en una PC,
+   y el alcance de cada integrante.
+4. **Entrega:** preparar ZIP desde el `main` definitivo, revisar contenido,
+   adjuntar evidencias y video, y subir a Moodle; **no entregado aún**.
+5. **Bibliografía:** revisar referencias usadas y normas de cita/IA del curso.
 
 ## Limitaciones declaradas (no son incumplimientos)
 

@@ -1,23 +1,10 @@
 # Bases de Datos II · Sistema de Gestión de Estudios Médicos Distribuido
 
-> **Estado (25/10/2026): IMPLEMENTACIÓN COMPLETA Y PROBADA en ramas/PR #3-#5, pendiente de integrar en `main`, grabar el video y entregar.** Ver [matriz de cumplimiento](documentacion/CUMPLIMIENTO_REQUISITOS.md). Proyecto académico del Instituto Tecnológico de Costa Rica, Campus Tecnológico San Carlos. **Entrega indicada en el enunciado: 28/10/2026 a las 23:59; confirmar en Moodle la inconsistencia del día de la semana.**
-
-> **Actualización (26/10/2026):** [PR #7](https://github.com/Pochonski/bases-ii-estudios-medicos/pull/7) propone endurecer instalación y pruebas del PR #5, sin fusionar ningún PR. La [CI integrada del head `0189e58`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40280158117) pasó en Ubuntu; la ejecución de Docker en esta PC Windows sigue pendiente. También quedan revisión de Joyce/Armando, concurrencia del outbox, TLS/CA y restauración desde respaldo. El estado del 25/10 anterior es histórico.
-
-> **Cierre técnico propuesto, 26/10:** el commit `cedddb9` de PR #7 agrega serialización
-> por estudio, una función web acotada y pruebas de concurrencia/restauración en P18.
-> La CI del nuevo SHA está en curso; el Docker Linux local sigue sin responder.
-> Guía para validación, revisión y empaquetado: [cierre y entrega](documentacion/GUIA_CIERRE_Y_ENTREGA.md).
-
-> La [CI integrada del código `dd44973`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286173209)
-> confirmó concurrencia, permisos API y restauración de los tres motores en Ubuntu.
-> Cambios posteriores del PR #7 y la demostración automatizada requieren su propio
-> run; Windows Docker Desktop sigue sin motor Linux disponible.
-
-> [CI `ed2e5b2` con demo](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40286756682):
-> P18, pruebas integradas, restauración y nueve segmentos del guion PASAN en
-> Ubuntu. El video todavía debe grabarse; faltan revisión de Joyce/Armando,
-> CI del commit documental final, validación Windows y las fusiones autorizadas.
+> **Estado verificado el 26/10/2026:** rama `main` en [`3d50894`](https://github.com/Pochonski/bases-ii-estudios-medicos/commit/3d50894c9e566d44a2190d6d115331983127f5bd); PR #3, #4 y #5 fusionados en `main`, PR #7 fusionado en la rama de Joyce e incorporado al merge de #5. No quedan PR de integración abiertos. **Cuatro workflows de `main`: siete trabajos de siete aprobados** en ese mismo SHA: [Infraestructura (3/3)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328045185) · [Núcleo PostgreSQL (1/1)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328099902) · [TDS FDW (2/2)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328122775) · [Integración de tres motores (1/1)](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40328144203).
+>
+> **Evidencia Ubuntu CI:** P18 desde volúmenes efímeros, P01–P18, INT-01–INT-05, segmentación, FDW reales, permisos API, dos exportadores concurrentes, restauración PG/SQL Server/MongoDB mediante EJSON estricto, P12 tras reinicio y nueve segmentos automáticos de demo.
+>
+> **No confundir con entrega concluida:** Docker Desktop abierto en Windows según Joseph, pero el motor Linux y P18 en esa PC aún no están verificados; faltan capturas reales, video narrado de 5–8 min y entrega Moodle. El documento del curso indica 28/10/2026 a las 23:59, pendiente de confirmar en Moodle. Límites: TDS `table_name` con igualdad DECIMAL incorrecta (usar `query` probada); TLS/CA no listo para producción; Mongo EJSON no equivale a `mongorestore`; candado outbox no cubre DML directo fuera del procedimiento.
 
 Este repositorio es la **fuente común de contexto** de Joseph, Joyce, Armando y sus agentes de desarrollo. Se elaboró a partir del enunciado original y de las fases de planificación acordadas en conversación. Su objetivo es prevenir decisiones contradictorias y facilitar trabajo paralelo y revisable.
 
