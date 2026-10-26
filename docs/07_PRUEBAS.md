@@ -503,3 +503,26 @@ posterior. No se inició el servicio ni se tocaron WSL o los volúmenes.
 - El commit documental final y la marca de disponibilidad de `mongodump`
   todavía necesitan un run propio; los resultados de `ed2e5b2` no prueban
   cambios posteriores. Windows local continúa sin motor Docker disponible.
+
+### CI posterior del commit documental `3302ae1` (26/10/2026)
+
+- [Suite integrada `40287276057`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276057),
+  [infraestructura `40287276041`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276041),
+  [núcleo `40287276076`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276076)
+  y [TDS `40287276054`](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276054)
+  **PASARON** para HEAD `3302ae1fa96d44647342b81d3d18a08e6060dae2`.
+- Artifact `joyce-modulos-evidencia` descargado: checkout de PR
+  `411036cafc42c2319e6636c06d9050fb47548a3e`, Docker 28.0.4,
+  kernel `6.8.0-1064-azure`. P18 creó y retiró solo
+  `joyce-p18-e0cca5e32aa8`, sin puertos publicados. Pasaron las pruebas
+  funcionales, concurrencia con dos exportadores, API huérfana,
+  restauración PostgreSQL/SQL Server/MongoDB, P12 y nueve segmentos de demo.
+- Las herramientas `mongodump` y `mongorestore` estaban **disponibles** en ese
+  contenedor; **no se ejecutaron**. La restauración MongoDB probada utilizó
+  EJSON canónico estricto con comparación de tipos BSON, datos e índices.
+  El artifact no contiene contraseñas ni valores de secretos generados;
+  aparecen solo nombres de parámetros y la indicación de omisión.
+- El último commit de documentación/bibliografía posterior a `3302ae1`
+  requiere su propia CI antes de atribuirle estos resultados. Windows local
+  continúa sin motor Docker disponible; ninguna prueba de motores se ejecutó
+  allí. La igualdad DECIMAL en TDS `table_name` sigue PENDIENTE.

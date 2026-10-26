@@ -535,3 +535,16 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   PostgreSQL/SQL Server/EJSON MongoDB, P12 y nueve segmentos de demo PASAN.
   Artifact descargado sin patrón de secreto. No se grabó video ni se ejecutó
   Docker en la PC Windows. Falta CI del commit documental final.
+
+- **CI documental `3302ae1` (Joseph, 26/10):** [integrada 40287276057](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276057),
+  [infra 40287276041](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276041),
+  [núcleo 40287276076](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276076)
+  y [TDS 40287276054](https://github.com/Pochonski/bases-ii-estudios-medicos/actions/runs/40287276054)
+  PASARON. Artifact HEAD `3302ae1fa96d44647342b81d3d18a08e6060dae2`, checkout
+  `411036cafc42c2319e6636c06d9050fb47548a3e`; P18 efímero
+  `joyce-p18-e0cca5e32aa8` se limpió. Se verificaron concurrencia, API,
+  restauración efectiva en tres motores y nueve segmentos de demo.
+  `mongodump/mongorestore` existen, pero la prueba usó EJSON estricto; no se
+  acredita restauración con esas herramientas. Esta entrada y la corrección
+  bibliográfica posterior requieren CI del nuevo HEAD. Windows Docker local
+  sigue NO EJECUTADO, sin cambios a `main` ni merges.
