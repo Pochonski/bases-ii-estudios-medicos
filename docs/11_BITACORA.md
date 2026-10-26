@@ -386,3 +386,10 @@ El cierre documental posterior no modifica código probado. PR #1 sigue OPEN/DRA
   completa, P12 en tres motores y P17. Demo de 9 segmentos ejecutada completa.
 - Nuevos: mapa de conexiones y configuración, referencias, guion del video, inicio rápido en README.
 - No ejecutado: CI, grabación del video, entrega en Moodle.
+
+## 2026-10-25 — Joyce asume el alcance de Armando y agrega CI (D-044)
+
+- PR #5 abierto en borrador (base `feature/joseph-tds-fdw-spike`). CI de infraestructura de Joseph
+  PASÓ en sus tres jobs con los cambios de Joyce (run 40273876990).
+- `pruebas/reportes/` creada; P09 la usa. Suite local repetida: PASA.
+- Workflow `joyce-modulos.yml` agregado; su resultado se registra al terminar.

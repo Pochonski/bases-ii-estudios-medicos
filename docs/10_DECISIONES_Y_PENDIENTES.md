@@ -406,3 +406,18 @@ en `evidencias/registros/2026-10-22-joseph-gateway-ci.txt` y evidencia Windows 1
 - **Alcance de P12:** `restart`, no recreación de contenedores ni restauración de respaldo.
 - **Pendiente del grupo:** push/PR (Joyce sin permiso de escritura), revisión de Joseph (D-041) y
   Armando (D-042), merge de PR #3/#4, grabación del video, confirmar fecha en Moodle y entrega.
+
+### D-044 — Joyce asume formalmente el alcance de Armando y agrega CI de módulos (25/10/2026, Joyce)
+
+- **Fuente:** Joyce informa que Armando no se ha unido al repositorio y que el grupo necesita
+  cerrar el trabajo hoy. Amplía D-042: el alcance de Armando (`agents/ARMANDO.md`) queda
+  **implementado por Joyce**: roles externos, vistas `api`, agregaciones, validaciones y
+  `pruebas/seguridad`, `pruebas/reportes`. Si Armando se incorpora, su papel pasa a revisión y narración.
+- **Riesgo académico [PENDIENTE DEL GRUPO]:** el enunciado pide que el video lo narren los
+  integrantes. El guion conserva el bloque de Armando y define un reemplazo; la decisión sobre
+  su participación y la nota es del grupo y del docente, no de este registro.
+- **CI nueva:** `.github/workflows/joyce-modulos.yml` (Ubuntu 22.04) ejecuta
+  `Test-Entrega.ps1 -DesdeCero` (P18, suite completa, P12 en tres motores, P17), comprueba que la
+  evidencia no contenga secretos y la publica como artifact por 14 días.
+- **Archivos:** `pruebas/reportes/01_conteo_pg_medico_tipo.sql`, `02_conteo_mongo_medico_tipo.js`
+  (P09 los usa), workflow, guion, handoff, `agents/ARMANDO.md`.

@@ -36,9 +36,9 @@
 
 ## Armando: aceptación del traspaso
 
-- Fecha y hora:
-- Interfaces aceptadas:
-- Bloqueos reportados:
+- Fecha y hora: no se realizó; Armando no se incorporó al repositorio (D-044).
+- Interfaces aceptadas: n/a; Joyce asumió el alcance.
+- Bloqueos reportados: ninguno técnico.
 - Plan de P02/P03/P09/P10/P11: **implementados y probados por Joyce con permiso de Armando (D-042).**
   Armando: revisar `postgresql/04..05`, `mongodb/04..05`, `pruebas/seguridad/*`, confirmar el
   permiso y preparar su narración del video.
